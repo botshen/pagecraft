@@ -1,0 +1,48 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+.output
+store-assets/*.zip
+stats.html
+stats-*.json
+.wxt
+web-ext.config.ts
+
+# Secrets, environment files, and private keys
+.env*
+!.env.example
+*.pem
+
+# Cloudflare Workers (local dev state & secrets; nested .gitignore also covers
+# node_modules but we keep the root copy so the rule is visible at a glance)
+.wrangler
+.dev.vars*
+!.dev.vars.example
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Design-review artifacts (store screenshots, baselines) — keep locally,
+# not in the repo
+design-review/
+
+# Agent & MCP local tooling
+.mcp.json
+.agents/
+.claude/
+skills-lock.json

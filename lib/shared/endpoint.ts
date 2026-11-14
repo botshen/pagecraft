@@ -1,0 +1,27 @@
+/**
+ * Canonical API base for the PageCraft Cloud Trial Worker.
+ */
+
+import { DEFAULT_CLOUD_ENDPOINT } from './constants';
+import { isLocalLoopbackEndpoint } from './ai-endpoints';
+
+export function endpointBase(endpoint?: string | null): string | null {
+  const raw = (endpoint ?? '').trim() || DEFAULT_CLOUD_ENDPOINT;
+  const stripped = raw
+    .replace(/\/api\/(generate|quota|register|feedback)\/?$/i, '')
+    .replace(/\/+$/, '');
+  let url: URL;
+  try {
+    url = new URL(stripped);
+  } catch {
+    return null;
+  }
+  if (url.username || url.password) return null;
+  if (url.protocol === 'https:') {
+    return `${url.protocol}//${url.host}${url.pathname.replace(/\/+$/, '')}`;
+  }
+  if (url.protocol === 'http:' && isLocalLoopbackEndpoint(stripped)) {
+    return `${url.protocol}//${url.host}${url.pathname.replace(/\/+$/, '')}`;
+  }
+  return null;
+}

@@ -1,0 +1,58 @@
+name: Bug Report
+description: Report a bug in the PageCraft extension, Element Picker, CSS/JS engine, or Cloud Worker
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug! Please avoid pasting private URLs with session tokens or API keys.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Component
+      options:
+        - Side Panel Studio UI
+        - Visual Element Picker (Shadow DOM / Selector)
+        - CSS Engine (insertCSS / Quick Sliders)
+        - JS Userscript Engine (chrome.userScripts / GM_* shim)
+        - AI Generation (Cloud Trial / BYOK / Local Ollama)
+        - Shareable Shortcode (#PC1:...#) / .user.js Import-Export
+        - Self-Hosted Cloud Worker (workers/cloud)
+    validations:
+      required: true
+
+  - type: input
+    id: browser
+    attributes:
+      label: Browser & OS
+      placeholder: "e.g., Chrome 138 on macOS 15.4 / Edge 136 on Windows 11 / Firefox 137"
+    validations:
+      required: true
+
+  - type: input
+    id: site
+    attributes:
+      label: Target Website (if applicable)
+      placeholder: "e.g., https://news.ycombinator.com (strip any private query params)"
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      placeholder: |
+        1. Open ...
+        2. Click Pick Element on ...
+        3. Enter prompt "..." and click Generate
+        4. Observe error / unexpected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs. Actual Behavior
+      placeholder: Describe what you expected to happen and what happened instead (include console errors or screenshots if helpful).
+    validations:
+      required: true

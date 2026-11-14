@@ -1,0 +1,67 @@
+name: Website Recipe Request / Share
+description: Request a new 1-click website mod or share a working CSS/JS/#PC1:...# recipe with the community!
+title: "[Recipe]: "
+labels: ["recipe", "enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Share a cool `#PC1:...#` shortcode / CSS / JS mod you crafted with PageCraft, or request a built-in 1-click recipe for a popular website (`lib/userscripts/templates.ts`)!
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Submission Type
+      options:
+        - Share a working recipe (CSS / JS / #PC1:...# shortcode)
+        - Request a new website recipe
+    validations:
+      required: true
+
+  - type: input
+    id: target_site
+    attributes:
+      label: Target Website or Scope
+      description: Domain pattern or `Universal (any site)`
+      placeholder: "e.g., https://*.github.com/* or Universal (all docs/blogs)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Recipe Category
+      options:
+        - clean (Remove clutter, banners, sidebars, or restyle reading view)
+        - focus (Hide addictive feeds / distractions)
+        - extract (Export tables, copy code/markdown, extract data)
+        - unlock (Direct external links, keyboard shortcuts, UX fixes)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: engine
+    attributes:
+      label: Preferred Engine
+      options:
+        - CSS (Instant insertCSS — zero Allow-User-Scripts setup)
+        - JS (Isolated chrome.userScripts — interactive DOM behavior)
+        - Not sure / Either
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What Should This Recipe Do?
+      placeholder: "Describe the visual change or workflow improvement (before vs. after). Screenshots are super welcome!"
+    validations:
+      required: true
+
+  - type: textarea
+    id: recipe_code
+    attributes:
+      label: Shareable Shortcode or CSS/JS Snippet (Optional)
+      description: If you already generated a working mod in PageCraft, paste its `#PC1:...#` shortcode or CSS/JS source here!
+      placeholder: |
+        #PC1:...#
+        or CSS / JS snippet
+      render: css

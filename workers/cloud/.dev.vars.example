@@ -1,0 +1,19 @@
+# Local development secrets for `pnpm dev` (`wrangler dev`).
+# Copy this file to `.dev.vars` (git-ignored) and fill in your own values:
+#   cp .dev.vars.example .dev.vars
+#
+# In production, set these as encrypted Cloudflare Worker secrets instead:
+#   npx wrangler secret put PRIMARY_LLM_API_KEY
+#   npx wrangler secret put ADMIN_TOKEN
+
+# OpenAI-compatible API key used for Cloud Trial generations (DeepSeek, OpenAI, OpenRouter, SiliconFlow, etc.)
+# Matches `PRIMARY_LLM_BASE_URL` and `PRIMARY_LLM_MODEL` in `wrangler.toml` (can also be overridden online via `/admin`).
+PRIMARY_LLM_API_KEY="replace-with-your-llm-api-key"
+
+# Operator token (>= 16 random characters) protecting `/admin` and deriving the AES-256-GCM key
+# used to encrypt runtime LLM API keys stored in D1 (`runtime_config`).
+# Generate one with: `openssl rand -hex 24`
+ADMIN_TOKEN="replace-with-at-least-16-char-random-admin-token"
+
+# Optional fallback cap for total cloud generations across all installs per UTC day (default: 2000)
+# DAILY_GLOBAL_GEN_LIMIT="2000"

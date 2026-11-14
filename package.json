@@ -1,0 +1,70 @@
+{
+  "name": "pagecraft",
+  "description": "PageCraft — Point at any webpage element and modify layouts, remove clutter, or generate Tampermonkey userscripts with AI.",
+  "private": true,
+  "version": "0.1.0",
+  "license": "MIT",
+  "type": "module",
+  "homepage": "https://pagecraft.shenxin.space",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/botshen/plugin-radar.git"
+  },
+  "bugs": {
+    "url": "https://github.com/botshen/plugin-radar/issues"
+  },
+  "engines": {
+    "node": ">=22.6.0"
+  },
+  "keywords": [
+    "chrome-extension",
+    "browser-extension",
+    "userscript",
+    "tampermonkey",
+    "greasemonkey",
+    "ai",
+    "custom-css",
+    "manifest-v3",
+    "wxt",
+    "ollama",
+    "local-ai",
+    "dom-picker",
+    "web-customization"
+  ],
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "zip": "wxt build && rm -f .output/pagecraft-0.1.0-chrome.zip store-assets/pagecraft-0.1.0-store.zip && (cd .output/chrome-mv3 && zip -9 -r -X -q ../pagecraft-0.1.0-chrome.zip . -x '*.DS_Store' '*__MACOSX*') && cp .output/pagecraft-0.1.0-chrome.zip store-assets/pagecraft-0.1.0-store.zip",
+    "zip:firefox": "wxt zip -b firefox",
+    "compile": "tsc --noEmit",
+    "test": "node --experimental-strip-types --import ./tests/register-loader.mjs --test 'tests/core/**/*.test.ts'",
+    "postinstall": "wxt prepare"
+  },
+  "dependencies": {
+    "@radix-ui/react-slot": "^1.5.0",
+    "@wxt-dev/i18n": "^0.2.8",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.58.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "tailwind-merge": "^3.7.0",
+    "tailwindcss-animate": "^1.0.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/chrome": "^0.3.5",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@types/react-router-dom": "^5.3.3",
+    "@wxt-dev/module-react": "^1.1.5",
+    "autoprefixer": "^10.6.1",
+    "postcss": "^8.5.30",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3",
+    "web-ext": "^10.5.0",
+    "wxt": "^0.21.3"
+  }
+}

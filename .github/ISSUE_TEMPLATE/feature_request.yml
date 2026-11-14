@@ -1,0 +1,27 @@
+name: Feature Request
+description: Suggest an improvement to PageCraft's studio workflow, AI backends, Element Picker, or userscript capabilities
+title: "[Feat]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or Use Case
+      description: What workflow friction or limitation are you running into today?
+      placeholder: "When customizing a complex SPA, I wish I could..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed Solution
+      description: How should PageCraft solve this cleanly while staying fast, local-first, and Manifest V3 compliant?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered (Optional)
+      placeholder: Any workarounds, existing extensions, or trade-offs worth noting?

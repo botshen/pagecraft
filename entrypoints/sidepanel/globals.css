@@ -1,0 +1,458 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+}
+
+/* ==========================================================================
+   Claude Design System (CDS) tokens — aligned with open-claude-ui
+   Reverse-engineered from Claude Desktop v2.37337.1.
+   ========================================================================== */
+
+:root {
+  /* Brand & clay */
+  --brand: #c6613f;
+  --cds-clay: #d97757;
+  --cds-clay-hover: #cc5a36;
+  --cds-clay-light: #fbf3ef;
+
+  /* Official 4-stop surface ramp (light) */
+  --cds-surface-0: #f9f9f7;
+  --cds-surface-1: #fcfcfb;
+  --cds-surface-2: #ffffff;
+  --cds-surface-3: #ffffff;
+  --cds-surface-popover: #ffffff;
+
+  /* Alpha border + fill */
+  --cds-alpha-1: hsla(0, 0%, 8%, 0.05);
+  --cds-alpha-2: hsla(0, 0%, 8%, 0.10);
+  --cds-alpha-3: hsla(0, 0%, 8%, 0.20);
+  --cds-border: var(--cds-alpha-2);
+  --cds-border-strong: var(--cds-alpha-3);
+
+  /* Fill */
+  --cds-fill-ghost-hover: var(--cds-alpha-1);
+  --cds-fill-ghost-selected: var(--cds-alpha-2);
+  --cds-fill-secondary: var(--cds-alpha-2);
+  --cds-fill-secondary-hover: rgba(21, 21, 21, 0.14);
+  --cds-fill-brand-subtle: var(--cds-clay-light);
+  --cds-segmented-track: rgba(0, 0, 0, 0.06);
+  --cds-segmented-thumb: #ffffff;
+
+  /* Shadows */
+  --cds-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 2px 8px 0 rgba(0, 0, 0, 0.08);
+  --cds-shadow-md: 0 2px 4px 0 rgba(0, 0, 0, 0.05), 0 6px 16px 0 rgba(0, 0, 0, 0.08);
+  --cds-shadow-lg: 0 4px 8px 0 rgba(0, 0, 0, 0.06), 0 12px 28px -2px rgba(0, 0, 0, 0.08);
+  --cds-panel-shadow: 0 0 0 1px var(--cds-border), var(--cds-shadow-sm);
+  --cds-panel-shadow-hover: 0 0 0 1px var(--cds-border-strong), 0 4px 16px -2px rgba(0, 0, 0, 0.09);
+  --cds-shadow-composer: 0 4px 20px rgba(0, 0, 0, 0.035), inset 0 0 0 1px var(--cds-border);
+  --cds-shadow-composer-hover: 0 4px 24px rgba(0, 0, 0, 0.06), inset 0 0 0 1px var(--cds-border-strong);
+  --cds-shadow-composer-focus: 0 4px 24px rgba(0, 0, 0, 0.08), inset 0 0 0 1px var(--cds-border-strong), 0 0 0 1px var(--cds-border-strong);
+  --cds-focus-shadow: inset 0 0 0 1px var(--cds-surface-1), 0 0 0 1.5px var(--cds-clay), 0 0 6px 1px rgba(217, 119, 87, 0.25);
+  --cds-shadow-popover: inset 0 0 0 0px var(--cds-border), 0 0 0 1px var(--cds-border), 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08);
+
+  /* Text */
+  --cds-text-primary: #151515;
+  --cds-text-secondary: #525252;
+  --cds-text-muted: #6e6e6e;
+
+  /* Radius */
+  --radius-xs: .125rem;
+  --radius-sm: .25rem;
+  --radius-md: .375rem;
+  --radius-lg: .5rem;
+  --radius-xl: .75rem;
+  --radius-2xl: 1rem;
+  --cds-panel-radius: 10px;
+  --cds-radius-card: calc(var(--radius-lg) + 4px);
+
+  /* Motion — durations */
+  --cds-dur-instant: 70ms;
+  --cds-dur-fast: 100ms;
+  --cds-dur-snap: 120ms;
+  --cds-dur-base: 180ms;
+  --cds-dur-slow: 350ms;
+
+  /* Motion — easings (REA-extracted) */
+  --cds-ease-swift: cubic-bezier(.16, 1, .3, 1);
+  --cds-ease-expand: cubic-bezier(.19, 1, .22, 1);
+  --cds-ease-enter: cubic-bezier(.22, 1, .36, 1);
+  --cds-ease-out: cubic-bezier(.165, .84, .44, 1);
+  --cds-ease-snap: cubic-bezier(.32, .72, 0, 1);
+  --cds-ease-overshoot: cubic-bezier(.34, 1.3, .64, 1);
+  --cds-ease-pop: cubic-bezier(.34, 1.56, .64, 1);
+  --cds-ease-pulse: cubic-bezier(.4, 0, .2, 1);
+  /* 15-stop spring for button press release */
+  --cds-btn-spring: linear(0, .2459, .6526, .9468, 1.0764, 1.0915, 1.0585, 1.0219, .9993, .9914, .9921, .9957, .9988, 1.0004, 1);
+
+  /* Legacy shadcn-style tokens — kept for backward compatibility while
+     pages migrate; expressed in HSL triplets for hsl(var(--x)) usage. */
+  --background: 48 33% 97%;
+  --foreground: 60 4% 9%;
+  --card: 0 0% 100%;
+  --card-foreground: 60 4% 9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 60 4% 9%;
+  --primary: 16 58% 42%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 45 22% 92%;
+  --secondary-foreground: 60 4% 12%;
+  --muted: 45 22% 93%;
+  --muted-foreground: 45 6% 35%;
+  --accent: 45 20% 89%;
+  --accent-foreground: 60 4% 9%;
+  --destructive: 0 72% 45%;
+  --destructive-foreground: 0 0% 98%;
+  --border: 44 18% 86%;
+  --input: 44 18% 84%;
+  --ring: 16 58% 42%;
+  --radius: 0.625rem;
+}
+
+/* Dark mode — strict surface inversion per CDS */
+.dark {
+  --cds-surface-0: #0b0b0b;
+  --cds-surface-1: #151515;
+  --cds-surface-2: #1a1a19;
+  --cds-surface-3: #20201f;
+  --cds-surface-popover: #2c2c2a;
+
+  --cds-clay: #d97757;
+  --cds-clay-hover: #e08264;
+
+  --cds-alpha-1: hsla(0, 0%, 100%, 0.05);
+  --cds-alpha-2: hsla(0, 0%, 100%, 0.09);
+  --cds-alpha-3: hsla(0, 0%, 100%, 0.18);
+  --cds-border: var(--cds-alpha-2);
+  --cds-border-strong: var(--cds-alpha-3);
+
+  --cds-fill-ghost-hover: var(--cds-alpha-1);
+  --cds-fill-ghost-selected: var(--cds-alpha-2);
+  --cds-fill-secondary: var(--cds-alpha-2);
+  --cds-fill-secondary-hover: rgba(255, 255, 255, 0.14);
+  --cds-fill-brand-subtle: rgba(217, 119, 87, 0.15);
+  --cds-segmented-track: #141413;
+  --cds-segmented-thumb: #363531;
+
+  --cds-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4), 0 2px 8px 0 rgba(0, 0, 0, 0.4);
+  --cds-shadow-md: 0 2px 4px 0 rgba(0, 0, 0, 0.4), 0 6px 16px 0 rgba(0, 0, 0, 0.4);
+  --cds-shadow-lg: 0 4px 8px 0 rgba(0, 0, 0, 0.5), 0 16px 36px -2px rgba(0, 0, 0, 0.4);
+  --cds-panel-shadow: 0 0 0 1px var(--cds-border), var(--cds-shadow-sm);
+  --cds-panel-shadow-hover: 0 0 0 1px var(--cds-border-strong), 0 6px 20px rgba(0, 0, 0, 0.6);
+  --cds-shadow-composer: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 0 0 1px var(--cds-border);
+  --cds-shadow-composer-hover: 0 4px 24px rgba(0, 0, 0, 0.55), inset 0 0 0 1px var(--cds-border-strong);
+  --cds-shadow-composer-focus: 0 4px 24px rgba(0, 0, 0, 0.65), inset 0 0 0 1px rgba(255, 255, 255, 0.22), 0 0 0 1px rgba(255, 255, 255, 0.22);
+  --cds-focus-shadow: inset 0 0 0 1px var(--cds-surface-1), 0 0 0 1.5px var(--cds-clay), 0 0 8px 2px rgba(217, 119, 87, 0.35);
+  --cds-shadow-popover: inset 0 0 0 1px rgba(255, 255, 255, 0.10), 0 8px 28px rgba(0, 0, 0, 0.65), 0 2px 8px rgba(0, 0, 0, 0.45);
+
+  --cds-text-primary: #f5f5f5;
+  --cds-text-secondary: #a3a3a3;
+  --cds-text-muted: #8a8a8a;
+
+  /* shadcn-style tokens (dark) */
+  --background: 60 3% 10%;
+  --foreground: 48 24% 94%;
+  --card: 40 5% 13%;
+  --card-foreground: 48 24% 94%;
+  --popover: 40 5% 13%;
+  --popover-foreground: 48 24% 94%;
+  --primary: 16 68% 64%;
+  --primary-foreground: 60 4% 9%;
+  --secondary: 40 5% 18%;
+  --secondary-foreground: 48 20% 92%;
+  --muted: 40 5% 16%;
+  --muted-foreground: 42 6% 68%;
+  --accent: 38 6% 20%;
+  --accent-foreground: 48 24% 94%;
+  --destructive: 0 70% 62%;
+  --destructive-foreground: 60 4% 9%;
+  --border: 40 6% 21%;
+  --input: 40 6% 22%;
+  --ring: 16 68% 64%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  color: hsl(var(--foreground));
+  background-color: hsl(var(--background));
+  transition: background-color var(--cds-dur-base) var(--cds-ease-out),
+    color var(--cds-dur-base) var(--cds-ease-out);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── PageCraft Tactile & Entrance Motion ───────────────────────────── */
+@keyframes pc-first-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pc-badge-confirm {
+  0% {
+    transform: scale(0.91) translateY(1px);
+    opacity: 0.78;
+  }
+  55% {
+    transform: scale(1.04) translateY(-0.5px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pc-counter-flip {
+  0% {
+    opacity: 0.35;
+    transform: translateY(6px) scale(0.92);
+  }
+  65% {
+    opacity: 1;
+    transform: translateY(-1.5px) scale(1.04);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.pc-stagger-1 {
+  animation: pc-first-reveal 260ms var(--cds-ease-enter) both;
+}
+.pc-stagger-2 {
+  animation: pc-first-reveal 280ms var(--cds-ease-enter) 55ms both;
+}
+.pc-stagger-3 {
+  animation: pc-first-reveal 300ms var(--cds-ease-enter) 110ms both;
+}
+.pc-confirm-pop {
+  animation: pc-badge-confirm 240ms var(--cds-ease-overshoot) both;
+}
+.pc-counter-tick {
+  display: inline-block;
+  animation: pc-counter-flip 240ms var(--cds-ease-overshoot) both;
+}
+
+.pc-press {
+  transition: transform 110ms var(--cds-ease-swift),
+    background-color 150ms var(--cds-ease-out),
+    border-color 150ms var(--cds-ease-out),
+    box-shadow 150ms var(--cds-ease-out);
+}
+.pc-press:active:not(:disabled) {
+  transform: scale(0.94) translateY(0.5px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pc-stagger-1,
+  .pc-stagger-2,
+  .pc-stagger-3,
+  .pc-confirm-pop,
+  .pc-counter-tick,
+  .animate-page-enter {
+    animation: none !important;
+  }
+  .pc-press {
+    transition: none !important;
+  }
+}
+
+.font-serif-editorial {
+  font-family: "Newsreader", "Iowan Old Style", "Georgia", "Songti SC",
+    "Noto Serif SC", serif;
+}
+
+/* ─── Scrollbar ─────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.5); }
+
+/* ─── CDS keyframes ─────────────────────────────────────────────────── */
+@keyframes message-fade-up {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes page-enter {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes cds-skeleton-sweep {
+  0% { transform: translateX(-100%) skewX(-15deg); }
+  100% { transform: translateX(200%) skewX(-15deg); }
+}
+@keyframes dframe-clay-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+@keyframes timeline-quiet-dot {
+  0%, 8%   { opacity: 0; transform: translateY(2px); }
+  22%      { opacity: 1; transform: translateY(-2.5px); }
+  36%, 70% { opacity: 1; transform: translateY(0); }
+  90%, 100%{ opacity: 0; transform: translateY(0); }
+}
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* ─── CDS button squish physics ─────────────────────────────────────── */
+.cds-btn-squish {
+  transition: transform var(--cds-dur-slow) var(--cds-btn-spring);
+}
+.cds-btn-squish:active {
+  transform: scale(0.975);
+  transition: transform var(--cds-dur-fast) ease-out;
+}
+.cds-btn-squish:disabled {
+  transform: none;
+}
+
+/* ─── CDS surfaces (utility classes that bypass Tailwind token name) ── */
+.cds-surface-0 { background-color: var(--cds-surface-0); }
+.cds-surface-1 { background-color: var(--cds-surface-1); }
+.cds-surface-2 { background-color: var(--cds-surface-2); }
+.cds-surface-3 { background-color: var(--cds-surface-3); }
+.cds-text-primary { color: var(--cds-text-primary); }
+.cds-text-secondary { color: var(--cds-text-secondary); }
+.cds-text-muted { color: var(--cds-text-muted); }
+.cds-panel {
+  border-radius: var(--cds-panel-radius);
+  box-shadow: var(--cds-panel-shadow);
+  background: var(--cds-surface-2);
+}
+.cds-panel-hover {
+  transition: box-shadow var(--cds-dur-base) var(--cds-ease-swift),
+    transform var(--cds-dur-base) var(--cds-ease-swift);
+}
+.cds-panel-hover:hover {
+  box-shadow: var(--cds-panel-shadow-hover);
+  transform: translateY(-1px);
+}
+.cds-focus-ring:focus-visible {
+  outline: none;
+  box-shadow: var(--cds-focus-shadow);
+}
+
+/* ─── Animation utility classes ─────────────────────────────────────── */
+.anim-page-enter,
+.animate-page-enter {
+  animation: page-enter var(--cds-dur-base) var(--cds-ease-enter) both;
+}
+.anim-fade-up { animation: message-fade-up 0.45s var(--cds-ease-overshoot) both; }
+.anim-clay-breathe { animation: dframe-clay-breathe 2.4s infinite ease-in-out; }
+.anim-status-pulse { animation: status-pulse 1.6s infinite ease-in-out; }
+
+/* ─── Segmented control (Sliding Pill) ──────────────────────────────── */
+.cds-seg-track {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--cds-segmented-track);
+  height: 32px;
+  font-size: 13px;
+}
+.cds-seg-thumb {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  border-radius: 999px;
+  background: var(--cds-segmented-thumb);
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 0.5px var(--cds-border),
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 2px 6px -1px rgba(0, 0, 0, 0.05);
+  transition:
+    left var(--cds-dur-snap) var(--cds-ease-snap),
+    width var(--cds-dur-snap) var(--cds-ease-snap);
+}
+.dark .cds-seg-track {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+.dark .cds-seg-thumb {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 1px 3px rgba(0, 0, 0, 0.55);
+}
+.cds-seg-item {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto; /* content-sized: long labels get more room, pill hugs text */
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 400;
+  color: var(--cds-text-secondary);
+  transition: color var(--cds-dur-fast) ease-out;
+  white-space: nowrap;
+}
+.cds-seg-item:hover { color: var(--cds-text-primary); }
+.cds-seg-item[data-active] {
+  color: var(--cds-text-primary);
+  font-weight: 500;
+}
+.dark .cds-seg-item[data-active] { color: #ffffff; }
+
+@layer utilities {
+  .bg-background            { background-color: hsl(var(--background)); }
+  .text-foreground          { color: hsl(var(--foreground)); }
+  .bg-card                  { background-color: hsl(var(--card)); }
+  .text-card-foreground     { color: hsl(var(--card-foreground)); }
+  .bg-popover               { background-color: hsl(var(--popover)); }
+  .border-border            { border-color: hsl(var(--border)); }
+  .border-input             { border-color: hsl(var(--input)); }
+  .bg-secondary             { background-color: hsl(var(--secondary)); }
+  .text-secondary-foreground{ color: hsl(var(--secondary-foreground)); }
+  .bg-muted                 { background-color: hsl(var(--muted)); }
+  .text-muted-foreground    { color: hsl(var(--muted-foreground)); }
+  .bg-primary               { background-color: hsl(var(--primary)); }
+  .text-primary             { color: hsl(var(--primary)); }
+  .text-primary-foreground  { color: hsl(var(--primary-foreground)); }
+  .border-primary           { border-color: hsl(var(--primary)); }
+  .bg-destructive           { background-color: hsl(var(--destructive)); }
+  .text-destructive         { color: hsl(var(--destructive)); }
+  .text-destructive-foreground { color: hsl(var(--destructive-foreground)); }
+  .bg-accent                { background-color: hsl(var(--accent)); }
+  .text-accent-foreground   { color: hsl(var(--accent-foreground)); }
+}

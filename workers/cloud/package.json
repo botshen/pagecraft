@@ -1,0 +1,33 @@
+{
+  "name": "pagecraft-cloud",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "predev": "node scripts/build-privacy-page.mjs",
+    "dev": "wrangler dev",
+    "predeploy": "node scripts/build-privacy-page.mjs",
+    "deploy": "wrangler deploy",
+    "build:privacy": "node scripts/build-privacy-page.mjs",
+    "test": "rm -rf test-build && esbuild --bundle test/*.test.ts --outdir=test-build --format=cjs --platform=node '--external:node:*' --out-extension:.js=.cjs && node --test 'test-build/*.test.cjs'",
+    "typecheck": "tsc --noEmit",
+    "d1:create": "wrangler d1 create pagecraft-cloud",
+    "d1:migrate:local": "wrangler d1 migrations apply pagecraft-cloud --local",
+    "d1:migrate:remote": "wrangler d1 migrations apply pagecraft-cloud --remote",
+    "tail": "wrangler tail",
+    "stats": "node scripts/stats.mjs"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20251014.0",
+    "@types/node": "^26.6.5",
+    "esbuild": "^0.28.2",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.45.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "workerd"
+    ]
+  }
+}
