@@ -54,14 +54,14 @@
 ## PageCraft MCP 本地编程智能体桥接（Claude Code / Cursor / Codex）
 
 1. 打开 PageCraft 侧栏 **设置 → 本地编程智能体桥接（`pagecraft-mcp`）**，开启 **启用本地 MCP 桥接客户端**。
-2. 在 Cursor / Claude Desktop 中添加以下配置（也可直接在设置页一键点击 **复制 MCP 配置 JSON**）：
+2. 在 Cursor / Claude Desktop 中添加以下配置（也可直接在设置页一键点击 **复制 MCP 配置 JSON**，将 `/path/to/plugin-radar` 替换为你本地克隆的仓库路径）：
 
 ```json
 {
   "mcpServers": {
     "pagecraft": {
-      "command": "npx",
-      "args": ["-y", "pagecraft-mcp"]
+      "command": "node",
+      "args": ["--experimental-strip-types", "/path/to/plugin-radar/packages/mcp/src/cli.ts"]
     }
   }
 }
@@ -70,12 +70,12 @@
 或在 **Claude Code** 中一行命令注册：
 
 ```bash
-claude mcp add pagecraft -- npx -y pagecraft-mcp
-# 若从源码仓库直接启动桥接服务：
+claude mcp add pagecraft -- node --experimental-strip-types /path/to/plugin-radar/packages/mcp/src/cli.ts
+# 或在仓库根目录直接启动桥接服务：
 pnpm mcp
 ```
 
-内置暴露的 7 个标准 MCP 工具：`get_active_page`、`trigger_element_picker`、`get_picked_element`、`verify_selectors`、`apply_page_mod`、`list_page_mods`、`toggle_page_mod`。
+内置暴露的 7 个标准 MCP 工具：`pagecraft_get_active_page`、`pagecraft_trigger_picker`、`pagecraft_get_picked_element`、`pagecraft_verify_selectors`、`pagecraft_apply_mod`、`pagecraft_list_mods`、`pagecraft_toggle_mod`。
 
 ## 系统架构
 

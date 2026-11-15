@@ -54,28 +54,28 @@ All mods, recipes, and settings stay strictly in `chrome.storage.local` (guarded
 ## PageCraft MCP Bridge (Claude Code / Cursor / Codex)
 
 1. Open PageCraft **Settings → Local Coding Agent Bridge (`pagecraft-mcp`)** and toggle **Enable Local MCP Bridge** ON.
-2. Add `pagecraft-mcp` to your coding agent (or click **Copy MCP Config JSON** right inside Settings):
+2. Add `pagecraft-mcp` to your coding agent (or click **Copy MCP Config JSON** right inside Settings, replacing `/path/to/plugin-radar` with your local clone path):
 
 ```json
 {
   "mcpServers": {
     "pagecraft": {
-      "command": "npx",
-      "args": ["-y", "pagecraft-mcp"]
+      "command": "node",
+      "args": ["--experimental-strip-types", "/path/to/plugin-radar/packages/mcp/src/cli.ts"]
     }
   }
 }
 ```
 
-Or register directly in **Claude Code** (from a local clone or via `npx`):
+Or register directly in **Claude Code**:
 
 ```bash
-claude mcp add pagecraft -- npx -y pagecraft-mcp
-# Or when running directly from source:
+claude mcp add pagecraft -- node --experimental-strip-types /path/to/plugin-radar/packages/mcp/src/cli.ts
+# Or launch standalone from the repository root:
 pnpm mcp
 ```
 
-Exposed MCP tools: `get_active_page`, `trigger_element_picker`, `get_picked_element`, `verify_selectors`, `apply_page_mod`, `list_page_mods`, and `toggle_page_mod`.
+Exposed MCP tools: `pagecraft_get_active_page`, `pagecraft_trigger_picker`, `pagecraft_get_picked_element`, `pagecraft_verify_selectors`, `pagecraft_apply_mod`, `pagecraft_list_mods`, and `pagecraft_toggle_mod`.
 
 ## Architecture
 

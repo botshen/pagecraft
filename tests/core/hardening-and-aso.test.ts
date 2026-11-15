@@ -473,12 +473,29 @@ test('locales/{zh_CN,en}.yml strictly satisfy CWS/Edge <=45 name & <=132 desc li
       /pagecraft-mcp/,
       `${rel} must document pagecraft-mcp local coding agent bridge`,
     );
+    assert.match(
+      content,
+      /--experimental-strip-types.*\/path\/to\/plugin-radar\/packages\/mcp\/src\/cli\.ts/,
+      `${rel} must document direct Node strip-types MCP CLI command`,
+    );
+    assert.equal(
+      /npx\s+-y\s+(?:@pagecraft\/mcp|pagecraft-mcp)/.test(content),
+      false,
+      `${rel} must not instruct npx on unpublished MCP package`,
+    );
     assert.equal(
       content.includes('workers/cloud'),
       false,
       `${rel} must not reference legacy workers/cloud backend`,
     );
   }
+
+  const settingsTsx = fs.readFileSync(
+    path.join(ROOT_DIR, 'entrypoints/sidepanel/pages/Settings.tsx'),
+    'utf8',
+  );
+  assert.match(settingsTsx, /\/path\/to\/plugin-radar\/packages\/mcp\/src\/cli\.ts/);
+  assert.equal(/npx\s+-y\s+(?:@pagecraft\/mcp|pagecraft-mcp)/.test(settingsTsx), false);
 
   const roadmapContent = fs.readFileSync(path.join(ROOT_DIR, 'ROADMAP.md'), 'utf8');
   assert.equal(
