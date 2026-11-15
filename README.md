@@ -54,14 +54,14 @@ All mods, recipes, and settings stay strictly in `chrome.storage.local` (guarded
 ## PageCraft MCP Bridge (Claude Code / Cursor / Codex)
 
 1. Open PageCraft **Settings → Local Coding Agent Bridge (`pagecraft-mcp`)** and toggle **Enable Local MCP Bridge** ON.
-2. Add `pagecraft-mcp` to your coding agent (or click **Copy MCP Config JSON** right inside Settings, replacing `/path/to/pagecraft` with your local clone path):
+2. Add `pagecraft-mcp` to your coding agent (or click **Copy MCP JSON** right inside Settings):
 
 ```json
 {
   "mcpServers": {
     "pagecraft": {
-      "command": "node",
-      "args": ["--experimental-strip-types", "/path/to/pagecraft/packages/mcp/src/cli.ts"]
+      "command": "npx",
+      "args": ["-y", "pagecraft-mcp"]
     }
   }
 }
@@ -70,9 +70,7 @@ All mods, recipes, and settings stay strictly in `chrome.storage.local` (guarded
 Or register directly in **Claude Code**:
 
 ```bash
-claude mcp add pagecraft -- node --experimental-strip-types /path/to/pagecraft/packages/mcp/src/cli.ts
-# Or launch standalone from the repository root:
-pnpm mcp
+claude mcp add pagecraft -- npx -y pagecraft-mcp
 ```
 
 Exposed MCP tools: `pagecraft_get_active_page`, `pagecraft_trigger_picker`, `pagecraft_get_picked_element`, `pagecraft_verify_selectors`, `pagecraft_apply_mod`, `pagecraft_list_mods`, and `pagecraft_toggle_mod`.

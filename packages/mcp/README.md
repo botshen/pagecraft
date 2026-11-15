@@ -1,6 +1,6 @@
-# `@pagecraft/mcp` (`pagecraft-mcp`)
+# `pagecraft-mcp`
 
-Zero-dependency **Model Context Protocol (MCP)** local bridge connecting **Claude Code**, **Cursor**, **Codex CLI**, and **Windsurf** directly to PageCraft's live authenticated browser DOM, Visual Element Picker, and Dual-Engine (`insertCSS` + isolated `chrome.userScripts`) runtime over `127.0.0.1`.
+Zero-dependency **Model Context Protocol (MCP)** local bridge connecting **Claude Code**, **Cursor**, **Codex CLI**, and **Windsurf** directly to [PageCraft](https://pagecraft.shenxin.space)'s live authenticated browser DOM, Visual Element Picker, and Dual-Engine (`insertCSS` + isolated `chrome.userScripts`) runtime over `127.0.0.1`.
 
 ## Why Use PageCraft MCP?
 
@@ -15,8 +15,8 @@ Unlike headless Playwright/Puppeteer browsers that start with an empty profile a
 
 ## Prerequisites
 
-1. **Node.js `>= 22.6.0`** (runs TypeScript natively with zero external npm runtime dependencies).
-2. **PageCraft Browser Extension** loaded in Chrome/Edge:
+1. **Node.js `>= 18.0.0`** (zero external npm runtime dependencies).
+2. **PageCraft Browser Extension** loaded in Chrome/Edge ([GitHub](https://github.com/botshen/pagecraft)):
    - Open the **PageCraft SidePanel -> Settings**.
    - Toggle **Local Agent Bridge (MCP)** ON (`ws://127.0.0.1:17321`).
 
@@ -24,20 +24,18 @@ Unlike headless Playwright/Puppeteer browsers that start with an empty profile a
 
 ## Quick Setup by Coding Agent
 
-Replace `/path/to/pagecraft` below with the absolute path to your cloned PageCraft repository.
-
 ### 1. Claude Code
 
 Run in your terminal:
 
 ```bash
-claude mcp add pagecraft -- node --experimental-strip-types /path/to/pagecraft/packages/mcp/src/cli.ts
+claude mcp add pagecraft -- npx -y pagecraft-mcp
 ```
 
 With an optional shared token:
 
 ```bash
-claude mcp add pagecraft -e PAGECRAFT_MCP_TOKEN=your-local-secret -- node --experimental-strip-types /path/to/pagecraft/packages/mcp/src/cli.ts
+claude mcp add pagecraft -e PAGECRAFT_MCP_TOKEN=your-local-secret -- npx -y pagecraft-mcp
 ```
 
 ### 2. Cursor (`.cursor/mcp.json` or `~/.cursor/mcp.json`)
@@ -46,11 +44,8 @@ claude mcp add pagecraft -e PAGECRAFT_MCP_TOKEN=your-local-secret -- node --expe
 {
   "mcpServers": {
     "pagecraft": {
-      "command": "node",
-      "args": [
-        "--experimental-strip-types",
-        "/path/to/pagecraft/packages/mcp/src/cli.ts"
-      ]
+      "command": "npx",
+      "args": ["-y", "pagecraft-mcp"]
     }
   }
 }
@@ -60,8 +55,8 @@ claude mcp add pagecraft -e PAGECRAFT_MCP_TOKEN=your-local-secret -- node --expe
 
 ```toml
 [mcp_servers.pagecraft]
-command = "node"
-args = ["--experimental-strip-types", "/path/to/pagecraft/packages/mcp/src/cli.ts"]
+command = "npx"
+args = ["-y", "pagecraft-mcp"]
 ```
 
 ### 4. Windsurf (`~/.codeium/windsurf/mcp_config.json`)
@@ -70,11 +65,8 @@ args = ["--experimental-strip-types", "/path/to/pagecraft/packages/mcp/src/cli.t
 {
   "mcpServers": {
     "pagecraft": {
-      "command": "node",
-      "args": [
-        "--experimental-strip-types",
-        "/path/to/pagecraft/packages/mcp/src/cli.ts"
-      ]
+      "command": "npx",
+      "args": ["-y", "pagecraft-mcp"]
     }
   }
 }
@@ -102,3 +94,7 @@ args = ["--experimental-strip-types", "/path/to/pagecraft/packages/mcp/src/cli.t
 - **Cross-Site WebSocket Hijacking (CSWSH) Protection**: Any HTTP/WebSocket upgrade carrying a web `Origin` header (`http://...`, `https://...`, `null`, or `file://...`) is rejected immediately with `403 Forbidden`, ensuring malicious websites visited in the browser can never communicate with `127.0.0.1:17321`. Only browser extension origins (`chrome-extension://`, `moz-extension://`, `safari-web-extension://`) or local CLI/test clients without web origins are accepted.
 - **Optional Shared-Secret Authentication**: Set `PAGECRAFT_MCP_TOKEN` in both the MCP server environment and PageCraft Settings to enforce constant-time (`crypto.timingSafeEqual`) token verification during the WebSocket handshake.
 - **Zero External Dependencies**: Built exclusively on Node's built-in `node:http` and `node:crypto` modules with zero third-party supply-chain surface.
+
+## License
+
+MIT · [GitHub](https://github.com/botshen/pagecraft) · [Website](https://pagecraft.shenxin.space)

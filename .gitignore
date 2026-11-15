@@ -9,6 +9,7 @@ lerna-debug.log*
 
 node_modules
 .output
+packages/mcp/dist
 store-assets/*.zip
 stats.html
 stats-*.json

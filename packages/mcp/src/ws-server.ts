@@ -24,7 +24,7 @@ import {
   type BridgeRpcMethod,
   type BridgeRpcResponse,
   type BridgeServerMessage,
-} from '../../../lib/mcp/types.ts';
+} from './types.ts';
 
 const WS_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11';
 export const DEFAULT_MAX_PAYLOAD_BYTES = 4 * 1024 * 1024; // 4 MB

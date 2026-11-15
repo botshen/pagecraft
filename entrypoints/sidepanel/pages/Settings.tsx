@@ -76,7 +76,7 @@ function isValidLoopbackWsUrl(rawUrl: string): boolean {
   }
 }
 
-const MCP_CLI_SCRIPT_PATH = '/path/to/pagecraft/packages/mcp/src/cli.ts';
+const MCP_NPX_PACKAGE = 'pagecraft-mcp';
 
 function buildMcpConfigJson(wsUrl: string, token: string): string {
   const portMatch = /:(\d+)(?:\/|$)/.exec(wsUrl.trim());
@@ -86,8 +86,8 @@ function buildMcpConfigJson(wsUrl: string, token: string): string {
   if (token.trim()) env.PAGECRAFT_MCP_TOKEN = token.trim();
 
   const serverConfig: Record<string, unknown> = {
-    command: 'node',
-    args: ['--experimental-strip-types', MCP_CLI_SCRIPT_PATH],
+    command: 'npx',
+    args: ['-y', MCP_NPX_PACKAGE],
     ...(Object.keys(env).length > 0 ? { env } : {}),
   };
 
@@ -101,7 +101,7 @@ function buildClaudeCodeCliCommand(wsUrl: string, token: string): string {
   if (port) envFlags.push(`-e PAGECRAFT_MCP_PORT=${port}`);
   if (token.trim()) envFlags.push(`-e PAGECRAFT_MCP_TOKEN=${token.trim()}`);
   const envPart = envFlags.length > 0 ? ` ${envFlags.join(' ')}` : '';
-  return `claude mcp add pagecraft${envPart} -- node --experimental-strip-types ${MCP_CLI_SCRIPT_PATH}`;
+  return `claude mcp add pagecraft${envPart} -- npx -y ${MCP_NPX_PACKAGE}`;
 }
 
 function matchesPreset(currentBaseUrl: string, preset: AiProviderPreset): boolean {

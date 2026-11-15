@@ -11,10 +11,10 @@
 
 import type { Readable, Writable } from 'node:stream';
 import { BridgeNotConnectedError, type BridgeWsServer } from './ws-server.ts';
-import type { McpApplyModInput } from '../../../lib/mcp/types.ts';
+import type { McpApplyModInput } from './types.ts';
 
 export const MCP_SERVER_NAME = 'pagecraft-mcp';
-export const MCP_SERVER_VERSION = '0.2.0';
+export const MCP_SERVER_VERSION = '0.2.1';
 export const DEFAULT_MCP_PROTOCOL_VERSION = '2024-11-05';
 
 const SUPPORTED_PROTOCOL_VERSIONS = new Set([

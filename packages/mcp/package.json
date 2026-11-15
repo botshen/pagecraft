@@ -1,29 +1,41 @@
 {
-  "name": "@pagecraft/mcp",
-  "version": "0.2.0",
+  "name": "pagecraft-mcp",
+  "version": "0.2.1",
   "description": "Zero-dependency local MCP bridge connecting Claude Code, Cursor, Codex CLI, and Windsurf to PageCraft's live authenticated browser DOM, Element Picker, and Dual-Engine runtime over 127.0.0.1.",
   "license": "MIT",
   "type": "module",
   "bin": {
-    "pagecraft-mcp": "./src/cli.ts"
+    "pagecraft-mcp": "dist/cli.js"
   },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts",
-    "./ws-server": "./src/ws-server.ts",
-    "./mcp-server": "./src/mcp-server.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./ws-server": {
+      "types": "./dist/ws-server.d.ts",
+      "default": "./dist/ws-server.js"
+    },
+    "./mcp-server": {
+      "types": "./dist/mcp-server.d.ts",
+      "default": "./dist/mcp-server.js"
+    }
   },
   "files": [
-    "src",
+    "dist",
     "README.md"
   ],
   "engines": {
-    "node": ">=22.6.0"
+    "node": ">=18.0.0"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/botshen/pagecraft.git",
     "directory": "packages/mcp"
   },
+  "homepage": "https://pagecraft.shenxin.space",
   "bugs": {
     "url": "https://github.com/botshen/pagecraft/issues"
   },
@@ -32,6 +44,7 @@
     "model-context-protocol",
     "pagecraft",
     "browser-extension",
+    "chrome-extension",
     "claude-code",
     "cursor",
     "codex",
@@ -40,7 +53,10 @@
     "dom-inspector"
   ],
   "scripts": {
-    "start": "node --experimental-strip-types ./src/cli.ts",
+    "build": "../../node_modules/.bin/tsc -p ./tsconfig.json && node -e \"const fs=require('node:fs');fs.chmodSync('./dist/cli.js',0o755)\"",
+    "prepublishOnly": "npm run build",
+    "start": "node ./dist/cli.js",
+    "dev": "node --experimental-strip-types ./src/cli.ts",
     "typecheck": "../../node_modules/.bin/tsc --noEmit -p ./tsconfig.json"
   }
 }

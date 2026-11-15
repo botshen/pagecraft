@@ -852,3 +852,39 @@ test('bridge-client auto-reconnects when ws-server restarts and mcp-server suppo
     await wsServer.close();
   }
 });
+
+test('compiled packages/mcp/dist/cli.js matches npm package.json bin and executes cleanly', async () => {
+  const fs = await import('node:fs');
+  const pkgJsonPath = path.join(ROOT_DIR, 'packages/mcp/package.json');
+  const pkg = JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8')) as {
+    name: string;
+    version: string;
+    bin?: Record<string, string>;
+    dependencies?: Record<string, string>;
+  };
+
+  assert.equal(pkg.name, 'pagecraft-mcp');
+  assert.equal(pkg.bin?.['pagecraft-mcp'], 'dist/cli.js');
+  assert.equal(Object.keys(pkg.dependencies ?? {}).length, 0);
+
+  const distCliPath = path.join(ROOT_DIR, 'packages/mcp/dist/cli.js');
+  assert.equal(fs.existsSync(distCliPath), true, 'packages/mcp/dist/cli.js must exist after mcp:build');
+
+  const stderrOut = await new Promise<string>((resolve, reject) => {
+    const child = spawn(process.execPath, [distCliPath, '--version'], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stderr = '';
+    child.stderr.setEncoding('utf8');
+    child.stderr.on('data', (c: string) => {
+      stderr += c;
+    });
+    child.on('error', reject);
+    child.on('exit', (code) => {
+      if (code === 0) resolve(stderr.trim());
+      else reject(new Error(`dist/cli.js exited with code ${code}: ${stderr}`));
+    });
+  });
+
+  assert.equal(stderrOut, `pagecraft-mcp v${pkg.version}`);
+});

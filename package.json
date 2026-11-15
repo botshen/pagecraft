@@ -44,6 +44,7 @@
     "compile": "tsc --noEmit",
     "test": "node --experimental-strip-types --import ./tests/register-loader.mjs --test 'tests/core/**/*.test.ts'",
     "mcp": "node --experimental-strip-types packages/mcp/src/cli.ts",
+    "mcp:build": "npm --prefix packages/mcp run build",
     "site:build": "node scripts/build-site.mjs",
     "site:deploy": "node scripts/build-site.mjs && npx wrangler deploy --config wrangler.jsonc",
     "postinstall": "wxt prepare"
@@ -62,6 +63,7 @@
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
     "@types/chrome": "^0.3.5",
+    "@types/node": "26.6.5",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/react-router-dom": "^5.3.3",

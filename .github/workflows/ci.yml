@@ -41,6 +41,9 @@ jobs:
       - name: Type-check extension
         run: pnpm compile
 
+      - name: Build standalone MCP package
+        run: pnpm mcp:build
+
       - name: Run core unit tests
         run: pnpm test
 
