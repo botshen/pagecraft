@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import type { AppSettings } from '~/lib/types';
+import type { McpBridgeStatus } from '~/lib/mcp/types';
 import type {
   ActiveTabInfo,
   GeneratedUserScript,
@@ -191,7 +192,28 @@ export default function StudioPage({
   const [feedbackVote, setFeedbackVote] = useState<'up' | null>(
     studioSession.feedbackVote,
   );
+  const [mcpStatus, setMcpStatus] = useState<McpBridgeStatus | null>(null);
   const previewCssRef = useRef<{ tabId: number; css: string } | null>(null);
+
+  useEffect(() => {
+    void safeSendMessage<McpBridgeStatus>({ type: 'MCP_BRIDGE_STATUS' }).then((res) => {
+      if (res) setMcpStatus(res);
+    });
+  }, [settings.mcpBridgeEnabled, settings.mcpBridgeUrl, settings.mcpBridgeToken]);
+
+  useEffect(() => {
+    if (typeof chrome === 'undefined' || !chrome.runtime?.onMessage) return;
+    const onMessage = (msg: { type?: string; payload?: unknown }) => {
+      if (msg?.type === 'PAGECRAFT_MCP_STATUS_CHANGED' && msg.payload) {
+        setMcpStatus(msg.payload as McpBridgeStatus);
+      }
+      return false;
+    };
+    chrome.runtime.onMessage.addListener(onMessage);
+    return () => {
+      chrome.runtime.onMessage.removeListener(onMessage);
+    };
+  }, []);
 
   useEffect(() => {
     studioSession.intent = intent;
@@ -853,10 +875,16 @@ export default function StudioPage({
               <button
                 type="button"
                 onClick={onNavigateSettings}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25 text-[11px] font-medium cursor-pointer shrink-0"
+                title={mcpStatus?.lastError || settings.mcpBridgeUrl}
+                className={cn(
+                  'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-medium cursor-pointer shrink-0',
+                  mcpStatus?.connected
+                    ? 'bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 border-emerald-500/25'
+                    : 'bg-amber-500/12 text-amber-700 dark:text-amber-300 border-amber-500/25',
+                )}
               >
                 <PlugZap className="h-3 w-3" />
-                <span>{t('mcpActiveBadge')}</span>
+                <span>{mcpStatus?.connected ? t('mcpActiveBadge') : t('mcpPendingBadge')}</span>
               </button>
             )}
             <button

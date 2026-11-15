@@ -7,15 +7,17 @@
 - [ ] Built-in Website Recipe (`lib/userscripts/templates.ts`)
 - [ ] Bug fix (non-breaking change fixing an issue)
 - [ ] New feature (Element Picker, Side Panel UI, CSS/JS runtime, AI provider)
+- [ ] Local Coding Agent Bridge (`packages/mcp/` / `lib/mcp/`)
+- [ ] Static Site & Sandbox Playground (`site/` / `scripts/build-site.mjs`)
 - [ ] Documentation / CI / Governance
-- [ ] Self-hosted Cloud Worker (`workers/cloud/`)
 
 ## Verification
 
 - [ ] `pnpm compile` passes with 0 TypeScript errors
 - [ ] `pnpm test` passes all unit tests
 - [ ] `pnpm build` produces `.output/chrome-mv3` cleanly
-- [ ] *(If touching `workers/cloud/`)* `pnpm --dir workers/cloud typecheck && pnpm --dir workers/cloud test` passes
+- [ ] *(If touching `packages/mcp/` or `lib/mcp/`)* `pnpm --dir packages/mcp typecheck` passes
+- [ ] *(If touching `site/` or `scripts/build-site.mjs`)* `node scripts/build-site.mjs && node scripts/build-site.mjs --check` passes
 
 ## Security & Privacy Checklist
 

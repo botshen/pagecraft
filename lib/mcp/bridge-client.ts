@@ -48,6 +48,8 @@ export interface McpBridgeClient {
    * Rejects immediately if `wsUrl` is non-loopback, disabled, or rejected by token check.
    */
   connect: (config?: McpBridgeConfig) => Promise<McpBridgeStatus>;
+  /** Force an immediate fresh WebSocket reconnect attempt when enabled (resetting backoff). */
+  reconnect: () => McpBridgeStatus;
   /** Disable the bridge and close any active socket or pending reconnect timers. */
   disconnect: () => void;
   /** Alias for `disconnect`. */
@@ -645,6 +647,40 @@ export function createMcpBridgeClient(
     });
   }
 
+  function reconnect(): McpBridgeStatus {
+    if (!currentConfig.enabled) {
+      return snapshotStatus();
+    }
+
+    if (!isLoopbackWsUrl(currentConfig.wsUrl)) {
+      socketGeneration += 1;
+      clearTimers();
+      const prev = ws;
+      ws = null;
+      connected = false;
+      authRejected = false;
+      reconnectAttempt = 0;
+      lastError = `Refused non-loopback WebSocket URL: ${currentConfig.wsUrl}. Only ws://127.0.0.1, ws://localhost, and ws://[::1] are permitted.`;
+      safeCloseSocket(prev, 'Invalid URL');
+      rejectConnectWaiters(lastError);
+      emitStatus();
+      return snapshotStatus();
+    }
+
+    socketGeneration += 1;
+    clearTimers();
+    const prev = ws;
+    ws = null;
+    connected = false;
+    authRejected = false;
+    reconnectAttempt = 0;
+    lastError = undefined;
+    safeCloseSocket(prev, 'Manual reconnect');
+    openSocket();
+    emitStatus();
+    return snapshotStatus();
+  }
+
   function disconnect(): void {
     configure({
       ...currentConfig,
@@ -656,6 +692,7 @@ export function createMcpBridgeClient(
     configure,
     updateConfig: configure,
     connect,
+    reconnect,
     disconnect,
     close: disconnect,
     getStatus: snapshotStatus,

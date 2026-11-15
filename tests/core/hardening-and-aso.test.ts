@@ -434,6 +434,8 @@ test('locales/{zh_CN,en}.yml strictly satisfy CWS/Edge <=45 name & <=132 desc li
 
   assert.ok(zh.appDesc && zh.appDesc.length > 0 && zh.appDesc.length <= 132, `zh appDesc length=${zh.appDesc?.length}`);
   assert.ok([...zh.appDesc].length <= 132);
+  assert.equal(zh.appDesc.includes('10 次免费'), false);
+  assert.match(zh.appDesc, /MCP/);
 
   assert.equal(en.appName, 'PageCraft: AI Webpage Customizer & Userscript');
   assert.ok(en.appName.length > 0 && en.appName.length <= 45, `en appName length=${en.appName.length}`);
@@ -441,14 +443,23 @@ test('locales/{zh_CN,en}.yml strictly satisfy CWS/Edge <=45 name & <=132 desc li
 
   assert.equal(
     en.appDesc,
-    'Click any page element to remove popups, customize CSS, export tables to Excel, or generate Tampermonkey userscripts. Zero tracking.',
+    'Click elements to hide popups, customize CSS, or build Tampermonkey scripts. 100% local-first: Built-in AI, BYOK, Ollama & MCP.',
   );
   assert.ok(en.appDesc.length > 0 && en.appDesc.length <= 132, `en appDesc length=${en.appDesc.length}`);
   assert.ok([...en.appDesc].length <= 132);
 
-  // Unused boilerplate asset and legacy cloud API directory must stay deleted
+  // Unused boilerplate asset, orphaned legacy types, and legacy cloud backend must stay deleted
   assert.equal(fs.existsSync(path.join(ROOT_DIR, 'public/wxt.svg')), false);
   assert.equal(fs.existsSync(path.join(ROOT_DIR, 'lib/api')), false);
+  assert.equal(fs.existsSync(path.join(ROOT_DIR, 'workers/cloud/package.json')), false);
+  assert.equal(fs.existsSync(path.join(ROOT_DIR, 'workers/cloud/src')), false);
+  assert.equal(fs.existsSync(path.join(ROOT_DIR, 'types/index.ts')), false);
+
+  for (const ghRel of ['.github/ISSUE_TEMPLATE/bug_report.yml', '.github/PULL_REQUEST_TEMPLATE.md']) {
+    const ghContent = fs.readFileSync(path.join(ROOT_DIR, ghRel), 'utf8');
+    assert.equal(ghContent.includes('workers/cloud'), false, `${ghRel} must not reference workers/cloud`);
+    assert.match(ghContent, /packages\/mcp/, `${ghRel} must reference packages/mcp`);
+  }
 
   // Open-source docs must link to GitHub Issues + official contact email, document Ollama CORS & MCP, and omit workers/cloud
   const readmeFiles = ['README.md', 'README.zh-CN.md'];

@@ -799,6 +799,26 @@ test('bridge-client auto-reconnects when ws-server restarts and mcp-server suppo
     assert.equal(client.getStatus().connected, true);
     assert.equal(wsServer.isExtensionConnected(), true);
 
+    // Verify manual client.reconnect() cleanly replaces socket and re-authenticates
+    const reconnectingSnap = client.reconnect();
+    assert.equal(reconnectingSnap.enabled, true);
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('Manual reconnect timed out')), 3000);
+      if (client.getStatus().connected && wsServer.isExtensionConnected()) {
+        clearTimeout(timer);
+        resolve();
+        return;
+      }
+      const unsub = client.onStatusChange((s) => {
+        if (s.connected) {
+          clearTimeout(timer);
+          unsub();
+          resolve();
+        }
+      });
+    });
+    assert.equal(client.getStatus().connected, true);
+
     // Also test Content-Length framing on mcp-server
     const input = new PassThrough();
     const output = new PassThrough();

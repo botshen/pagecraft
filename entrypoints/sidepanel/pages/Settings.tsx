@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { AIMode, AppSettings } from '~/lib/types';
+import type { McpBridgeStatus } from '~/lib/mcp/types';
 import type { UserScriptsAvailability } from '~/lib/userscripts/types';
 import type {
   ApiFailureHint,
@@ -159,6 +160,8 @@ export default function SettingsPage({
   const [copiedOllamaCmd, setCopiedOllamaCmd] = useState(false);
   const [copiedMcpJson, setCopiedMcpJson] = useState(false);
   const [copiedMcpCli, setCopiedMcpCli] = useState(false);
+  const [mcpStatus, setMcpStatus] = useState<McpBridgeStatus | null>(null);
+  const [reconnectingMcp, setReconnectingMcp] = useState(false);
   const baseUrlInputRef = useRef<HTMLInputElement | null>(null);
   const autosaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -180,6 +183,18 @@ export default function SettingsPage({
     }
   }, []);
 
+  const refreshMcpStatus = useCallback(async () => {
+    if (typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) return;
+    try {
+      const status = (await chrome.runtime.sendMessage({
+        type: 'MCP_BRIDGE_STATUS',
+      })) as McpBridgeStatus | undefined;
+      if (status) setMcpStatus(status);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   useEffect(() => {
     setS(settings);
   }, [settings]);
@@ -187,6 +202,44 @@ export default function SettingsPage({
   useEffect(() => {
     void checkBuiltinStatus();
   }, [checkBuiltinStatus]);
+
+  useEffect(() => {
+    void refreshMcpStatus();
+  }, [refreshMcpStatus, settings.mcpBridgeEnabled, settings.mcpBridgeUrl, settings.mcpBridgeToken]);
+
+  useEffect(() => {
+    if (typeof chrome === 'undefined' || !chrome.runtime?.onMessage) return;
+    const onMessage = (msg: { type?: string; payload?: unknown }) => {
+      if (msg?.type === 'PAGECRAFT_MCP_STATUS_CHANGED' && msg.payload) {
+        setMcpStatus(msg.payload as McpBridgeStatus);
+      }
+      return false;
+    };
+    chrome.runtime.onMessage.addListener(onMessage);
+    return () => {
+      chrome.runtime.onMessage.removeListener(onMessage);
+    };
+  }, []);
+
+  async function handleReconnectMcp() {
+    if (typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) return;
+    setReconnectingMcp(true);
+    try {
+      if (autosaveRef.current) {
+        clearTimeout(autosaveRef.current);
+        autosaveRef.current = null;
+        await onSaveSettings(s);
+      }
+      const status = (await chrome.runtime.sendMessage({
+        type: 'MCP_BRIDGE_RECONNECT',
+      })) as McpBridgeStatus | undefined;
+      if (status) setMcpStatus(status);
+    } catch {
+      /* ignore */
+    } finally {
+      setTimeout(() => setReconnectingMcp(false), 350);
+    }
+  }
 
   function commitPatch(next: AppSettings) {
     setS(next);
@@ -689,6 +742,45 @@ export default function SettingsPage({
           </div>
 
           <p className="text-xs text-muted-foreground leading-relaxed">{t('mcpDesc')}</p>
+
+          <div className="rounded-lg border border-border/80 bg-secondary/45 p-2.5 space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span
+                  className={cn(
+                    'h-2 w-2 rounded-full shrink-0',
+                    !s.mcpBridgeEnabled
+                      ? 'bg-muted-foreground/60'
+                      : mcpStatus?.connected
+                        ? 'bg-emerald-500'
+                        : 'bg-amber-500',
+                  )}
+                />
+                <span className="text-xs font-medium text-foreground truncate">
+                  {!s.mcpBridgeEnabled
+                    ? t('mcpStatusOff')
+                    : mcpStatus?.connected
+                      ? t('mcpStatusConnected')
+                      : t('mcpStatusWaiting')}
+                </span>
+              </div>
+              {s.mcpBridgeEnabled && (
+                <button
+                  type="button"
+                  onClick={() => void handleReconnectMcp()}
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
+                >
+                  <RefreshCw className={cn('h-3.5 w-3.5', reconnectingMcp && 'animate-spin')} />
+                  <span>{t('mcpReconnectBtn')}</span>
+                </button>
+              )}
+            </div>
+            {s.mcpBridgeEnabled && !mcpStatus?.connected && mcpStatus?.lastError && (
+              <p className="text-[11px] text-muted-foreground leading-snug break-words pl-4">
+                {mcpStatus.lastError}
+              </p>
+            )}
+          </div>
 
           <div className="space-y-2.5">
             <div className="space-y-1">

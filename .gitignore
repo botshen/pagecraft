@@ -20,11 +20,12 @@ web-ext.config.ts
 !.env.example
 *.pem
 
-# Cloudflare Workers (local dev state & secrets; nested .gitignore also covers
-# node_modules but we keep the root copy so the rule is visible at a glance)
+# Legacy retired cloud worker local state (zero-backend architecture)
+workers/
 .wrangler
 .dev.vars*
 !.dev.vars.example
+.admin-token*
 
 # Editor directories and files
 .vscode/*

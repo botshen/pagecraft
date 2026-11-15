@@ -1,5 +1,5 @@
 name: Bug Report
-description: Report a bug in the PageCraft extension, Element Picker, CSS/JS engine, or Cloud Worker
+description: Report a bug in the PageCraft extension, Element Picker, CSS/JS engine, Local MCP Bridge, or Static Site
 title: "[Bug]: "
 labels: ["bug"]
 body:
@@ -17,9 +17,10 @@ body:
         - Visual Element Picker (Shadow DOM / Selector)
         - CSS Engine (insertCSS / Quick Sliders)
         - JS Userscript Engine (chrome.userScripts / GM_* shim)
-        - AI Generation (Cloud Trial / BYOK / Local Ollama)
+        - AI Generation (Chrome Built-in AI / BYOK / Local Ollama)
+        - Local Coding Agent Bridge (packages/mcp)
         - Shareable Shortcode (#PC1:...#) / .user.js Import-Export
-        - Self-Hosted Cloud Worker (workers/cloud)
+        - Static Site & Sandbox Playground (site/)
     validations:
       required: true
 

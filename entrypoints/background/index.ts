@@ -14,7 +14,8 @@ import {
   hasLocalBuiltinAiGlobal,
   probeBuiltinAi,
 } from '~/lib/shared/builtin-ai';
-import { DEFAULT_PRACTICE_URL } from '~/lib/shared/constants';
+import { DEFAULT_PRACTICE_URL, STORAGE_KEYS } from '~/lib/shared/constants';
+import { createMcpBridgeClient } from '~/lib/mcp/bridge-client';
 import {
   getExtensionDetailsUrl,
   isScriptableTabUrl,
@@ -107,6 +108,21 @@ export const mcpBridgeHandlers = buildMcpBridgeHandlers({
   includeVisionScreenshot: async () => (await readSettings()).enableVisionCapture,
 });
 
+export const mcpBridgeClient = createMcpBridgeClient(mcpBridgeHandlers);
+
+async function syncMcpBridgeFromSettings(): Promise<void> {
+  try {
+    const settings = await readSettings();
+    mcpBridgeClient.configure({
+      enabled: settings.mcpBridgeEnabled,
+      wsUrl: settings.mcpBridgeUrl,
+      token: settings.mcpBridgeToken,
+    });
+  } catch {
+    /* ignore */
+  }
+}
+
 async function configureSidePanelBehavior(): Promise<void> {
   try {
     if (chrome.sidePanel?.setPanelBehavior) {
@@ -121,6 +137,19 @@ export default defineBackground(() => {
   void configureSidePanelBehavior();
   initModsRuntime();
   void flushPendingJsApply();
+  void syncMcpBridgeFromSettings();
+
+  mcpBridgeClient.onStatusChange((status) => {
+    chrome.runtime
+      .sendMessage({ type: 'PAGECRAFT_MCP_STATUS_CHANGED', payload: status })
+      .catch(() => {});
+  });
+
+  chrome.storage?.onChanged?.addListener((changes, area) => {
+    if (area === 'local' && STORAGE_KEYS.SETTINGS in changes) {
+      void syncMcpBridgeFromSettings();
+    }
+  });
 
   chrome.runtime.onInstalled.addListener((details) => {
     void configureSidePanelBehavior();
@@ -350,6 +379,16 @@ export default defineBackground(() => {
     if (type === 'LIST_MODELS') {
       byokListModels(payload as AIConfig).then(sendResponse);
       return true;
+    }
+
+    if (type === 'MCP_BRIDGE_STATUS') {
+      sendResponse(mcpBridgeClient.getStatus());
+      return false;
+    }
+
+    if (type === 'MCP_BRIDGE_RECONNECT') {
+      sendResponse(mcpBridgeClient.reconnect());
+      return false;
     }
 
     return false;
