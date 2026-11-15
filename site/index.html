@@ -84,13 +84,8 @@ html:not([data-lang="zh"]) [data-l="zh"] { display: none !important; }
 <link rel="stylesheet" href="assets/ui/toggles/fragment.css">
 <link rel="stylesheet" href="assets/ui/code/fragment.css">
 <link rel="stylesheet" href="assets/diagrams/diagram.css">
-<link rel="stylesheet" href="assets/moments/line-carries-colour/moment.css">
 <script>document.documentElement.classList.add('m-enter');setTimeout(()=>document.documentElement.classList.add('m-enter-done'),700)</script>
 <script src="assets/backgrounds/backgrounds.js"></script>
-<script>document.documentElement.classList.add('mo-js');setTimeout(()=>document.documentElement.classList.add('mo-safe'),2500)</script>
-<link rel="modulepreload" href="assets/moments/moments.js">
-<link rel="modulepreload" href="assets/moments/lib.js">
-<link rel="modulepreload" href="assets/moments/line-carries-colour/moment.js">
 <style>
   /* Brand mark & language segmented switcher inside nav */
   .pc-mark { width: 24px; height: 24px; border-radius: 6px; flex: none; display: block; }
@@ -309,8 +304,7 @@ html:not([data-lang="zh"]) [data-l="zh"] { display: none !important; }
   }
   #compute .card:not(:hover) [data-dg-still] * { transition: none !important; }
 
-  /* MCP bridge rows on inverse ground (line-carries-colour host) */
-  #bridge.mo-lc { --mo-gap: clamp(8px, 0.8vw, 12px); }
+  /* MCP bridge rows on inverse ground */
   .mcp-spec { display: grid; gap: var(--s-5); align-content: start; }
   .mcp-rows { display: grid; }
   .mcp-row {
@@ -802,7 +796,7 @@ html:not([data-lang="zh"]) [data-l="zh"] { display: none !important; }
     </div>
   </section>
 
-  <section class="section ground-inverse" id="bridge" data-moment="line-carries-colour" data-moment-opts='{"from": "base"}' aria-labelledby="bridge-h">
+  <section class="section ground-inverse" id="bridge" aria-labelledby="bridge-h">
     <div class="wrap">
       <div class="grid">
         <div class="span-5">
