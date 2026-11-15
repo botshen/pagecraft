@@ -3,87 +3,86 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; base-uri 'self'; form-action 'none'">
-<title>PageCraft 20s Sandbox — Practice Live Webpage Customization</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; base-uri 'self'; form-action 'self' mailto:">
+<title>PageCraft: live customization sandbox and PC1 recipe decoder</title>
 <meta name="description" content="Interactive zero-telemetry practice sandbox for PageCraft. Pick the promo banner, widen the narrow article column, export the sample table to CSV, or import shared #PC1:...# recipes.">
 <link rel="canonical" href="https://pagecraft.shenxin.space/playground/">
-<meta property="og:title" content="PageCraft 20s Sandbox — Try Reshaping This Page Live">
+<meta property="og:title" content="PageCraft: live customization sandbox and PC1 recipe decoder">
 <meta property="og:description" content="Zero-setup practice sandbox and client-side #PC1:...# shared recipe decoder for PageCraft.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://pagecraft.shenxin.space/playground/">
 <meta property="og:image" content="https://pagecraft.shenxin.space/og.svg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/svg+xml" href="../icon.svg">
+<link rel="stylesheet" href="../fonts/fonts.css">
 <style>
 :root {
   --bg: #FAF8F5;
-  --bg-subtle: #F3EFE8;
+  --bg-subtle: #F1ECE4;
   --surface: #FFFFFF;
-  --surface-2: #FCFAF7;
+  --surface-2: #F6F2EB;
   --ink: #1C1917;
-  --ink-secondary: #44403C;
-  --muted: #78716C;
+  --ink-secondary: #3F3B37;
+  --muted: #686562;
   --primary: #C95533;
-  --primary-hover: #B04324;
+  --primary-hover: #B24627;
   --primary-soft: rgba(201, 85, 51, 0.10);
-  --primary-border: rgba(201, 85, 51, 0.32);
-  --amber-bg: rgba(217, 119, 6, 0.09);
-  --amber-border: rgba(217, 119, 6, 0.38);
+  --primary-border: rgba(201, 85, 51, 0.30);
+  --amber-bg: rgba(217, 119, 6, 0.08);
+  --amber-border: rgba(217, 119, 6, 0.36);
   --emerald: #15803D;
   --emerald-soft: rgba(21, 128, 61, 0.10);
   --emerald-border: rgba(21, 128, 61, 0.26);
   --border: rgba(28, 25, 23, 0.11);
   --border-strong: rgba(28, 25, 23, 0.20);
-  --shadow-sm: 0 1px 2px rgba(28, 25, 23, 0.04), 0 4px 14px rgba(28, 25, 23, 0.05);
-  --serif: "Newsreader", "Iowan Old Style", "Georgia", "Songti SC", "STSong", "Noto Serif SC", serif;
-  --sans: -apple-system, BlinkMacSystemFont, "Inter", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --gut: clamp(24px, 5vw, 80px);
+  --display: "Epilogue", system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --sans: "Epilogue", system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #141312;
-    --bg-subtle: #1C1A18;
-    --surface: #1E1C1A;
-    --surface-2: #252220;
-    --ink: #F5F2EB;
-    --ink-secondary: #D6D1C7;
-    --muted: #A09A90;
-    --primary: #E27250;
-    --primary-hover: #EB8060;
-    --primary-soft: rgba(226, 114, 80, 0.15);
-    --primary-border: rgba(226, 114, 80, 0.38);
-    --amber-bg: rgba(245, 158, 11, 0.12);
-    --amber-border: rgba(245, 158, 11, 0.42);
+    --bg: #1C1917;
+    --bg-subtle: #292624;
+    --surface: #23201E;
+    --surface-2: #292624;
+    --ink: #FAF8F5;
+    --ink-secondary: #D8D4CE;
+    --muted: #9D9B98;
+    --primary: #D96543;
+    --primary-hover: #E37453;
+    --primary-soft: rgba(217, 101, 67, 0.16);
+    --primary-border: rgba(217, 101, 67, 0.36);
+    --amber-bg: rgba(245, 158, 11, 0.11);
+    --amber-border: rgba(245, 158, 11, 0.40);
     --emerald: #4ADE80;
     --emerald-soft: rgba(74, 222, 128, 0.13);
     --emerald-border: rgba(74, 222, 128, 0.28);
-    --border: rgba(245, 242, 235, 0.11);
-    --border-strong: rgba(245, 242, 235, 0.22);
-    --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35);
+    --border: rgba(250, 248, 245, 0.11);
+    --border-strong: rgba(250, 248, 245, 0.22);
   }
 }
 
 :root[data-theme="dark"] {
-  --bg: #141312;
-  --bg-subtle: #1C1A18;
-  --surface: #1E1C1A;
-  --surface-2: #252220;
-  --ink: #F5F2EB;
-  --ink-secondary: #D6D1C7;
-  --muted: #A09A90;
-  --primary: #E27250;
-  --primary-hover: #EB8060;
-  --primary-soft: rgba(226, 114, 80, 0.15);
-  --primary-border: rgba(226, 114, 80, 0.38);
-  --amber-bg: rgba(245, 158, 11, 0.12);
-  --amber-border: rgba(245, 158, 11, 0.42);
+  --bg: #1C1917;
+  --bg-subtle: #292624;
+  --surface: #23201E;
+  --surface-2: #292624;
+  --ink: #FAF8F5;
+  --ink-secondary: #D8D4CE;
+  --muted: #9D9B98;
+  --primary: #D96543;
+  --primary-hover: #E37453;
+  --primary-soft: rgba(217, 101, 67, 0.16);
+  --primary-border: rgba(217, 101, 67, 0.36);
+  --amber-bg: rgba(245, 158, 11, 0.11);
+  --amber-border: rgba(245, 158, 11, 0.40);
   --emerald: #4ADE80;
   --emerald-soft: rgba(74, 222, 128, 0.13);
   --emerald-border: rgba(74, 222, 128, 0.28);
-  --border: rgba(245, 242, 235, 0.11);
-  --border-strong: rgba(245, 242, 235, 0.22);
-  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35);
+  --border: rgba(250, 248, 245, 0.11);
+  --border-strong: rgba(250, 248, 245, 0.22);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -95,12 +94,17 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--sans);
-  font-size: 15px;
+  font-size: 15.5px;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
 }
 
 a { color: inherit; text-decoration: none; }
+
+.wrap {
+  width: min(100% - 2 * var(--gut), 1280px);
+  margin-inline: auto;
+}
 
 .topbar {
   position: sticky;
@@ -108,11 +112,11 @@ a { color: inherit; text-decoration: none; }
   z-index: 30;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
-  padding: 12px 24px;
+  height: 72px;
+  display: flex;
+  align-items: center;
 }
 .topbar-inner {
-  max-width: 1060px;
-  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -123,24 +127,25 @@ a { color: inherit; text-decoration: none; }
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-weight: 600;
+  font-weight: 500;
 }
 .brand-mark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  filter: drop-shadow(0 2px 5px rgba(201, 85, 51, 0.22));
 }
+.brand-mark svg { border-radius: 6px; }
 .brand-title {
-  font-family: var(--serif);
+  font-family: var(--display);
   font-size: 18px;
-  letter-spacing: -0.01em;
+  font-weight: 500;
+  letter-spacing: -0.02em;
 }
 .sandbox-pill {
-  font-size: 12px;
-  font-weight: 600;
-  padding: 2px 9px;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 3px 10px;
   border-radius: 999px;
   background: var(--primary-soft);
   color: var(--primary);
@@ -149,12 +154,20 @@ a { color: inherit; text-decoration: none; }
 .controls {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
+.nav-home-link {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-secondary);
+  padding: 6px 8px;
+  transition: color 0.16s ease;
+}
+.nav-home-link:hover { color: var(--primary); }
 .seg {
   display: inline-flex;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 2px;
   background: var(--surface);
 }
@@ -162,29 +175,34 @@ a { color: inherit; text-decoration: none; }
   border: 0;
   background: transparent;
   color: var(--muted);
-  font-size: 12px;
+  font-family: var(--sans);
+  font-size: 12.5px;
   font-weight: 500;
-  padding: 4px 9px;
-  border-radius: 6px;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
   cursor: pointer;
+  transition: transform 0.16s ease, background-color 0.16s ease, color 0.16s ease;
+}
+.seg button:hover, .icon-btn:hover {
+  color: var(--ink);
+  transform: translateY(-1px);
+}
+.seg button:active, .icon-btn:active {
+  transform: translateY(1px) scale(0.985);
 }
 .seg button[aria-pressed="true"] {
   background: var(--bg-subtle);
   color: var(--ink);
-  font-weight: 600;
 }
 .icon-btn {
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--ink-secondary);
-  padding: 5px 10px;
-  border-radius: 8px;
 }
 
-.wrap {
-  max-width: 1060px;
-  margin: 0 auto;
-  padding: 22px 24px 64px;
+.sandbox-main {
+  padding-block: 32px 64px;
 }
 
 /* ─── ?recipe=PC1:... Client-Side Shared Recipe Decoder Banner ──────── */
@@ -193,11 +211,10 @@ a { color: inherit; text-decoration: none; }
 }
 #pc-recipe-banner {
   background: var(--surface);
-  border: 2px solid var(--primary);
-  border-radius: 16px;
-  padding: 20px 22px;
-  margin-bottom: 20px;
-  box-shadow: var(--shadow-sm);
+  border: 1.5px solid var(--primary);
+  border-radius: 18px;
+  padding: 22px 24px;
+  margin-bottom: 22px;
 }
 .recipe-banner-top {
   display: flex;
@@ -211,41 +228,42 @@ a { color: inherit; text-decoration: none; }
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 .recipe-kicker {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 12.5px;
+  font-weight: 500;
   color: var(--primary);
   background: var(--primary-soft);
   border: 1px solid var(--primary-border);
-  padding: 2px 9px;
+  padding: 3px 10px;
   border-radius: 999px;
 }
 .recipe-engine-badge {
   font-family: var(--mono);
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
   color: var(--emerald);
   background: var(--emerald-soft);
   border: 1px solid var(--emerald-border);
-  padding: 2px 8px;
+  padding: 3px 9px;
   border-radius: 999px;
 }
 .recipe-shared-title {
-  font-family: var(--serif);
-  font-size: 22px;
-  font-weight: 600;
-  margin: 0 0 4px;
+  font-family: var(--display);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  margin: 0 0 6px;
   color: var(--ink);
 }
 .recipe-shared-desc {
   margin: 0 0 8px;
-  font-size: 14px;
+  font-size: 14.5px;
   color: var(--ink-secondary);
 }
 .recipe-matches-line {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--muted);
   display: flex;
   align-items: center;
@@ -269,43 +287,50 @@ a { color: inherit; text-decoration: none; }
 .copy-shortcode-btn {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 10px 16px;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 18px;
   border-radius: 10px;
   border: 0;
   background: var(--primary);
   color: #FAF8F5;
   font-family: var(--sans);
-  font-size: 13.5px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 3px 10px rgba(201, 85, 51, 0.26);
+  transition: transform 0.16s ease, background-color 0.16s ease;
 }
-.copy-shortcode-btn:hover { background: var(--primary-hover); }
+.copy-shortcode-btn:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+.copy-shortcode-btn:active {
+  transform: translateY(1px) scale(0.985);
+}
 .recipe-import-hint {
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--muted);
 }
 .recipe-source-details {
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px dashed var(--border);
-  font-size: 12.5px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
   color: var(--muted);
 }
 .recipe-source-details summary {
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--ink-secondary);
 }
 .recipe-source-pre {
   margin: 8px 0 0;
   padding: 12px;
-  border-radius: 8px;
+  border-radius: 10px;
   background: var(--bg-subtle);
   color: var(--ink);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 12.5px;
   overflow-x: auto;
   max-height: 200px;
 }
@@ -314,10 +339,9 @@ a { color: inherit; text-decoration: none; }
 #pc-demo-guide {
   background: var(--surface);
   border: 1px solid var(--primary-border);
-  border-radius: 14px;
-  padding: 14px 18px;
-  margin-bottom: 18px;
-  box-shadow: var(--shadow-sm);
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -419,29 +443,28 @@ a { color: inherit; text-decoration: none; }
 
 #pc-demo-article {
   flex: 1 1 auto;
-  max-width: 680px;
+  max-width: 780px;
   min-width: 0;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 28px 32px;
-  box-shadow: var(--shadow-sm);
+  border-radius: 20px;
+  padding: 32px 36px;
   transition: max-width 0.2s ease, background-color 0.2s ease;
 }
 
 .article-kicker {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-size: 12.5px;
+  font-weight: 500;
   color: var(--muted);
   margin-bottom: 8px;
 }
 .article-h1 {
-  font-family: var(--serif);
-  font-size: 26px;
-  line-height: 1.3;
-  margin: 0 0 14px;
+  font-family: var(--display);
+  font-size: clamp(26px, 3vw, 34px);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin: 0 0 16px;
   color: var(--ink);
 }
 .article-p {
@@ -551,51 +574,51 @@ tr[data-status="overdue"] .status-pill {
   border: 1.5px dashed var(--primary-border);
   border-radius: 12px;
   padding: 10px 14px;
-  box-shadow: var(--shadow-sm);
   cursor: crosshair;
   max-width: 220px;
 }
 .float-title {
   font-size: 12.5px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--ink);
 }
 
-footer {
-  max-width: 1060px;
-  margin: 0 auto;
-  padding: 20px 24px 40px;
+.site-footer {
   border-top: 1px solid var(--border);
+  padding-block: 24px 44px;
+  font-size: 13.5px;
+  color: var(--muted);
+}
+.site-footer__inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  font-size: 13px;
-  color: var(--muted);
 }
 .foot-links {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 18px;
   flex-wrap: wrap;
 }
-.foot-links a:hover { color: var(--ink); text-decoration: underline; }
+.foot-links a:hover { color: var(--primary); }
 
 @media (max-width: 860px) {
+  .topbar { height: auto; padding-block: 12px; }
   #pc-demo-layout { flex-direction: column; }
-  #pc-demo-article { max-width: 100%; }
+  #pc-demo-article { max-width: 100%; padding: 24px 20px; }
   #pc-demo-sidebar { width: 100%; flex: 1 1 auto; }
 }
 </style>
 </head>
 <body>
   <header class="topbar">
-    <div class="topbar-inner">
+    <div class="wrap topbar-inner">
       <div class="brand">
         <a href="../" class="brand" aria-label="PageCraft Home">
           <span class="brand-mark">
-            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 128 128" fill="none" aria-hidden="true"><defs><linearGradient id="pcg-pg" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#C95533"/><stop offset="100%" stop-color="#A63C20"/></linearGradient></defs><rect width="128" height="128" rx="28.5" fill="url(#pcg-pg)"/><path fill="#FAF8F5" d="M35 31.5h53.8L70 38.5l18.8 6.8 1.1 2.2H32.5V87a2.8 2.8 0 0 0 2.8 2.8h57.4A2.8 2.8 0 0 0 95.5 87V59.6l6.5-15V87a9 9 0 0 1-9 9H35a9 9 0 0 1-9-9V40.5a9 9 0 0 1 9-9Z"/><rect x="44.5" y="66" width="39" height="5.8" rx="1.2" fill="#FAF8F5"/><path fill="#FAF8F5" d="M95 22.2c1.5 9.6 3.5 13.3 16.2 16.3-12.7 3-14.7 6.7-16.2 16.3-1.5-9.6-3.5-13.3-16.2-16.3 12.7-3 14.7-6.7 16.2-16.3Z"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 128 128" fill="none" aria-hidden="true"><defs><linearGradient id="pcg-pg" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#C95533"/><stop offset="100%" stop-color="#A63C20"/></linearGradient></defs><rect width="128" height="128" rx="28.5" fill="url(#pcg-pg)"/><path fill="#FAF8F5" d="M35 31.5h53.8L70 38.5l18.8 6.8 1.1 2.2H32.5V87a2.8 2.8 0 0 0 2.8 2.8h57.4A2.8 2.8 0 0 0 95.5 87V59.6l6.5-15V87a9 9 0 0 1-9 9H35a9 9 0 0 1-9-9V40.5a9 9 0 0 1 9-9Z"/><rect x="44.5" y="66" width="39" height="5.8" rx="1.2" fill="#FAF8F5"/><path fill="#FAF8F5" d="M95 22.2c1.5 9.6 3.5 13.3 16.2 16.3-12.7 3-14.7 6.7-16.2 16.3-1.5-9.6-3.5-13.3-16.2-16.3 12.7-3 14.7-6.7 16.2-16.3Z"/></svg>
           </span>
           <span class="brand-title">PageCraft</span>
         </a>
@@ -603,6 +626,7 @@ footer {
       </div>
 
       <div class="controls">
+        <a href="../" class="nav-home-link"><span data-l="zh">← 首页</span><span data-l="en">← Home</span></a>
         <div class="seg" role="group" aria-label="Language">
           <button type="button" data-set-lang="zh" aria-pressed="false">中文</button>
           <button type="button" data-set-lang="en" aria-pressed="true">EN</button>
@@ -612,7 +636,7 @@ footer {
     </div>
   </header>
 
-  <main class="wrap">
+  <main class="wrap sandbox-main">
     <!-- Client-Side ?recipe=PC1:... Shared Recipe Decoder Banner -->
     <section id="pc-recipe-banner" hidden aria-live="polite">
       <div class="recipe-banner-top">
@@ -793,13 +817,15 @@ footer {
     <div class="float-title"><span data-l="zh">🧧 扫码领 18 元新人礼包</span><span data-l="en">🎁 Spin Wheel &amp; App Coupon</span></div>
   </div>
 
-  <footer>
-    <span>PageCraft · <span data-l="zh">100% 无服务端 · 零遥测监控</span><span data-l="en">100% Serverless · Zero Telemetry</span></span>
-    <div class="foot-links">
-      <a href="../"><span data-l="zh">返回官网</span><span data-l="en">Home</span></a>
-      <a href="../privacy/"><span data-l="zh">隐私政策</span><span data-l="en">Privacy Policy</span></a>
-      <a href="https://github.com/botshen/plugin-radar" rel="noopener noreferrer">GitHub</a>
-      <a href="mailto:botzgbj@gmail.com">botzgbj@gmail.com</a>
+  <footer class="site-footer">
+    <div class="wrap site-footer__inner">
+      <span>PageCraft · <span data-l="zh">100% 无服务端 · 零遥测监控</span><span data-l="en">100% Serverless · Zero Telemetry</span></span>
+      <div class="foot-links">
+        <a href="../"><span data-l="zh">返回官网</span><span data-l="en">Home</span></a>
+        <a href="../privacy/"><span data-l="zh">隐私政策</span><span data-l="en">Privacy Policy</span></a>
+        <a href="https://github.com/botshen/plugin-radar" rel="noopener noreferrer">GitHub</a>
+        <a href="mailto:botzgbj@gmail.com">Email support</a>
+      </div>
     </div>
   </footer>
 

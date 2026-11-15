@@ -1,1209 +1,368 @@
 <!DOCTYPE html>
-<html lang="en" data-lang="en">
+<html lang="en" data-type="software" data-radius="soft" data-ground="sand" data-buttons="arrow" data-motion>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; base-uri 'self'; form-action 'none'">
-<title>PageCraft — Open-Source Live Webpage Customizer &amp; Browser Micro-Agent Runtime</title>
-<meta name="description" content="100% serverless, zero-telemetry browser extension &amp; MCP runtime. Point at any element to customize CSS in 0.1s, run isolated MV3 userscripts, or connect Claude Code, Cursor &amp; Codex via pagecraft-mcp.">
-<link rel="canonical" href="https://pagecraft.shenxin.space/">
-<link rel="alternate" hreflang="zh-CN" href="https://pagecraft.shenxin.space/?lang=zh">
-<link rel="alternate" hreflang="en" href="https://pagecraft.shenxin.space/?lang=en">
-<link rel="alternate" hreflang="x-default" href="https://pagecraft.shenxin.space/">
-<meta property="og:site_name" content="PageCraft">
-<meta property="og:title" content="PageCraft — Live Webpage Customizer &amp; Browser Micro-Agent Runtime">
-<meta property="og:description" content="100% Serverless &amp; Zero-Telemetry. Dual-Engine CSS + MV3 Userscripts, Multimodal Vision + Auto-Heal, Gemini Nano / Ollama / BYOK, and PageCraft MCP Bridge.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; base-uri 'self'; form-action 'self' mailto:">
+<title>PageCraft: live webpage customizer for Chrome and coding agents</title>
+<meta name="description" content="Pick any live DOM element, tune CSS in 0.1s or run sandboxed MV3 scripts via Gemini Nano, local Ollama, your own API key, or pagecraft-mcp.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://pagecraft.shenxin.space/">
-<meta property="og:image" content="https://pagecraft.shenxin.space/og.svg">
-<meta property="og:image:type" content="image/svg+xml">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
+<meta property="og:title" content="PageCraft: live webpage customizer for Chrome and coding agents">
+<meta property="og:description" content="Local-first Chrome extension and MCP bridge for live CSS, MV3 userScripts, and self-healing selectors.">
+<meta property="og:image" content="share.jpg">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="PageCraft — Live Webpage Customizer &amp; Browser Micro-Agent Runtime">
-<meta name="twitter:description" content="100% Serverless &amp; Zero-Telemetry. Customize any webpage with Gemini Nano, Ollama, BYOK, or Claude Code / Cursor / Codex via MCP.">
-<meta name="twitter:image" content="https://pagecraft.shenxin.space/og.svg">
-<link rel="icon" type="image/svg+xml" href="./icon.svg">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"PageCraft","applicationCategory":"BrowserApplication","operatingSystem":"Chrome, Microsoft Edge, Chromium, Firefox","license":"https://opensource.org/licenses/MIT","url":"https://pagecraft.shenxin.space/","codeRepository":"https://github.com/botshen/plugin-radar","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"Open-source live webpage customizer and browser micro-agent runtime. 100% serverless and zero-telemetry with Dual-Engine insertCSS + isolated chrome.userScripts, Multimodal Vision, Closed-Loop Auto-Heal, Chrome Built-in Gemini Nano, Ollama, BYOK, and PageCraft MCP Bridge."}</script>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#FAF8F5">
+<link rel="canonical" href="https://pagecraft.shenxin.space/">
+<meta name="site-kind" content="software">
+<meta name="page-type" content="software">
+
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="assets/system.css">
+<link rel="stylesheet" href="assets/ui/cards.css">
+<link rel="stylesheet" href="assets/motion/motion.css">
+<link rel="stylesheet" href="assets/backgrounds/backgrounds.css">
+<link rel="stylesheet" href="assets/layout/layout.css">
+<link rel="stylesheet" href="assets/icons/icon.css">
 <style>
 :root {
-  --bg: #FAF8F5;
-  --bg-subtle: #F3EFE8;
-  --surface: #FFFFFF;
-  --surface-2: #FCFAF7;
-  --ink: #1C1917;
-  --ink-secondary: #44403C;
-  --muted: #78716C;
-  --primary: #C95533;
-  --primary-hover: #B04324;
-  --primary-soft: rgba(201, 85, 51, 0.10);
-  --primary-border: rgba(201, 85, 51, 0.28);
-  --emerald: #15803D;
-  --emerald-soft: rgba(21, 128, 61, 0.10);
-  --emerald-border: rgba(21, 128, 61, 0.24);
-  --border: rgba(28, 25, 23, 0.10);
-  --border-strong: rgba(28, 25, 23, 0.18);
-  --code-bg: #1B1917;
-  --code-ink: #F5F2EB;
-  --shadow-sm: 0 1px 2px rgba(28, 25, 23, 0.04), 0 3px 10px rgba(28, 25, 23, 0.05);
-  --shadow-lg: 0 8px 24px -4px rgba(28, 25, 23, 0.08), 0 20px 48px -8px rgba(28, 25, 23, 0.07);
-  --nav-bg: rgba(250, 248, 245, 0.88);
-  --serif: "Newsreader", "Iowan Old Style", "Georgia", "Songti SC", "STSong", "Noto Serif SC", serif;
-  --sans: -apple-system, BlinkMacSystemFont, "Inter", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  /* Client palette: warm paper #FAF8F5, sand #F1ECE4, ink #1C1917, terracotta #C95533 */
+  --p-bg: #faf8f5; --p-surface: #f1ece4; --p-ink: #1c1917; --p-muted: #4a4643;
+  --p-accent: #b84727; --p-accent-ink: #ffffff; --p-action: #b84727; --p-action-ink: #ffffff;
+  --p-inv-bg: #1c1917; --p-inv-surface: #292624; --p-inv-ink: #faf8f5; --p-inv-muted: #bab5ae;
+  --p-inv-accent: #e06d4b; --p-inv-accent-ink: #1c1917; --p-inv-action: #b84727; --p-inv-action-ink: #ffffff;
+  --font-display: "Epilogue", system-ui, sans-serif;
+  --font-text: "Epilogue", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --display-weight: 400;
+  --display-tracking: -0.035em;
+  --display-tracking-xl: -0.045em;
+  --ly-scale: 0.97;
 }
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #131211;
-    --bg-subtle: #1A1816;
-    --surface: #1E1C1A;
-    --surface-2: #252220;
-    --ink: #F5F2ED;
-    --ink-secondary: #D6D3CD;
-    --muted: #A8A29E;
-    --primary: #E06D4B;
-    --primary-hover: #EB8060;
-    --primary-soft: rgba(224, 109, 75, 0.15);
-    --primary-border: rgba(224, 109, 75, 0.34);
-    --emerald: #4ADE80;
-    --emerald-soft: rgba(74, 222, 128, 0.13);
-    --emerald-border: rgba(74, 222, 128, 0.28);
-    --border: rgba(255, 255, 255, 0.09);
-    --border-strong: rgba(255, 255, 255, 0.18);
-    --code-bg: #0E0D0C;
-    --code-ink: #F5F2ED;
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.28);
-    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45), 0 24px 60px rgba(0, 0, 0, 0.4);
-    --nav-bg: rgba(19, 18, 17, 0.88);
+</style>
+<link rel="stylesheet" href="assets/ui/base.css">
+<link rel="stylesheet" href="assets/ui/window/fragment.css">
+<link rel="stylesheet" href="assets/ui/diff-review/fragment.css">
+<link rel="stylesheet" href="assets/ui/slider/fragment.css">
+<link rel="stylesheet" href="assets/ui/toggles/fragment.css">
+<link rel="stylesheet" href="assets/ui/code/fragment.css">
+<link rel="stylesheet" href="assets/diagrams/diagram.css">
+<link rel="stylesheet" href="assets/moments/line-carries-colour/moment.css">
+<script>document.documentElement.classList.add('m-enter');setTimeout(()=>document.documentElement.classList.add('m-enter-done'),700)</script>
+<script src="assets/backgrounds/backgrounds.js"></script>
+<script>document.documentElement.classList.add('mo-js');setTimeout(()=>document.documentElement.classList.add('mo-safe'),2500)</script>
+<link rel="modulepreload" href="assets/moments/moments.js">
+<link rel="modulepreload" href="assets/moments/lib.js">
+<link rel="modulepreload" href="assets/moments/line-carries-colour/moment.js">
+<style>
+  /* Brand mark inside nav & footer */
+  .pc-mark { width: 24px; height: 24px; border-radius: 6px; flex: none; display: block; }
+  @media (max-width: 359px) {
+    .nav:not(.is-open) .nav__actions .btn { padding-inline: var(--s-2); font-size: 12.5px; }
+    .nav:not(.is-open) .nav__actions .btn .m-arrow { display: none; }
   }
-}
-
-html[data-theme="dark"] {
-  --bg: #131211;
-  --bg-subtle: #1A1816;
-  --surface: #1E1C1A;
-  --surface-2: #252220;
-  --ink: #F5F2ED;
-  --ink-secondary: #D6D3CD;
-  --muted: #A8A29E;
-  --primary: #E06D4B;
-  --primary-hover: #EB8060;
-  --primary-soft: rgba(224, 109, 75, 0.15);
-  --primary-border: rgba(224, 109, 75, 0.34);
-  --emerald: #4ADE80;
-  --emerald-soft: rgba(74, 222, 128, 0.13);
-  --emerald-border: rgba(74, 222, 128, 0.28);
-  --border: rgba(255, 255, 255, 0.09);
-  --border-strong: rgba(255, 255, 255, 0.18);
-  --code-bg: #0E0D0C;
-  --code-ink: #F5F2ED;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.28);
-  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45), 0 24px 60px rgba(0, 0, 0, 0.4);
-  --nav-bg: rgba(19, 18, 17, 0.88);
-}
-
-html[data-lang="zh"] [data-l="en"] { display: none !important; }
-html[data-lang="en"] [data-l="zh"] { display: none !important; }
-
-*, *::before, *::after { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-
-body {
-  margin: 0;
-  background-color: var(--bg);
-  color: var(--ink);
-  font-family: var(--sans);
-  font-size: 15px;
-  line-height: 1.62;
-  -webkit-font-smoothing: antialiased;
-  transition: background-color 180ms ease, color 180ms ease;
-}
-
-a { color: inherit; text-decoration: none; }
-
-.container {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 0 24px;
-}
-
-/* ─── Nav ───────────────────────────────────────────────────────────── */
-.site-nav {
-  position: sticky;
-  top: 0;
-  z-index: 40;
-  background: var(--nav-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
-}
-
-.nav-inner {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 12px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.brand-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  font-family: var(--serif);
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
-.brand-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  filter: drop-shadow(0 2px 6px rgba(201, 85, 51, 0.28));
-  flex-shrink: 0;
-}
-
-.oss-badge {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 6px;
-  background: var(--emerald-soft);
-  color: var(--emerald);
-  border: 1px solid var(--emerald-border);
-}
-
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 22px;
-  font-size: 14px;
-  color: var(--ink-secondary);
-}
-
-.nav-links a:hover { color: var(--primary); }
-
-.nav-controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.lang-switch {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px;
-  border-radius: 999px;
-  background: var(--bg-subtle);
-  border: 1px solid var(--border);
-}
-
-.lang-btn {
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  font-family: var(--sans);
-  font-size: 12.5px;
-  font-weight: 500;
-  padding: 4px 10px;
-  border-radius: 999px;
-  cursor: pointer;
-}
-
-.lang-btn[aria-pressed="true"] {
-  background: var(--surface);
-  color: var(--ink);
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-.theme-btn {
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--ink-secondary);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.theme-btn:hover {
-  border-color: var(--border-strong);
-  color: var(--ink);
-}
-
-/* ─── Hero ──────────────────────────────────────────────────────────── */
-.hero {
-  padding: 64px 0 56px;
-}
-
-.hero-header {
-  max-width: 860px;
-  margin: 0 auto 38px;
-  text-align: center;
-}
-
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 14px;
-  border-radius: 999px;
-  background: var(--emerald-soft);
-  border: 1px solid var(--emerald-border);
-  color: var(--emerald);
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 20px;
-}
-
-.eyebrow-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--emerald);
-}
-
-.hero-title {
-  font-family: var(--serif);
-  font-size: clamp(30px, 4.6vw, 48px);
-  line-height: 1.16;
-  letter-spacing: -0.025em;
-  font-weight: 600;
-  margin: 0 0 18px;
-  color: var(--ink);
-}
-
-.hero-sub {
-  font-size: clamp(16px, 2vw, 18.5px);
-  line-height: 1.65;
-  color: var(--ink-secondary);
-  max-width: 740px;
-  margin: 0 auto 28px;
-}
-
-.cta-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 16px;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  padding: 12px 20px;
-  border-radius: 12px;
-  font-size: 14.5px;
-  font-weight: 600;
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: transform 140ms ease, border-color 140ms ease, background-color 140ms ease;
-}
-
-.btn:hover { transform: translateY(-1px); }
-
-.btn-primary {
-  background: var(--primary);
-  color: #FAF8F5;
-  box-shadow: 0 4px 14px rgba(201, 85, 51, 0.28);
-}
-
-.btn-primary:hover { background: var(--primary-hover); }
-
-.btn-secondary {
-  background: var(--surface);
-  color: var(--ink);
-  border-color: var(--border-strong);
-  box-shadow: var(--shadow-sm);
-}
-
-.btn-secondary:hover { border-color: var(--primary); }
-
-.hero-pillars {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-  flex-wrap: wrap;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.hero-pillars span {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-/* ─── Browser + SidePanel Mockup ────────────────────────────────────── */
-.studio-frame {
-  border-radius: 16px;
-  background: var(--surface);
-  border: 1px solid var(--border-strong);
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
-  margin-top: 34px;
-}
-
-.browser-chrome {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 16px;
-  background: var(--bg-subtle);
-  border-bottom: 1px solid var(--border);
-}
-
-.window-dots { display: flex; gap: 6px; }
-.window-dots span {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--border-strong);
-}
-
-.address-bar {
-  flex: 1;
-  max-width: 460px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 4px 12px;
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.ext-pin {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--primary);
-  background: var(--primary-soft);
-  border: 1px solid var(--primary-border);
-  padding: 3px 10px;
-  border-radius: 999px;
-}
-
-.studio-split {
-  display: grid;
-  grid-template-columns: 1.32fr 1fr;
-  min-height: 410px;
-}
-
-.webpage-pane {
-  padding: 22px;
-  background: var(--surface-2);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.mock-page-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.mock-page-title {
-  font-weight: 600;
-  font-size: 15px;
-}
-
-.mock-hidden-pill {
-  font-size: 11.5px;
-  color: var(--emerald);
-  background: var(--emerald-soft);
-  border: 1px solid var(--emerald-border);
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-weight: 600;
-}
-
-.picker-target-box {
-  position: relative;
-  border: 2px solid var(--primary);
-  border-radius: 12px;
-  background: var(--surface);
-  padding: 16px;
-  box-shadow: 0 0 0 4px var(--primary-soft);
-}
-
-.picker-hud-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--primary);
-  color: #FAF8F5;
-  font-family: var(--mono);
-  font-size: 11.5px;
-  font-weight: 600;
-  padding: 3px 9px;
-  border-radius: 6px;
-  margin-bottom: 12px;
-}
-
-.mock-table-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  gap: 8px;
-}
-
-.mock-table-caption {
-  font-size: 12.5px;
-  color: var(--muted);
-  font-weight: 500;
-}
-
-.mock-injected-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 11px;
-  border-radius: 7px;
-  background: var(--primary);
-  color: #FAF8F5;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.mock-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12.5px;
-}
-
-.mock-table th, .mock-table td {
-  padding: 8px 10px;
-  text-align: left;
-  border-bottom: 1px solid var(--border);
-}
-
-.mock-table th {
-  color: var(--muted);
-  font-weight: 600;
-  font-size: 11.5px;
-  background: var(--bg-subtle);
-}
-
-.mock-page-foot {
-  font-size: 12px;
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: auto;
-  padding-top: 6px;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.sidepanel-pane {
-  padding: 16px 18px;
-  background: var(--bg);
-  display: flex;
-  flex-direction: column;
-  gap: 11px;
-}
-
-.sp-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.sp-brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--serif);
-  font-weight: 600;
-  font-size: 15px;
-}
-
-.sp-engine-indicator {
-  font-family: var(--mono);
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 9px;
-  border-radius: 999px;
-  background: var(--emerald-soft);
-  border: 1px solid var(--emerald-border);
-  color: var(--emerald);
-}
-
-.sp-locked {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 7px 10px;
-  border-radius: 9px;
-  background: var(--primary-soft);
-  border: 1px solid var(--primary-border);
-  font-size: 12px;
-  color: var(--primary);
-  font-weight: 600;
-}
-
-.sp-locked code { font-family: var(--mono); font-size: 11.5px; }
-
-.sp-prompt-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.sp-result-card {
-  background: var(--surface);
-  border: 1px solid var(--border-strong);
-  border-radius: 11px;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  box-shadow: var(--shadow-sm);
-}
-
-.sp-result-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.sp-result-title { font-size: 13.5px; font-weight: 600; }
-.sp-badges { display: inline-flex; gap: 5px; flex-wrap: wrap; }
-
-.engine-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.badge-css {
-  background: var(--emerald-soft);
-  color: var(--emerald);
-  border: 1px solid var(--emerald-border);
-}
-
-.badge-js {
-  background: var(--primary-soft);
-  color: var(--primary);
-  border: 1px solid var(--primary-border);
-}
-
-.sp-hit-banner {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: var(--emerald-soft);
-  border: 1px solid var(--emerald-border);
-  color: var(--emerald);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.sp-actions { display: flex; align-items: center; gap: 8px; }
-.sp-btn-primary {
-  flex: 1;
-  text-align: center;
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: var(--primary);
-  color: #FAF8F5;
-  font-size: 12px;
-  font-weight: 600;
-}
-.sp-btn-outline {
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: var(--bg-subtle);
-  border: 1px solid var(--border);
-  color: var(--ink-secondary);
-  font-size: 12px;
-  font-weight: 500;
-}
-
-/* ─── Sections ──────────────────────────────────────────────────────── */
-.section {
-  padding: 68px 0;
-  border-top: 1px solid var(--border);
-}
-
-.section-head {
-  max-width: 720px;
-  margin-bottom: 36px;
-}
-
-.section-kicker {
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--primary);
-  margin-bottom: 8px;
-}
-
-.section-title {
-  font-family: var(--serif);
-  font-size: clamp(24px, 3.2vw, 34px);
-  line-height: 1.24;
-  letter-spacing: -0.02em;
-  margin: 0 0 10px;
-  font-weight: 600;
-}
-
-.section-sub {
-  margin: 0;
-  color: var(--ink-secondary);
-  font-size: 16px;
-}
-
-/* ─── 4 Compute Engines Grid ────────────────────────────────────────── */
-.compute-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 18px;
-}
-
-.compute-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 22px 24px;
-  box-shadow: var(--shadow-sm);
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.compute-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.compute-title {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 600;
-}
-
-.compute-desc {
-  margin: 0;
-  color: var(--ink-secondary);
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-.compute-meta {
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 4px;
-}
-
-/* ─── MCP Bridge Feature Box ────────────────────────────────────────── */
-.mcp-panel {
-  margin-top: 24px;
-  background: var(--surface);
-  border: 1.5px solid var(--primary-border);
-  border-radius: 16px;
-  padding: 26px 28px;
-  box-shadow: var(--shadow-sm);
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 24px;
-  align-items: center;
-}
-
-.mcp-tools {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 14px;
-}
-
-.mcp-tool-chip {
-  font-family: var(--mono);
-  font-size: 11.5px;
-  padding: 3px 9px;
-  border-radius: 6px;
-  background: var(--bg-subtle);
-  border: 1px solid var(--border);
-  color: var(--ink-secondary);
-}
-
-.code-window {
-  background: var(--code-bg);
-  color: var(--code-ink);
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-.code-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 9px 14px;
-  background: rgba(255, 255, 255, 0.06);
-  font-family: var(--mono);
-  font-size: 12px;
-  color: #D6D3CD;
-}
-
-.copy-code-btn {
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  background: rgba(201, 85, 51, 0.88);
-  color: #FAF8F5;
-  font-family: var(--sans);
-  font-size: 11.5px;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.code-window pre {
-  margin: 0;
-  padding: 14px 16px;
-  font-family: var(--mono);
-  font-size: 12.5px;
-  line-height: 1.55;
-  overflow-x: auto;
-}
-
-/* ─── Core Architecture (6 Cards) ───────────────────────────────────── */
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-}
-
-.feature-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 24px;
-  box-shadow: var(--shadow-sm);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.feature-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: var(--primary-soft);
-  color: var(--primary);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-family: var(--mono);
-  font-size: 14px;
-}
-
-.feature-title {
-  margin: 2px 0 0;
-  font-size: 16.5px;
-  font-weight: 600;
-  line-height: 1.35;
-}
-
-.feature-desc {
-  margin: 0;
-  color: var(--ink-secondary);
-  font-size: 14px;
-  line-height: 1.62;
-}
-
-/* ─── 10 Built-in Recipes ───────────────────────────────────────────── */
-.recipe-header-bar {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
-  margin-bottom: 28px;
-}
-.recipe-header-bar .section-head { margin-bottom: 0; }
-
-.recipe-tabs {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  background: var(--bg-subtle);
-  padding: 4px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-}
-
-.recipe-tab {
-  border: 0;
-  background: transparent;
-  color: var(--ink-secondary);
-  font-family: var(--sans);
-  font-size: 13px;
-  font-weight: 500;
-  padding: 6px 13px;
-  border-radius: 9px;
-  cursor: pointer;
-}
-
-.recipe-tab[aria-selected="true"] {
-  background: var(--surface);
-  color: var(--ink);
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-.recipes-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-
-.recipe-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 13px;
-  padding: 18px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  box-shadow: var(--shadow-sm);
-}
-.recipe-card[hidden] { display: none !important; }
-
-.recipe-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-.recipe-tag { font-size: 12px; color: var(--muted); font-weight: 500; }
-.recipe-title { margin: 2px 0 0; font-size: 16px; font-weight: 600; }
-.recipe-desc { margin: 0; font-size: 13.8px; color: var(--ink-secondary); line-height: 1.58; flex: 1; }
-.recipe-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 8px;
-  margin-top: 4px;
-  border-top: 1px dashed var(--border);
-  font-size: 12px;
-  color: var(--muted);
-}
-.recipe-scope { font-family: var(--mono); font-size: 11.5px; }
-.recipe-ready { color: var(--primary); font-weight: 600; }
-
-/* ─── FAQ & Trust Band ──────────────────────────────────────────────── */
-.faq-list { display: grid; gap: 12px; max-width: 860px; }
-.faq-item {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 13px;
-  padding: 16px 20px;
-  box-shadow: var(--shadow-sm);
-}
-.faq-q {
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 15.5px;
-  list-style: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-.faq-q::-webkit-details-marker { display: none; }
-.faq-q::after { content: "+"; font-size: 18px; color: var(--primary); flex-shrink: 0; }
-.faq-item[open] .faq-q::after { content: "−"; }
-.faq-a {
-  margin: 10px 0 0;
-  padding-top: 10px;
-  border-top: 1px dashed var(--border);
-  font-size: 14.5px;
-  line-height: 1.66;
-  color: var(--ink-secondary);
-}
-
-.trust-band {
-  margin-top: 42px;
-  padding: 24px 28px;
-  border-radius: 14px;
-  background: var(--bg-subtle);
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-.trust-band h3 { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
-.trust-band p { margin: 0; font-size: 14px; color: var(--ink-secondary); }
-.trust-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 16px;
-  border-radius: 10px;
-  background: var(--surface);
-  border: 1px solid var(--border-strong);
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--primary);
-  white-space: nowrap;
-}
-
-.site-footer {
-  border-top: 1px solid var(--border);
-  padding: 36px 0 48px;
-  color: var(--muted);
-  font-size: 13.5px;
-}
-.footer-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-.footer-links {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-.footer-links a { color: var(--ink-secondary); font-weight: 500; }
-.footer-links a:hover { color: var(--primary); text-decoration: underline; }
-
-@media (max-width: 920px) {
-  .studio-split, .mcp-panel, .compute-grid, .features-grid, .recipes-grid {
-    grid-template-columns: 1fr;
+  /* Epilogue has a compact 0-glyph (ch), so 19ch holds 36 characters cleanly on 2 lines inside 880px */
+  .hero--centred h1 { max-width: 19ch; }
+
+  /* Hero window: warm non-violet CSS fallback behind gradient-mesh + live Browser + SidePanel UI */
+  .hero__window {
+    background:
+      radial-gradient(95% 70% at 80% 108%, #d7b29c 0%, transparent 58%),
+      radial-gradient(85% 65% at 18% 105%, #c9b89e 0%, transparent 55%),
+      linear-gradient(180deg, #e7dfd2 0%, #d8ccb8 100%);
   }
-  .webpage-pane { border-right: 0; border-bottom: 1px solid var(--border); }
-  .nav-links { display: none; }
-}
+  .pc-win {
+    background: #191715;
+    color: #f3efe9;
+    border-radius: 12px;
+    overflow: hidden;
+    font: 400 13px/1.4 var(--font-text);
+    box-shadow: 0 0 0 1px rgb(255 255 255 / .09), 0 26px 64px -28px rgb(0 0 0 / .65);
+    text-align: left;
+  }
+  .pc-win__bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 38px;
+    padding: 0 14px;
+    border-bottom: 1px solid rgb(255 255 255 / .08);
+    font-size: 12px;
+    color: #bdb6ae;
+  }
+  .pc-win__dots { display: flex; gap: 6px; }
+  .pc-win__dots i { width: 9px; height: 9px; border-radius: 50%; background: #494440; display: block; }
+  .pc-win__url {
+    color: #ebe5dd;
+    font: 400 12px/1.2 var(--font-mono);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pc-win__sp { flex: 1; }
+  .pc-win__chips { display: flex; align-items: center; gap: 8px; }
+  .pc-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font: 500 12px/1.2 var(--font-text);
+    color: #d8d2ca;
+    white-space: nowrap;
+  }
+  .pc-chip--acc { color: #f6b59f; }
+  .pc-chip--ok { color: #9de0b9; }
+  .pc-win__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(256px, .85fr);
+    min-height: 236px;
+  }
+  .pc-dom {
+    padding: 14px 16px;
+    border-right: 1px solid rgb(255 255 255 / .08);
+    display: grid;
+    align-content: start;
+    gap: 10px;
+  }
+  .pc-picked {
+    padding: 2px 0 2px 10px;
+    border-left: 2px solid #e06d4b;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .pc-picked__tag {
+    color: #f6b59f;
+    font: 500 12px/1.2 var(--font-mono);
+  }
+  .pc-picked__meta { font: 400 12px/1.2 var(--font-mono); color: #bdb6ae; }
+  .pc-article {
+    padding: 4px 0 0;
+    display: grid;
+    gap: 6px;
+  }
+  .pc-article strong { font: 500 15px/1.3 var(--font-text); color: #faf8f5; }
+  .pc-article p { margin: 0; font-size: 13px; line-height: 1.45; color: #d6d0c8; }
+  .pc-side {
+    padding: 14px 16px;
+    display: grid;
+    align-content: start;
+    gap: 9px;
+  }
+  .pc-side__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .pc-side__top b { font-weight: 500; color: #faf8f5; font-size: 13px; }
+  .pc-sliders { display: grid; gap: 7px; }
+  .pc-srow { display: grid; grid-template-columns: 54px 1fr 44px; align-items: center; gap: 8px; font-size: 12px; color: #d6d0c8; }
+  .pc-srow code { font: 500 12px/1 var(--font-mono); color: #faf8f5; text-align: right; }
+  .pc-strack { height: 6px; border-radius: 99px; background: rgb(255 255 255 / .12); overflow: hidden; }
+  .pc-strack i { display: block; height: 100%; border-radius: 99px; background: #e06d4b; }
+  .pc-mcp {
+    margin-top: 2px;
+    padding: 8px 0 0;
+    border-top: 1px solid rgb(255 255 255 / .08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+    color: #d6d0c8;
+  }
+  .pc-mcp code { font: 500 12px/1 var(--font-mono); color: #faf8f5; }
+  @media (max-width: 819px) {
+    .pc-win__chips .pc-chip:not(.pc-chip--ok) { display: none; }
+    .pc-win__body { grid-template-columns: minmax(0, 1fr); }
+    .pc-dom { display: none; }
+  }
+  @media (max-width: 639px) {
+    .pc-win__chips { display: none; }
+  }
+
+  /* app-frame recipe (sections-library.md) */
+  .app.ui {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    margin-top: var(--s-7);
+    background: var(--u-bg);
+    border: 1px solid var(--u-border);
+    border-radius: var(--u-r);
+    box-shadow: var(--u-shadow);
+  }
+  .app > .app__pane { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+  .app > .app__pane + .app__pane { border-left: 1px solid var(--u-line); }
+  .app > .app__pane > .ui-panel { width: 100%; border: 0; border-radius: 0; box-shadow: none; }
+  .app > .app__pane::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 64px;
+    background: linear-gradient(transparent, var(--u-bg));
+    pointer-events: none;
+  }
+  @media (min-width: 1024px) and (max-width: 1279px) {
+    .app.ui { grid-template-columns: minmax(0, 4fr) minmax(0, 8fr); }
+  }
+  @media (max-width: 1023px) {
+    .app.ui { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+    .app > .app__pane--list { max-height: 252px; }
+    .app > .app__pane--list::after { display: none; }
+    .app .ui-win__side { display: none; }
+    .app .ui-win__body { grid-template-columns: minmax(0, 1fr); }
+    .app > .app__pane + .app__pane { border-left: 0; border-top: 1px solid var(--u-line); }
+  }
+  @media (max-width: 639px) {
+    .app.ui { grid-template-rows: minmax(0, 1fr); }
+    .app > .app__pane--list { display: none; }
+    .app > .app__pane + .app__pane { border-top: 0; }
+  }
+
+  /* 2x2 feature panels: warm sand fallback + one uniform panel height per group */
+  #compute .panel {
+    --p-h: 300px;
+    background:
+      radial-gradient(90% 70% at 82% 105%, #d6b69e 0%, transparent 58%),
+      linear-gradient(180deg, #e9e0d2 0%, #d9ccb7 100%);
+  }
+  @media (max-width: 1279px) {
+    #compute .panel { --p-h: 228px; }
+  }
+  @media (max-width: 639px) {
+    #compute .panel { --p-h: 144px; }
+  }
+  #compute .card:not(:hover) [data-dg-still] * { transition: none !important; }
+
+  /* MCP bridge rows on inverse ground (line-carries-colour host) */
+  #bridge.mo-lc { --mo-gap: clamp(8px, 0.8vw, 12px); }
+  .mcp-spec { display: grid; gap: var(--s-5); align-content: start; }
+  .mcp-rows { display: grid; }
+  .mcp-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: var(--s-4);
+    padding: var(--s-4) 0;
+    border-top: 1px solid var(--line);
+  }
+  .mcp-row:last-child { border-bottom: 1px solid var(--line); }
+  .mcp-row code { font: 500 var(--t-body)/1.4 var(--font-mono); color: var(--ink); }
+  .mcp-row span { color: var(--muted); font-size: var(--t-small); text-align: right; }
+  @media (min-width: 1024px) {
+    .mcp-row { grid-template-columns: minmax(0, 1fr); gap: var(--s-2); padding: 28px 0; }
+    .mcp-row span { text-align: left; }
+    #questions .faq > .faq__item { padding: 34px 0; }
+    #questions .faq > .faq__item:first-child { padding-top: 0; }
+  }
+  @media (max-width: 639px) {
+    .mcp-row { grid-template-columns: minmax(0, 1fr); gap: var(--s-1); }
+    .mcp-row span { text-align: left; }
+  }
+
+  .q-icons { display: flex; align-items: center; gap: var(--s-4); margin: var(--s-5) 0; }
+  .q-icons img { width: 28px; height: 28px; }
 </style>
 </head>
 <body>
+<!--
+  plan:
+  1. type: software; kind: software; category: live webpage customizer; primary: Get PageCraft
+  2. palette: client brand (#faf8f5 warm paper, #f1ece4 sand surface, #1c1917 ink, #c95533 terracotta — echoes warm editorial paper and live markup); type: epilogue (Epilogue + JetBrains Mono); hero: centred; effects: gradient-mesh (hero + 2x2 panels on sand lit ground); moment: line-carries-colour (on #bridge .ground-inverse); parts: nav-centre (re-dealt from nav-cards since software uses UI rather than photos), footer-dark, close-type, rhythm dark-band (one inverse band #bridge for line-carries-colour, followed by base #questions before footer-dark), buttons arrow, mark client SVG (#C95533).
+  3. sections: hero--centred (1 screen), #studio app-frame (1 screen), #compute features-2x2 (.g2, 2 screens), #bridge MCP moment (.ground-inverse, 1 screen), #questions open faq (1 screen), footer.closing footer--dark (1 screen).
+-->
 
-<header class="site-nav">
-  <div class="nav-inner">
-    <a href="#" class="brand-link" aria-label="PageCraft">
-      <span class="brand-mark" aria-hidden="true">
-        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 128 128" fill="none"><defs><linearGradient id="pcg-nav" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#C95533"/><stop offset="100%" stop-color="#A63C20"/></linearGradient></defs><rect width="128" height="128" rx="28.5" fill="url(#pcg-nav)"/><path fill="#FAF8F5" d="M35 31.5h53.8L70 38.5l18.8 6.8 1.1 2.2H32.5V87a2.8 2.8 0 0 0 2.8 2.8h57.4A2.8 2.8 0 0 0 95.5 87V59.6l6.5-15V87a9 9 0 0 1-9 9H35a9 9 0 0 1-9-9V40.5a9 9 0 0 1 9-9Z"/><rect x="44.5" y="66" width="39" height="5.8" rx="1.2" fill="#FAF8F5"/><path fill="#FAF8F5" d="M95 22.2c1.5 9.6 3.5 13.3 16.2 16.3-12.7 3-14.7 6.7-16.2 16.3-1.5-9.6-3.5-13.3-16.2-16.3 12.7-3 14.7-6.7 16.2-16.3Z"/></svg>
-      </span>
-      <span>PageCraft</span>
-      <span class="oss-badge">MIT</span>
+<header class="nav nav--centre">
+  <div class="wrap nav__bar">
+    <a class="skip-link" href="#top">Skip to content</a>
+    <a class="nav__logo" href="#top">
+      <img class="pc-mark" src="icon.svg" alt="" width="24" height="24" aria-hidden="true">
+      PageCraft
     </a>
-
-    <nav class="nav-links" aria-label="Primary">
-      <a href="#compute"><span data-l="zh">4 种本地算力</span><span data-l="en">4 Compute Modes</span></a>
-      <a href="#mcp-bridge"><span data-l="zh">MCP 桥接</span><span data-l="en">MCP Bridge</span></a>
-      <a href="#architecture"><span data-l="zh">核心架构</span><span data-l="en">Architecture</span></a>
-      <a href="#recipes"><span data-l="zh">10 款内置配方</span><span data-l="en">10 Recipes</span></a>
-      <a href="./playground/"><span data-l="zh">练习靶场</span><span data-l="en">Sandbox</span></a>
-      <a href="./privacy/"><span data-l="zh">隐私政策</span><span data-l="en">Privacy</span></a>
-    </nav>
-
-    <div class="nav-controls">
-      <div class="lang-switch" role="group" aria-label="Language switch">
-        <button type="button" id="lang-zh" class="lang-btn" data-set-lang="zh" aria-pressed="false">中文</button>
-        <button type="button" id="lang-en" class="lang-btn" data-set-lang="en" aria-pressed="true">EN</button>
+    <nav class="nav__links" aria-label="Main">
+      <div class="nav__item">
+        <a class="nav__link" href="#studio" aria-haspopup="true" aria-expanded="false">Studio <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        <div class="nav__menu" role="region" aria-label="Studio">
+          <div class="wrap grid">
+            <div class="menu-col span-4">
+              <p class="t-label">Workspace</p>
+              <a href="#studio">Recipe shelf<span>Manage per-site CSS, MV3 scripts, and Auto-Heal diffs</span></a>
+              <a href="./playground/">Live sandbox<span>Test 5 interactive targets and #PC1:...# shortcodes</span></a>
+            </div>
+            <div class="menu-col span-4">
+              <p class="t-label">Architecture</p>
+              <a href="#compute">Dual engine<span>0.1s Chrome insertCSS and sandboxed userScripts</span></a>
+              <a href="#bridge">MCP bridge<span>Connect Claude Code, Cursor, or Codex over 127.0.0.1</span></a>
+            </div>
+          </div>
+        </div>
       </div>
-      <button type="button" id="theme-toggle" class="theme-btn" aria-label="Toggle color theme" title="Toggle light / dark theme">◐</button>
+      <div class="nav__item"><a class="nav__link" href="#compute">Compute</a></div>
+      <div class="nav__item"><a class="nav__link" href="#bridge">Bridge</a></div>
+      <div class="nav__item"><a class="nav__link" href="#questions">Questions</a></div>
+    </nav>
+    <div class="nav__actions">
+      <a class="nav__link" href="#bridge">MCP docs</a>
+      <a class="btn btn--primary" href="https://github.com/botshen/plugin-radar">Get PageCraft<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a>
     </div>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-label="Menu">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h14M2 13h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
   </div>
 </header>
 
-<main>
-  <!-- Hero -->
-  <section class="hero">
-    <div class="container">
-      <div class="hero-header">
-        <div class="eyebrow">
-          <span class="eyebrow-dot"></span>
-          <span data-l="zh">100% 无服务端 · 零账号 · 零遥测上报 · MIT 开源</span>
-          <span data-l="en">100% Serverless &amp; Zero-Telemetry · Zero Accounts · MIT Open Source</span>
-        </div>
-
-        <h1 class="hero-title">
-          <span data-l="zh">鼠标指哪改哪，一句话定制任何网页——也是你本地 AI 的浏览器微智能体运行环境</span>
-          <span data-l="en">The Open-Source Live Webpage Customizer &amp; Browser Micro-Agent Runtime</span>
-        </h1>
-
-        <p class="hero-sub">
-          <span data-l="zh">告别 F12 翻代码与中心化云端锁定。双引擎（<code>insertCSS</code> 0.1s 秒生效 + 隔离 <code>chrome.userScripts</code>）、多模态视觉点选与闭环自愈（Auto-Heal），自由连接 Chrome 内置 Gemini Nano、离线 Ollama、BYOK 或通过 <code>pagecraft-mcp</code> 桥接 Claude Code / Cursor / Codex。</span>
-          <span data-l="en">Point at any page element to strip clutter in 0.1s via <code>insertCSS</code>, run isolated MV3 <code>chrome.userScripts</code>, verify &amp; self-heal selectors on the live DOM, and power everything locally with Chrome Built-in Gemini Nano, Offline Ollama, Direct BYOK, or Claude Code / Cursor / Codex via MCP.</span>
-        </p>
-
-        <div class="cta-row">
-          <a href="https://github.com/botshen/plugin-radar" class="btn btn-primary" rel="noopener noreferrer">
-            <span>★</span>
-            <span data-l="zh">GitHub 开源仓库与安装指南</span>
-            <span data-l="en">View on GitHub &amp; Install</span>
-          </a>
-          <a href="./playground/" class="btn btn-secondary">
-            <span>⚡</span>
-            <span data-l="zh">打开 20 秒交互练习靶场</span>
-            <span data-l="en">Try 20s Live Sandbox</span>
-          </a>
-        </div>
-
-        <div class="hero-pillars">
-          <span>✓ <span data-l="zh">零官方服务器 / 零数据库</span><span data-l="en">Zero PageCraft Servers</span></span>
-          <span>✓ <span data-l="zh">多模态视觉 + 0 命中自动自愈</span><span data-l="en">Vision + Closed-Loop Auto-Heal</span></span>
-          <span>✓ <span data-l="zh">原生支持 Claude Code / Cursor / Codex</span><span data-l="en">Claude Code / Cursor / Codex MCP</span></span>
-        </div>
-      </div>
-
-      <!-- Interactive Studio Preview -->
-      <div class="studio-frame" aria-label="PageCraft Browser and SidePanel Preview">
-        <div class="browser-chrome">
-          <div class="window-dots" aria-hidden="true"><span></span><span></span><span></span></div>
-          <div class="address-bar">
-            <span>https://ops.example.com/finance/settlements</span>
-            <span>🔒</span>
-          </div>
-          <div class="ext-pin">
-            <span>PageCraft MV3</span>
+<main id="top">
+  <section class="hero hero--centred" data-enter aria-labelledby="hero-h">
+    <div class="wrap">
+      <div class="hero-text">
+        <div class="hero__c">
+          <a class="pill" href="#compute"><span>MIT open source</span><span class="muted">Zero PageCraft servers</span></a>
+          <h1 id="hero-h">Live webpage customizer for Chrome</h1>
+          <p class="hero__lead">Pick any element, describe your edit, and inject 0.1s CSS or chrome.userScripts locally via Gemini Nano, Ollama, or pagecraft-mcp.</p>
+          <div class="btn-row">
+            <a class="btn btn--primary" href="https://github.com/botshen/plugin-radar">Get PageCraft<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a>
+            <a class="btn btn--secondary" href="./playground/">Open live sandbox</a>
           </div>
         </div>
-
-        <div class="studio-split">
-          <div class="webpage-pane">
-            <div class="mock-page-head">
-              <span class="mock-page-title"><span data-l="zh">月度结算明细台账</span><span data-l="en">Monthly Settlement Ledger</span></span>
-              <span class="mock-hidden-pill"><span data-l="zh">✓ 推广侧栏已隐藏 (insertCSS · 0.1s)</span><span data-l="en">✓ Promo rail hidden (insertCSS · 0.1s)</span></span>
-            </div>
-
-            <div class="picker-target-box">
-              <div class="picker-hud-label">
-                <span>🎯</span>
-                <span>table.settlement-grid · 128 tr</span>
+        <div class="hero__window" data-fx="gradient-mesh" data-fx-seed="7" role="img" aria-label="Browser window with live webpage element #pc-banner picked alongside the PageCraft SidePanel showing CSS sliders, Vision and Auto-Healed badges, and pagecraft-mcp connected to Claude Code and Cursor">
+          <div class="ly-piece ui pc-win" aria-hidden="true">
+            <div class="pc-win__bar">
+              <span class="pc-win__dots"><i></i><i></i><i></i></span>
+              <span class="pc-win__url">news.ycombinator.com · Live DOM</span>
+              <span class="pc-win__sp"></span>
+              <div class="pc-win__chips">
+                <span class="pc-chip pc-chip--acc">Vision</span>
+                <span class="pc-chip pc-chip--ok">Auto-Healed ✓</span>
+                <span class="pc-chip">pagecraft-mcp · Claude Code / Cursor</span>
               </div>
-
-              <div class="mock-table-toolbar">
-                <span class="mock-table-caption"><span data-l="zh">共 128 条记录 · 隔离沙箱挂载导出按钮</span><span data-l="en">128 rows · Isolated userScripts button mounted</span></span>
-                <span class="mock-injected-btn">
-                  <span>⬇</span>
-                  <span data-l="zh">导出 CSV (UTF-8)</span><span data-l="en">Export CSV (UTF-8)</span>
-                </span>
-              </div>
-
-              <table class="mock-table">
-                <thead>
-                  <tr>
-                    <th><span data-l="zh">单据编号</span><span data-l="en">Order ID</span></th>
-                    <th><span data-l="zh">合作方</span><span data-l="en">Partner</span></th>
-                    <th><span data-l="zh">结算金额</span><span data-l="en">Amount</span></th>
-                    <th><span data-l="zh">状态</span><span data-l="en">Status</span></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><code>#STL-2048</code></td>
-                    <td><span data-l="zh">星河云科</span><span data-l="en">Nova Cloud</span></td>
-                    <td>¥ 42,800.00</td>
-                    <td><span data-l="zh">已核销</span><span data-l="en">Cleared</span></td>
-                  </tr>
-                  <tr>
-                    <td><code>#STL-2049</code></td>
-                    <td><span data-l="zh">远山智造</span><span data-l="en">Peak Works</span></td>
-                    <td>¥ 19,560.00</td>
-                    <td><span data-l="zh">待导出</span><span data-l="en">Pending</span></td>
-                  </tr>
-                  <tr>
-                    <td><code>#STL-2050</code></td>
-                    <td><span data-l="zh">青禾数媒</span><span data-l="en">Reed Media</span></td>
-                    <td>¥ 68,120.00</td>
-                    <td><span data-l="zh">已核销</span><span data-l="en">Cleared</span></td>
-                  </tr>
-                </tbody>
-              </table>
             </div>
-
-            <div class="mock-page-foot">
-              <span><span data-l="zh">Shadow DOM 隔离点选层 · 客户端 PII 自动脱敏</span><span data-l="en">Shadow-DOM reticle · Client-side PII redaction</span></span>
-              <span>@match https://ops.example.com/*</span>
-            </div>
-          </div>
-
-          <div class="sidepanel-pane">
-            <div class="sp-top">
-              <span class="sp-brand">PageCraft Studio</span>
-              <span class="sp-engine-indicator">Gemini Nano · Ollama · MCP</span>
-            </div>
-
-            <div class="sp-locked">
-              <span><span data-l="zh">🎯 已锁定元素</span><span data-l="en">🎯 Locked target</span></span>
-              <code>table.settlement-grid</code>
-            </div>
-
-            <div class="sp-prompt-card">
-              <span data-l="zh">“隐藏右侧推广栏，并给这个表格右上角加一个导出 Excel / CSV 按钮（UTF-8 BOM 防中文乱码）”</span>
-              <span data-l="en">“Hide the right promo rail and attach a UTF-8 BOM Export CSV button above this table”</span>
-            </div>
-
-            <div class="sp-result-card">
-              <div class="sp-result-head">
-                <span class="sp-result-title"><span data-l="zh">结算表一键导出 + 纯净宽屏</span><span data-l="en">Ledger CSV Export &amp; Clean View</span></span>
-                <div class="sp-badges">
-                  <span class="engine-pill badge-js">Vision</span>
-                  <span class="engine-pill badge-css">Auto-Healed ✓</span>
+            <div class="pc-win__body">
+              <div class="pc-dom">
+                <div class="pc-picked">
+                  <span class="pc-picked__tag">#pc-banner</span>
+                  <span class="pc-picked__meta">1 node matched · hidden via insertCSS</span>
+                </div>
+                <div class="pc-article">
+                  <strong>Warm paper reader · 920px column</strong>
+                  <p>PageCraft applies #FAF8F5 paper ground, 17px body copy, and calm line spacing in 0.1s with zero page reload.</p>
                 </div>
               </div>
-
-              <div class="sp-hit-banner">
-                <span>✓</span>
-                <span><span data-l="zh">实时 DOM 命中校验通过（1 个表格 · 128 行）</span><span data-l="en">Live DOM verified (1 table · 128 rows matched)</span></span>
-              </div>
-
-              <div class="sp-actions">
-                <span class="sp-btn-primary"><span data-l="zh">✓ 已保存在本地浏览器</span><span data-l="en">✓ Applied &amp; Saved Locally</span></span>
-                <span class="sp-btn-outline"><span data-l="zh">导出 .user.js</span><span data-l="en">Export .user.js</span></span>
+              <div class="pc-side">
+                <div class="pc-side__top">
+                  <b>PageCraft SidePanel</b>
+                  <span class="pc-chip pc-chip--ok">CSS · 0.1s</span>
+                </div>
+                <div class="pc-sliders">
+                  <div class="pc-srow"><span>Font</span><span class="pc-strack"><i style="width:62%"></i></span><code>17px</code></div>
+                  <div class="pc-srow"><span>Width</span><span class="pc-strack"><i style="width:74%"></i></span><code>920px</code></div>
+                  <div class="pc-srow"><span>Warmth</span><span class="pc-strack"><i style="width:44%"></i></span><code>20%</code></div>
+                </div>
+                <div class="pc-mcp">
+                  <span>MCP 127.0.0.1</span>
+                  <code>Claude Code · Cursor</code>
+                </div>
               </div>
             </div>
           </div>
@@ -1212,390 +371,351 @@ a { color: inherit; text-decoration: none; }
     </div>
   </section>
 
-  <!-- 4 Local & User-Owned Compute Options + MCP Bridge -->
-  <section id="compute" class="section">
-    <div class="container">
-      <div class="section-head">
-        <div class="section-kicker"><span data-l="zh">100% 自有算力 · 零云端锁定</span><span data-l="en">4 Local &amp; User-Owned Compute Options</span></div>
-        <h2 class="section-title"><span data-l="zh">没有中间商服务器，用你最信任的模型或本地编程 Agent 驱动</span><span data-l="en">Zero Middleman Servers — Bring Any Local Model, API Key, or Coding Agent</span></h2>
-        <p class="section-sub"><span data-l="zh">PageCraft 彻底移除中心化后端与额度网关，四种算力路径完全运行在你的设备或你自选的加密直连端点上。</span><span data-l="en">PageCraft ships with zero backend servers or quota paywalls. Every prompt runs on-device, over localhost, or directly against your own provider key.</span></p>
+  <section class="section" id="studio" aria-labelledby="studio-h">
+    <div class="wrap">
+      <div class="grid">
+        <div class="span-5">
+          <h2 id="studio-h">Inspect and self-heal any webpage</h2>
+        </div>
+        <div class="span-6 start-7">
+          <p class="muted">Keep 10 built-in site recipes and your own rules in one shelf, share #PC1:...# text shortcodes, and repair broken selectors automatically when a site ships new markup.</p>
+          <p class="mt-4"><a class="link" href="./playground/">Test 5 live targets in the sandbox</a></p>
+        </div>
       </div>
-
-      <div class="compute-grid">
-        <article class="compute-card">
-          <div class="compute-top">
-            <h3 class="compute-title"><span data-l="zh">1. Chrome 内置 AI（Gemini Nano）</span><span data-l="en">1. Chrome Built-in AI (Gemini Nano)</span></h3>
-            <span class="engine-pill badge-css"><span data-l="zh">0 配置 · 纯离线端侧</span><span data-l="en">0-Config · On-Device</span></span>
-          </div>
-          <p class="compute-desc"><span data-l="zh">直接调用 Chrome 原生 <code>LanguageModel</code> 端侧推理接口，无需注册 API Key、零网络请求、离线即可生成网页净化规则。</span><span data-l="en">Uses Chrome's built-in on-device <code>LanguageModel</code> runtime. Zero API keys, zero network packets, 100% private in-browser inference.</span></p>
-          <div class="compute-meta">window.LanguageModel / chrome://flags/#prompt-api-for-gemini-nano</div>
-        </article>
-
-        <article class="compute-card">
-          <div class="compute-top">
-            <h3 class="compute-title"><span data-l="zh">2. 本地离线大模型（Ollama / LM Studio）</span><span data-l="en">2. Offline Local AI (Ollama / LM Studio)</span></h3>
-            <span class="engine-pill badge-css"><span data-l="zh">数据不出本机</span><span data-l="en">100% Air-Gapped</span></span>
-          </div>
-          <p class="compute-desc"><span data-l="zh">直连本机 <code>localhost</code> 推理端口（Qwen2.5-Coder、Llama、DeepSeek-R1 等），改造企业内网 ERP 与敏感管理后台零外发顾虑。</span><span data-l="en">Connects straight to <code>http://localhost:11434</code> or LM Studio on loopback—ideal for internal admin tools and sensitive dashboards.</span></p>
-          <div class="compute-meta">OLLAMA_ORIGINS="chrome-extension://*" ollama serve</div>
-        </article>
-
-        <article class="compute-card">
-          <div class="compute-top">
-            <h3 class="compute-title"><span data-l="zh">3. 自有密钥加密直连（Direct BYOK）</span><span data-l="en">3. Direct BYOK (OpenAI / Anthropic / DeepSeek / OpenRouter)</span></h3>
-            <span class="engine-pill badge-js"><span data-l="zh">浏览器 HTTPS 直连</span><span data-l="en">Direct HTTPS</span></span>
-          </div>
-          <p class="compute-desc"><span data-l="zh">密钥仅存于你浏览器的 <code>chrome.storage.local</code>，请求由客户端 PII 脱敏后加密直连模型服务商；纯文本模型自动兼容 Vision 降级。</span><span data-l="en">API keys stay in <code>chrome.storage.local</code>. Requests go directly from your browser over HTTPS with automatic text fallback for text-only models.</span></p>
-          <div class="compute-meta">OpenAI · Anthropic · DeepSeek · OpenRouter · SiliconFlow</div>
-        </article>
-
-        <article class="compute-card">
-          <div class="compute-top">
-            <h3 class="compute-title"><span data-l="zh">4. 本地编程智能体桥接（PageCraft MCP）</span><span data-l="en">4. Local Coding Agent Bridge (pagecraft-mcp)</span></h3>
-            <span class="engine-pill badge-js">ws://127.0.0.1:17321</span>
-          </div>
-          <p class="compute-desc"><span data-l="zh">通过纯本地回环 WebSocket 把 Claude Code、Cursor、Codex CLI 与浏览器真实已登录 DOM 及双引擎沙箱无缝打通。</span><span data-l="en">Bridges Claude Code, Cursor, and Codex CLI over <code>127.0.0.1</code> directly to your authenticated browser tab, Element Picker, and Dual-Engine runtime.</span></p>
-          <div class="compute-meta">Claude Code · Cursor · Codex CLI · Windsurf</div>
-        </article>
-      </div>
-
-      <!-- Dedicated PageCraft MCP Bridge Showcase -->
-      <div id="mcp-bridge" class="mcp-panel">
-        <div>
-          <div class="section-kicker"><span data-l="zh">PageCraft MCP Bridge · 终端与浏览器合体</span><span data-l="en">PageCraft MCP Bridge · For Claude Code, Cursor &amp; Codex</span></div>
-          <h3 class="compute-title" style="font-size:21px;margin-bottom:8px;">
-            <span data-l="zh">让你的本地 Coding Agent 看见点选元素、实时校验选择器并秒级注入规则</span>
-            <span data-l="en">Give Claude Code, Cursor &amp; Codex Direct Hands on Your Live Browser Tab</span>
-          </h3>
-          <p class="compute-desc">
-            <span data-l="zh">无需 Puppeteer 重新登录账号！开启设置中的 <code>pagecraft-mcp</code> 本地桥接（严格绑定 <code>127.0.0.1</code>），你在终端或 IDE 对 Claude Code / Cursor 说一句话，它即可读取脱敏页面结构、唤起可视化点选器、校验选择器命中数并持久化应用 CSS/JS 改造。</span>
-            <span data-l="en">Skip headless browser logins. Enable the loopback-only <code>pagecraft-mcp</code> bridge in Settings, and let your favorite coding agent inspect redacted live DOM landmarks, trigger the visual picker, verify selector hit counts, and persist CSS/JS mods in real time.</span>
-          </p>
-          <div class="mcp-tools" aria-label="Available MCP tools">
-            <span class="mcp-tool-chip">pagecraft_get_active_page</span>
-            <span class="mcp-tool-chip">pagecraft_get_picked_element</span>
-            <span class="mcp-tool-chip">pagecraft_trigger_picker</span>
-            <span class="mcp-tool-chip">pagecraft_verify_selectors</span>
-            <span class="mcp-tool-chip">pagecraft_apply_mod</span>
-            <span class="mcp-tool-chip">pagecraft_list_mods</span>
-            <span class="mcp-tool-chip">pagecraft_toggle_mod</span>
+      <div class="ui app fill" role="img" aria-label="PageCraft shelf showing 9 active site mods beside an Auto-Heal selector diff on #pc-banner" data-ui-pause-host>
+        <div class="app__pane app__pane--list">
+          <div class="ui ui-panel ui-win" data-ui="window" data-open="CSS 0.1s" data-work="Healing" data-done="Healed">
+            <div class="ui-win__bar">
+              <span class="ui-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="ui-win__crumb">PageCraft <i>/</i> <b>Site mods</b></span>
+              <span class="ui-spacer"></span>
+              <span class="ui-win__search" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg><span class="ui-win__ph">Search</span><span class="ui-kbd">/</span></span>
+            </div>
+            <div class="ui-win__body">
+              <nav class="ui-win__side" aria-hidden="true">
+                <span class="ui-win__nav is-on"><svg class="ui-icon" viewBox="0 0 16 16"><path d="M2.5 9h3l1 1.5h3l1-1.5h3"/><path d="M2.5 9 4 3.5h8L13.5 9v3.5h-11z"/></svg>Active<em>10</em></span>
+                <span class="ui-win__nav"><svg class="ui-icon" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 1.5"/></svg>CSS<em>7</em></span>
+                <span class="ui-win__nav"><svg class="ui-icon" viewBox="0 0 16 16"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg>Healed<em>3</em></span>
+                <span class="ui-win__label">Packs</span>
+                <span class="ui-win__nav"><span class="ui-win__hash">#</span>Reader</span>
+                <span class="ui-win__nav"><span class="ui-win__hash">#</span>Focus</span>
+              </nav>
+              <div class="ui-win__main">
+                <div class="ui-win__cols" aria-hidden="true"><span>Site</span><span>Recipe</span><span>Engine</span><span>Speed</span></div>
+                <ul class="ui-win__rows">
+                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="1">RD</span><span class="ui-win__who">reddit.com</span><span class="ui-win__sub">Hide #pc-banner promo bar</span><span class="ui-win__st" data-st>CSS 0.1s</span><span class="ui-win__age">0.1s</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="3">HN</span><span class="ui-win__who">news.ycombinator.com</span><span class="ui-win__sub">Warm paper 920px reader</span><span class="ui-win__st is-done" data-st>Active</span><span class="ui-win__age">0.1s</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="4">GH</span><span class="ui-win__who">github.com</span><span class="ui-win__sub">Wide pull-request split diff</span><span class="ui-win__st is-done" data-st>Active</span><span class="ui-win__age">0.1s</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="2">YT</span><span class="ui-win__who">youtube.com</span><span class="ui-win__sub">Hide Shorts shelf · MV3 JS</span><span class="ui-win__st is-you" data-st>JS MV3</span><span class="ui-win__age">12ms</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="5">AX</span><span class="ui-win__who">arxiv.org</span><span class="ui-win__sub">17px abstract column</span><span class="ui-win__st is-done" data-st>Active</span><span class="ui-win__age">0.1s</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="3">WK</span><span class="ui-win__who">wikipedia.org</span><span class="ui-win__sub">Calm margins &amp; footnote rail</span><span class="ui-win__st is-done" data-st>Active</span><span class="ui-win__age">0.1s</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="1">MD</span><span class="ui-win__who">developer.mozilla.org</span><span class="ui-win__sub">High-contrast code blocks</span><span class="ui-win__st is-done" data-st>Active</span><span class="ui-win__age">0.1s</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="4">PY</span><span class="ui-win__who">docs.python.org</span><span class="ui-win__sub">Pinned API table of contents</span><span class="ui-win__st is-you" data-st>JS MV3</span><span class="ui-win__age">9ms</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="2">LN</span><span class="ui-win__who">linear.app</span><span class="ui-win__sub">Compact triage row density</span><span class="ui-win__st is-done" data-st>Healed</span><span class="ui-win__age">0.1s</span></li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
-
-        <div class="code-window">
-          <div class="code-bar">
-            <span>mcpServers · pagecraft-mcp</span>
-            <button type="button" id="copy-mcp-btn" class="copy-code-btn">
-              <span data-l="zh">复制 MCP 配置</span><span data-l="en">Copy MCP JSON</span>
-            </button>
+        <div class="app__pane app__pane--open" data-ui-loop>
+          <div class="ui ui-panel ui-diff" data-ui="diff-review">
+            <div class="ui-diff__head">
+              <svg class="ui-icon ui-diff__chev" viewBox="0 0 16 16" aria-hidden="true"><path d="m4.5 6.25 3.5 3.5 3.5-3.5"/></svg>
+              <span class="ui-diff__tool" aria-hidden="true"><img data-icon="html" src="assets/icons/html.svg" alt="" width="16" height="16" loading="lazy"></span>
+              <span class="ui-diff__repo">reddit.com</span><i class="ui-diff__slash" aria-hidden="true">/</i>
+              <span class="ui-diff__path"><span class="ui-diff__dir">recipes/</span><b>hide-banner.css</b></span>
+              <span class="ui-spacer"></span>
+              <span class="ui-diff__stat"><b class="is-add"><span class="ui-diff__was">+1</span><span class="ui-diff__now">+2</span></b><b class="is-del"><span class="ui-diff__was">&minus;1</span><span class="ui-diff__now">&minus;1</span></b><span class="ui-diff__bar" aria-hidden="true"><i class="is-add"></i><i class="is-add"></i><i class="is-del"></i></span></span>
+            </div>
+            <div class="ui-diff__hunk"><span>@@ -1,10 +1,11 @@</span> <em class="ui-diff__sig">/* PC1 recipe · Auto-Heal check */</em></div>
+            <div class="ui-diff__lines">
+              <div class="ui-diff__ln"><i>1</i><i>1</i><span class="ui-diff__code" data-i="0"><span class="c">/* Hide sticky top banner and widen feed */</span></span></div>
+              <div class="ui-diff__ln is-del"><i>2</i><i></i><span class="ui-diff__code" data-i="0"><mark class="ui-diff__w">.promo-ribbon-legacy</mark> {</span></div>
+              <div class="ui-diff__ln is-add"><i></i><i>2</i><span class="ui-diff__code" data-i="0"><mark class="ui-diff__w">#pc-banner, [data-ad-slot="top"]</mark> {</span></div>
+              <div class="ui-diff__ln is-target" data-diff-target><i>3</i><i>3</i><span class="ui-diff__code" data-i="1"><span class="ui-diff__ind">  </span>display: <mark class="ui-diff__w">none</mark>;</span></div>
+              <div class="ui-diff__sug" data-diff-sug><div class="ui-diff__ln is-add"><i></i><i>3</i><span class="ui-diff__code" data-i="1"><span class="ui-diff__ind">  </span>display: <mark class="ui-diff__w">none !important</mark>;</span></div></div>
+              <div class="ui-diff__thread">
+                <div class="ui-diff__by">
+                  <span class="ui-avatar" data-tone="4">AH</span>
+                  <span class="ui-diff__name">Auto-Heal · Vision</span>
+                  <span class="ui-diff__time">0.4s</span>
+                  <span class="ui-spacer"></span>
+                  <span class="ui-diff__act" data-diff-act>
+                    <button class="ui-btn ui-btn--sm ui-diff__apply" type="button" tabindex="-1" data-diff-apply><span class="ui-diff__lbl">Apply heal</span><i class="ui-diff__spin" aria-hidden="true"></i></button>
+                    <span class="ui-chip ui-diff__done"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 8.4 2.6 2.6L12 5.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Auto-Healed</span>
+                  </span>
+                </div>
+                <div class="ui-diff__msg">Verified <code>#pc-banner</code> on 1 live node after markup update.</div>
+              </div>
+              <div class="ui-diff__ln"><i>4</i><i>4</i><span class="ui-diff__code" data-i="0">}</span></div>
+              <div class="ui-diff__ln"><i>5</i><i>5</i><span class="ui-diff__code" data-i="0">main.feed-column {</span></div>
+              <div class="ui-diff__ln is-add"><i></i><i>6</i><span class="ui-diff__code" data-i="1"><span class="ui-diff__ind">  </span>max-width: <span class="n">920px</span>;</span></div>
+              <div class="ui-diff__ln"><i>6</i><i>7</i><span class="ui-diff__code" data-i="1"><span class="ui-diff__ind">  </span>font-size: <span class="n">17px</span>;</span></div>
+              <div class="ui-diff__ln"><i>7</i><i>8</i><span class="ui-diff__code" data-i="1"><span class="ui-diff__ind">  </span>background: <span class="s">"#FAF8F5"</span>;</span></div>
+              <div class="ui-diff__ln"><i>8</i><i>9</i><span class="ui-diff__code" data-i="0">}</span></div>
+            </div>
           </div>
-          <pre id="mcp-config-code">{
-  "mcpServers": {
-    "pagecraft": {
-      "command": "node",
-      "args": [
-        "--experimental-strip-types",
-        "packages/mcp/src/cli.ts"
-      ]
-    }
-  }
-}</pre>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Core Architecture Highlights -->
-  <section id="architecture" class="section">
-    <div class="container">
-      <div class="section-head">
-        <div class="section-kicker"><span data-l="zh">工程与安全架构</span><span data-l="en">Runtime &amp; Security Architecture</span></div>
-        <h2 class="section-title"><span data-l="zh">专为真实复杂 SPA 网页打造的零遥测双引擎微智能体</span><span data-l="en">Engineered for Modern SPAs with Strict MV3 Isolation</span></h2>
-      </div>
-
-      <div class="features-grid">
-        <article class="feature-card">
-          <div class="feature-icon">01</div>
-          <h3 class="feature-title"><span data-l="zh">CSS + JS 双引擎分级沙箱</span><span data-l="en">Dual-Engine CSS + MV3 userScripts</span></h3>
-          <p class="feature-desc"><span data-l="zh">纯样式净化走 <code>chrome.scripting.insertCSS</code>，免开任何开关 0.1s 生效并自动跟随 SPA 路由；交互脚本运行于官方隔离 <code>chrome.userScripts</code> 世界（<code>csp: "script-src 'self'"</code>, <code>messaging: false</code>）。</span><span data-l="en">Visual tweaks inject via <code>chrome.scripting.insertCSS</code> in 0.1s with zero browser toggles; interactive DOM scripts run inside isolated <code>chrome.userScripts</code> with <code>csp: "script-src 'self'"</code> and <code>messaging: false</code>.</span></p>
-        </article>
-
-        <article class="feature-card">
-          <div class="feature-icon">02</div>
-          <h3 class="feature-title"><span data-l="zh">可视化点选 + 多模态视觉上下文</span><span data-l="en">Visual Picker + Multimodal Vision</span></h3>
-          <p class="feature-desc"><span data-l="zh">Shadow DOM 隔离浮层精准提取语义选择器并过滤编译哈希类名；可选视口截图上下文让多模态模型直观理解复杂排版，遇到纯文本模型自动无缝回退。</span><span data-l="en">Shadow-DOM hover reticle filters hashed classes for durable selectors, pairs with optional low-detail viewport screenshots, and auto-retries as plain text on text-only models.</span></p>
-        </article>
-
-        <article class="feature-card">
-          <div class="feature-icon">03</div>
-          <h3 class="feature-title"><span data-l="zh">闭环命中验证与自动自愈（Auto-Heal）</span><span data-l="en">Closed-Loop Verify &amp; Auto-Heal</span></h3>
-          <p class="feature-desc"><span data-l="zh">每次生成后立即在真实页面校验选择器命中数；若 0 命中，自动重新提取最新实时 DOM 地标并执行闭环自愈修正，告别盲猜选择器失效。</span><span data-l="en">Every generated draft is verified against the live DOM immediately. If selectors match 0 elements, PageCraft automatically extracts fresh DOM landmarks and self-heals the rule.</span></p>
-        </article>
-
-        <article class="feature-card">
-          <div class="feature-icon">04</div>
-          <h3 class="feature-title"><span data-l="zh">100% 无服务端与客户端 PII 脱敏</span><span data-l="en">Zero Telemetry &amp; Client-Side PII Scrubbing</span></h3>
-          <p class="feature-desc"><span data-l="zh">零官方服务器、零账号、零统计或反馈上报。发往 AI 的页面标题与局部结构在浏览器内自动抹除邮箱、<code>sk-...</code>/<code>Bearer</code> 令牌、长数字编号与 URL 参数。</span><span data-l="en">Zero PageCraft servers, zero accounts, zero feedback pings. Outbound context automatically scrubs emails, API tokens, numeric IDs, and URL query strings inside the browser.</span></p>
-        </article>
-
-        <article class="feature-card">
-          <div class="feature-icon">05</div>
-          <h3 class="feature-title"><span data-l="zh">标准 .user.js 互通与无服务端口令分享</span><span data-l="en">.user.js Export &amp; Zero-Server #PC1:...# Share</span></h3>
-          <p class="feature-desc"><span data-l="zh">一键导入导出标准 <code>// ==UserScript==</code> 文件，并支持将任意规则编码为紧凑 <code>#PC1:...#</code> 口令或靶场链接，纯前端解码，永久有效不依赖后端。</span><span data-l="en">Export or import standard <code>.user.js</code> scripts in one click, or share compact <code>#PC1:...#</code> tokens and deep links decoded 100% client-side.</span></p>
-        </article>
-
-        <article class="feature-card">
-          <div class="feature-icon">06</div>
-          <h3 class="feature-title"><span data-l="zh">零远程代码执行（严格合规 MV3）</span><span data-l="en">Zero Remote Code Execution</span></h3>
-          <p class="feature-desc"><span data-l="zh">内置配方 100% 构建期静态打包，绝不拉取外部 <code>@require</code> 脚本或提供跨站后台请求代理，彻底杜绝供应链远程代码注入风险。</span><span data-l="en">All built-in recipes are statically bundled at build time. Remote <code>@require</code> fetching and cross-origin background proxies are strictly prohibited.</span></p>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <!-- 10 Built-in Recipes Showcase -->
-  <section id="recipes" class="section">
-    <div class="container">
-      <div class="recipe-header-bar">
+  <section class="section g2" id="compute" aria-labelledby="compute-h">
+    <div class="wrap">
+      <div class="group">
         <div class="section-head">
-          <div class="section-kicker"><span data-l="zh">开箱即用 · 零 AI 配置可用</span><span data-l="en">Built-In Library · Works Without Any AI Key</span></div>
-          <h2 class="section-title"><span data-l="zh">预置 10 款高频同款配方，点一下立即生效</span><span data-l="en">10 Built-In 1-Click Recipes, Ready Out of the Box</span></h2>
+          <h2 id="compute-h">Two Chrome engines, four AI backends</h2>
+          <p class="muted">Prompts go straight to your chosen model with zero PageCraft cloud servers.</p>
         </div>
+        <div class="grid">
+          <article class="card card--row card--open span-6 m-nolift">
+            <h3>Route live DOM to four backends</h3>
+            <p>Pair Chrome's element picker and dual injector with Gemini Nano, local Ollama, direct BYOK keys, or MCP agents.</p>
+            <div class="panel">
+              <div class="dg" data-diagram data-dg-still>
+                <script type="application/json">
+                {
+                  "layout": "bowtie",
+                  "alt": "Chrome DOM, 0.1s CSS and MV3 JS connect through PageCraft to Gemini Nano, Ollama, OpenAI BYOK and Claude Code MCP.",
+                  "sources": [
+                    { "label": "Chrome DOM", "icon": "chrome", "sub": "Live picker" },
+                    { "label": "Edge MV3", "icon": "microsoft-edge", "sub": "0.1s CSS" },
+                    { "label": "userScripts", "icon": "javascript", "sub": "MV3 sandbox" }
+                  ],
+                  "core": {
+                    "label": "PageCraft",
+                    "icon": "text:PC"
+                  },
+                  "targets": [
+                    { "label": "Gemini Nano", "icon": "gemini", "sub": "In Chrome" },
+                    { "label": "Ollama", "icon": "ollama", "sub": "127.0.0.1" },
+                    { "label": "Direct BYOK", "icon": "openai", "sub": "Your key" },
+                    { "label": "MCP Bridge", "icon": "claude", "sub": "Cursor & CLI" }
+                  ]
+                }
+                </script>
+              </div>
+            </div>
+          </article>
 
-        <div class="recipe-tabs" role="tablist" aria-label="Filter built-in recipes">
-          <button type="button" class="recipe-tab" role="tab" data-filter="all" aria-selected="true">
-            <span data-l="zh">全部 (10)</span><span data-l="en">All (10)</span>
-          </button>
-          <button type="button" class="recipe-tab" role="tab" data-filter="css" aria-selected="false">
-            <span data-l="zh">CSS 秒生效 (5)</span><span data-l="en">Instant CSS (5)</span>
-          </button>
-          <button type="button" class="recipe-tab" role="tab" data-filter="js" aria-selected="false">
-            <span data-l="zh">JS 交互脚本 (5)</span><span data-l="en">JS Userscripts (5)</span>
-          </button>
+          <article class="card card--row card--open span-6 m-nolift">
+            <h3>Tune type and width in 0.1s</h3>
+            <p>Slide font scale, column width, and paper warmth via native Chrome insertCSS with zero flash of unstyled content.</p>
+            <div class="panel" data-fx="gradient-mesh" data-fx-seed="23">
+              <div class="stage">
+                <div class="at-center" data-ui-loop>
+                  <div class="ui ui-panel ui-slider" data-ui="slider">
+                    <div class="ui-slider__head">
+                      <span class="ui-slider__ico" aria-hidden="true"><svg viewBox="0 0 16 16"><circle cx="4" cy="4" r="1.1"/><circle cx="8" cy="4" r="1.1"/><circle cx="12" cy="4" r="1.1"/><circle cx="4" cy="8" r="1.1"/><circle cx="8" cy="8" r="1.1"/><circle cx="12" cy="8" r="1.1"/><circle cx="4" cy="12" r="1.1"/><circle cx="8" cy="12" r="1.1"/><circle cx="12" cy="12" r="1.1"/></svg></span>
+                      <span class="ui-slider__name"><span class="ui-title">Quick sliders</span><span class="ui-meta">insertCSS · 0.1s</span></span>
+                      <span class="ui-spacer"></span>
+                      <span class="ui-slider__reset">Reset</span>
+                    </div>
+                    <div class="ui-slider__row">
+                      <div class="ui-slider__top"><span>Warmth</span><output data-slider-val>20</output></div>
+                      <div class="ui-slider__track" data-slider-track style="--v:0.42"><i class="ui-slider__fill"></i><i class="ui-slider__thumb"></i></div>
+                    </div>
+                    <div class="ui-slider__row">
+                      <div class="ui-slider__top"><span>Column width</span><output>920 px</output></div>
+                      <div class="ui-slider__track" style="--v:0.72"><i class="ui-slider__fill"></i><i class="ui-slider__thumb"></i></div>
+                    </div>
+                    <div class="ui-slider__seg" role="group" aria-label="Paper mode">
+                      <span class="is-on">Paper</span><span>Dark</span><span>Auto</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
         </div>
       </div>
 
-      <div id="recipes-grid" class="recipes-grid">
-        <article class="recipe-card" data-engine="css">
-          <div class="recipe-top"><span class="engine-pill badge-css">CSS · 0.1s</span><span class="recipe-tag"><span data-l="zh">免开关秒生效</span><span data-l="en">Instant CSS</span></span></div>
-          <h3 class="recipe-title"><span data-l="zh">沉浸宽屏护眼阅读</span><span data-l="en">Warm Widescreen Reader</span></h3>
-          <p class="recipe-desc"><span data-l="zh">收起常见侧边推荐栏与悬浮角标，拓宽正文排版并切换暖白纸感护眼底色。</span><span data-l="en">Hide sidebars and floating widgets, widen article columns, and apply warm paper contrast.</span></p>
-          <div class="recipe-foot"><span class="recipe-scope">*://*/* (per-site)</span><span class="recipe-ready"><span data-l="zh">一键启用</span><span data-l="en">1-Click Ready</span></span></div>
+      <div class="grid">
+        <article class="card card--row card--open span-6 m-nolift">
+          <h3>Security for API keys and JS</h3>
+          <p>Credentials live only in chrome.storage.local, and JavaScript mods stay locked until Chrome's MV3 userScripts switch is on.</p>
+          <div class="panel" data-fx="gradient-mesh" data-fx-seed="31">
+            <div class="stage">
+              <div class="at-rise fit" style="--fit-max: 390px">
+                <div class="ui ui-panel ui-toggles" data-ui="toggles">
+                  <div class="ui-head">
+                    <svg class="ui-icon ui-toggles__ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8 13 4v3.6c0 3-2.1 5.4-5 6.6-2.9-1.2-5-3.6-5-6.6V4z"/><path d="m5.8 8 1.6 1.6 3-3.2"/></svg>
+                    <div class="ui-title">Local execution guards</div>
+                  </div>
+                  <ul class="ui-tg-list">
+                    <li class="ui-tg">
+                      <span class="ui-tg__text"><span class="ui-tg__label">Instant CSS injection</span><span class="ui-tg__sub">Chrome scripting.insertCSS</span></span>
+                      <button class="ui-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Instant CSS injection"><i></i></button>
+                    </li>
+                    <li class="ui-tg">
+                      <span class="ui-tg__text"><span class="ui-tg__label">MV3 chrome.userScripts</span><span class="ui-tg__sub">Isolated execution world</span></span>
+                      <button class="ui-switch is-on" type="button" role="switch" aria-checked="true" aria-label="MV3 chrome.userScripts"><i></i></button>
+                    </li>
+                    <li class="ui-tg">
+                      <span class="ui-tg__text"><span class="ui-tg__label">Send tab screenshot</span><span class="ui-tg__sub">Only when Vision is toggled</span></span>
+                      <button class="ui-switch" type="button" role="switch" aria-checked="false" aria-label="Send tab screenshot"><i></i></button>
+                    </li>
+                    <li class="ui-tg">
+                      <span class="ui-tg__text"><span class="ui-tg__label">Auto-Heal zero matches</span><span class="ui-tg__sub">Verify live DOM count first</span></span>
+                      <button class="ui-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Auto-Heal zero matches"><i></i></button>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
         </article>
 
-        <article class="recipe-card" data-engine="css">
-          <div class="recipe-top"><span class="engine-pill badge-css">CSS · 0.1s</span><span class="recipe-tag"><span data-l="zh">免开关秒生效</span><span data-l="en">Instant CSS</span></span></div>
-          <h3 class="recipe-title"><span data-l="zh">刺眼白底转柔和深色模式</span><span data-l="en">Smart Dark Mode Filter</span></h3>
-          <p class="recipe-desc"><span data-l="zh">为没有夜间模式的内网后台或文档站开启深色护眼滤镜，图片与视频保持原色不反相。</span><span data-l="en">Convert bright dashboards and docs to soft dark mode while preserving natural media colors.</span></p>
-          <div class="recipe-foot"><span class="recipe-scope">*://*/* (per-site)</span><span class="recipe-ready"><span data-l="zh">一键启用</span><span data-l="en">1-Click Ready</span></span></div>
+        <article class="card card--row card--open span-6 m-nolift">
+          <h3>PageCraft MCP in 8 lines</h3>
+          <p>Point Claude Code, Cursor, or Codex at pagecraft-mcp so your terminal agent inspects and patches live tabs directly.</p>
+          <div class="panel" data-fx="gradient-mesh" data-fx-seed="42">
+            <div class="stage">
+              <div class="at-rise fit" style="--fit-max: 440px">
+                <div class="ui ui-panel ui-code" data-ui="code">
+                  <div class="ui-code__tabs">
+                    <span class="ui-code__tab is-on"><i class="ui-code__lang">JSON</i>mcp.json</span>
+                    <span class="ui-code__tab"><i class="ui-code__lang">TS</i>cli.ts</span>
+                    <span class="ui-spacer"></span>
+                    <span class="ui-chip ui-chip--plain ui-code__chip" data-code-chip>127.0.0.1</span>
+                  </div>
+                  <pre class="ui-code__pre"><code><span class="ui-code__ln" data-n="1">{</span>
+<span class="ui-code__ln" data-n="2">  <span class="k">"mcpServers"</span>: {</span>
+<span class="ui-code__ln" data-n="3" data-note="Registers local stdio MCP server.">    <span class="k">"pagecraft"</span>: {</span>
+<span class="ui-code__ln" data-n="4">      <span class="f">"command"</span>: <span class="s">"node"</span>,</span>
+<span class="ui-code__ln" data-n="5">      <span class="f">"args"</span>: [</span>
+<span class="ui-code__ln is-mark" data-n="6" data-note="Bridges Chrome SidePanel over localhost.">        <span class="s">"mcp/src/cli.ts"</span></span>
+<span class="ui-code__ln" data-n="7">      ]</span>
+<span class="ui-code__ln" data-n="8">    } }</span></code></pre>
+                  <div class="ui-code__hint" data-code-hint><span class="ui-dot"></span><span data-code-text>4 live tools ready on localhost.</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
         </article>
-
-        <article class="recipe-card" data-engine="js">
-          <div class="recipe-top"><span class="engine-pill badge-js">JS · Userscript</span><span class="recipe-tag"><span data-l="zh">效率刚需</span><span data-l="en">Data Export</span></span></div>
-          <h3 class="recipe-title"><span data-l="zh">网页表格一键导出 Excel / CSV</span><span data-l="en">One-Click Table to CSV / Excel</span></h3>
-          <p class="recipe-desc"><span data-l="zh">自动识别数据表并在右上角挂载「导出 CSV」按钮，内置 UTF-8 BOM 编码防 Excel 中文乱码。</span><span data-l="en">Mount an Export CSV button above every HTML table with UTF-8 BOM for clean Excel opening.</span></p>
-          <div class="recipe-foot"><span class="recipe-scope">*://*/* (per-site)</span><span class="recipe-ready"><span data-l="zh">一键启用</span><span data-l="en">1-Click Ready</span></span></div>
-        </article>
-
-        <article class="recipe-card" data-engine="js">
-          <div class="recipe-top"><span class="engine-pill badge-js">JS · Userscript</span><span class="recipe-tag"><span data-l="zh">查资料必备</span><span data-l="en">Unlocker</span></span></div>
-          <h3 class="recipe-title"><span data-l="zh">解除网页复制与右键限制</span><span data-l="en">Unlock Copy, Select &amp; Right-Click</span></h3>
-          <p class="recipe-desc"><span data-l="zh">恢复文字选中并拦截禁止复制、复制追加版权尾巴与右键菜单封锁。</span><span data-l="en">Restore text selection and bypass copy blockers, appended tails, and context-menu locks.</span></p>
-          <div class="recipe-foot"><span class="recipe-scope">*://*/* (per-site)</span><span class="recipe-ready"><span data-l="zh">一键启用</span><span data-l="en">1-Click Ready</span></span></div>
-        </article>
-
-        <article class="recipe-card" data-engine="css">
-          <div class="recipe-top"><span class="engine-pill badge-css">CSS · 0.1s</span><span class="recipe-tag">zhihu.com</span></div>
-          <h3 class="recipe-title"><span data-l="zh">知乎纯净宽屏去弹窗</span><span data-l="en">Zhihu Clean Centered Reader</span></h3>
-          <p class="recipe-desc"><span data-l="zh">隐藏右侧杂乱栏与引导横幅，回答主体居中加宽舒展阅读。</span><span data-l="en">Hide right-rail clutter and promo banners on Zhihu and widen the main answer column.</span></p>
-          <div class="recipe-foot"><span class="recipe-scope">zhihu.com</span><span class="recipe-ready"><span data-l="zh">一键启用</span><span data-l="en">1-Click Ready</span></span></div>
-        </article>
-
-        <article class="recipe-card" data-engine="css">
-          <div class="recipe-top"><span class="engine-pill badge-css">CSS · 0.1s</span><span class="recipe-tag">bilibili.com</span></div>
-          <h3 class="recipe-title"><span data-l="zh">B站首页防摸鱼（仅留搜索栏）</span><span data-l="en">Bilibili Search-Only Focus Feed</span></h3>
-          <p class="recipe-desc"><span data-l="zh">隐藏首页推荐瀑布流与轮播图，仅保留搜索框与动态入口，专注搜教程不走神。</span><span data-l="en">Hide homepage recommendation feed and carousels on Bilibili for distraction-free search.</span></p>
-          <div class="recipe-foot"><span class="recipe-scope">bilibili.com</span><span class="recipe-ready"><span data-l="zh">一键启用</span><span data-l="en">1-Click Ready</span></span></div>
-        </article>
-
-        <article class="recipe-card" data-engine="css">
-          <div class="recipe-top"><span class="engine-pill badge-css">CSS · 0.1s</span><span class="recipe-tag">xiaohongshu.com</span></div>
-          <h3 class="recipe-title"><span data-l="zh">小红书网页版清爽大屏</span><span data-l="en">Xiaohongshu Clean Desktop View</span></h3>
-          <p class="recipe-desc"><span data-l="zh">隐藏悬浮下载引导气泡与登录横幅干扰，优化桌面端图文笔记阅读体验。</span><span data-l="en">Remove floating app-download prompts and optimize desktop note reading layout.</span></p>
-          <div class="recipe-foot"><span class="recipe-scope">xiaohongshu.com</span><span class="recipe-ready"><span data-l="zh">一键启用</span><span data-l="en">1-Click Ready</span></span></div>
-        </article>
-
-        <article class="recipe-card" data-engine="js">
-          <div class="recipe-top"><span class="engine-pill badge-js">JS · Userscript</span><span class="recipe-tag"><span data-l="zh">开发者效率</span><span data-l="en">Dev Utility</span></span></div>
-          <h3 class="recipe-title"><span data-l="zh">代码块统一加「一键复制」按钮</span><span data-l="en">Add Copy Button to Code Blocks</span></h3>
-          <p class="recipe-desc"><span data-l="zh">为旧版技术博客与内网 Wiki 的 <code>&lt;pre&gt;</code> 代码块自动补齐复制按钮。</span><span data-l="en">Attach a clean 1-click Copy button to every <code>&lt;pre&gt;</code> code block on docs and wikis.</span></p>
-          <div class="recipe-foot"><span class="recipe-scope">*://*/* (per-site)</span><span class="recipe-ready"><span data-l="zh">一键启用</span><span data-l="en">1-Click Ready</span></span></div>
-        </article>
-
-        <article class="recipe-card" data-engine="js">
-          <div class="recipe-top"><span class="engine-pill badge-js">JS · Userscript</span><span class="recipe-tag"><span data-l="zh">省时直达</span><span data-l="en">Zero Clicks Wasted</span></span></div>
-          <h3 class="recipe-title"><span data-l="zh">外链直达免二次确认跳转</span><span data-l="en">Bypass External Link Interstitials</span></h3>
-          <p class="recipe-desc"><span data-l="zh">自动改写包含 <code>target=</code> / <code>url=</code> 的站外链接中转页，点击直接打开目标网址。</span><span data-l="en">Rewrite redirect wrapper links (<code>?target=...</code> / <code>?url=...</code>) directly to their destination URL.</span></p>
-          <div class="recipe-foot"><span class="recipe-scope">*://*/* (per-site)</span><span class="recipe-ready"><span data-l="zh">一键启用</span><span data-l="en">1-Click Ready</span></span></div>
-        </article>
-
-        <article class="recipe-card" data-engine="js">
-          <div class="recipe-top"><span class="engine-pill badge-js">JS · Userscript</span><span class="recipe-tag"><span data-l="zh">看图利器</span><span data-l="en">Media Utility</span></span></div>
-          <h3 class="recipe-title"><span data-l="zh">按住 Alt 悬停放大预览缩略图</span><span data-l="en">Alt + Hover Thumbnail Zoom</span></h3>
-          <p class="recipe-desc"><span data-l="zh">浏览商品或帖子缩略图时，按住 Alt 键悬停即可居中弹出高清原图预览。</span><span data-l="en">Hold Alt while hovering any thumbnail image to preview it full-size in a centered overlay.</span></p>
-          <div class="recipe-foot"><span class="recipe-scope">*://*/* (per-site)</span><span class="recipe-ready"><span data-l="zh">一键启用</span><span data-l="en">1-Click Ready</span></span></div>
-        </article>
-      </div>
-
-      <div class="trust-band">
-        <div>
-          <h3><span data-l="zh">100% 本地优先、可审计的隐私架构</span><span data-l="en">100% Client-Side, Auditable Privacy by Design</span></h3>
-          <p><span data-l="zh">仓库中不包含任何后端服务器或遥测代码；本网站同样采用严格 CSP 静态托管于 GitHub Pages，零 Cookie、零第三方追踪。</span><span data-l="en">Zero backend servers in the repo, zero tracking cookies, and strict CSP static hosting on GitHub Pages.</span></p>
-        </div>
-        <a href="./privacy/" class="trust-link">
-          <span data-l="zh">阅读完整隐私政策 →</span><span data-l="en">Read Privacy Policy →</span>
-        </a>
       </div>
     </div>
   </section>
 
-  <!-- FAQ -->
-  <section id="faq" class="section">
-    <div class="container">
-      <div class="section-head">
-        <div class="section-kicker">FAQ</div>
-        <h2 class="section-title"><span data-l="zh">常见问题解答</span><span data-l="en">Frequently Asked Questions</span></h2>
+  <section class="section ground-inverse" id="bridge" data-moment="line-carries-colour" data-moment-opts='{"from": "base"}' aria-labelledby="bridge-h">
+    <div class="wrap">
+      <div class="grid">
+        <div class="span-5">
+          <div class="section-head">
+            <h2 id="bridge-h">Four live Chrome tools over localhost</h2>
+            <p class="muted">Run pagecraft-mcp on your machine so Claude Code, Cursor, or Codex reads picked DOM nodes, checks selector counts, and applies verified rules without copy-pasting HTML.</p>
+          </div>
+          <p><a class="link" href="https://github.com/botshen/plugin-radar#mcp-bridge-claude-code--cursor--codex">Read the MCP setup guide</a></p>
+        </div>
+        <div class="span-6 start-7 mcp-spec">
+          <div class="mcp-rows">
+            <div class="mcp-row"><code>ws://127.0.0.1:17321</code><span>Local stdio and WebSocket transport</span></div>
+            <div class="mcp-row"><code>pagecraft_get_picked_element</code><span>Tag, computed CSS, bounding box</span></div>
+            <div class="mcp-row"><code>pagecraft_get_page_context</code><span>Tab URL, title, DOM landmarks</span></div>
+            <div class="mcp-row"><code>pagecraft_verify_selectors</code><span>Live match count before apply</span></div>
+            <div class="mcp-row"><code>pagecraft_apply_mod</code><span>Inject CSS or MV3 JS and save</span></div>
+          </div>
+        </div>
       </div>
+    </div>
+  </section>
 
-      <div class="faq-list">
-        <details class="faq-item" open>
-          <summary class="faq-q"><span data-l="zh">PageCraft 有任何后台服务器、账号注册或数据上报吗？</span><span data-l="en">Does PageCraft have any backend servers, user accounts, or telemetry?</span></summary>
-          <p class="faq-a"><span data-l="zh">完全没有。PageCraft 100% 运行在你的浏览器本地客户端：零官方服务器、零账号系统、零遥测或反馈打点。你的所有规则与自定义 API Key 均保存在本地 <code>chrome.storage.local</code> 中。</span><span data-l="en">None at all. PageCraft operates 100% client-side with zero PageCraft servers, zero accounts, and zero telemetry or feedback pings. All mods and settings live in your local <code>chrome.storage.local</code>.</span></p>
-        </details>
-
-        <details class="faq-item">
-          <summary class="faq-q"><span data-l="zh">不想配 API Key 能直接用吗？</span><span data-l="en">Can I use PageCraft without configuring a paid API key?</span></summary>
-          <p class="faq-a"><span data-l="zh">可以！内置 10 款高频配方与 <code>/playground/</code> 练习靶场安装即用；此外你还可以直接开启 Chrome 内置端侧模型（Gemini Nano）或本机免费的 Ollama / LM Studio，甚至用你已订阅的 Claude Code / Cursor 通过 <code>pagecraft-mcp</code> 直接操控网页。</span><span data-l="en">Yes! All 10 built-in recipes and the <code>/playground/</code> sandbox work instantly with zero setup. For AI generation, you can use Chrome Built-in AI (Gemini Nano) on-device, free local Ollama / LM Studio, or your existing Claude Code / Cursor subscription via <code>pagecraft-mcp</code>.</span></p>
-        </details>
-
-        <details class="faq-item">
-          <summary class="faq-q"><span data-l="zh">为什么纯 CSS 样式改造免开任何开关就能 0.1 秒生效？</span><span data-l="en">Why do visual CSS mods work in 0.1s with zero developer toggles?</span></summary>
-          <p class="faq-a"><span data-l="zh">PageCraft 采用双引擎最小权限设计：隐藏干扰模块、宽屏护眼等视觉规则通过原生 <code>chrome.scripting.insertCSS</code> 注入，无需额外权限开关即可实时生效与关闭还原；仅当需要挂载交互按钮（如导出 CSV）时才启用隔离的 <code>chrome.userScripts</code> 沙箱。</span><span data-l="en">PageCraft separates styling from scripting: visual tweaks run via native <code>chrome.scripting.insertCSS</code> in 0.1s with zero browser toggles, while interactive DOM scripts run inside Chrome's isolated MV3 <code>chrome.userScripts</code> sandbox.</span></p>
-        </details>
+  <section class="section" id="questions" aria-labelledby="questions-h">
+    <div class="wrap">
+      <div class="grid">
+        <div class="span-5">
+          <div class="section-head">
+            <h2 id="questions-h">Questions</h2>
+            <p class="muted">Runs locally in Chrome 120+ and Edge 120+ under the MIT license.</p>
+          </div>
+          <div class="q-icons" aria-hidden="true">
+            <img src="assets/icons/chrome.svg" alt="" width="28" height="28" loading="lazy">
+            <img src="assets/icons/microsoft-edge.svg" alt="" width="28" height="28" loading="lazy">
+            <img src="assets/icons/gemini.svg" alt="" width="28" height="28" loading="lazy">
+            <img src="assets/icons/claude.svg" alt="" width="28" height="28" loading="lazy">
+          </div>
+          <p><a class="link" href="./privacy/">Read the privacy policy</a></p>
+        </div>
+        <div class="span-6 start-7">
+          <div class="faq">
+            <div class="faq__item">
+              <h3>Does PageCraft operate any backend servers?</h3>
+              <p>No. PageCraft runs zero telemetry, analytics, or proxy servers. Prompts go straight to Gemini Nano, local Ollama, or the endpoint you choose.</p>
+            </div>
+            <div class="faq__item">
+              <h3>Can I customize pages without an API key?</h3>
+              <p>Yes. All 10 built-in recipes, CSS sliders, Chrome Gemini Nano, local Ollama, and pagecraft-mcp work with zero cloud API keys.</p>
+            </div>
+            <div class="faq__item">
+              <h3>How does PageCraft sandbox JavaScript mods?</h3>
+              <p>Scripts execute inside Chrome's official MV3 chrome.userScripts world and stay disabled until you turn on Chrome's Allow User Scripts toggle.</p>
+            </div>
+            <div class="faq__item">
+              <h3>What happens when a webpage updates its DOM?</h3>
+              <p>Auto-Heal spots zero-match selectors, checks the live DOM and optional Vision tab capture, and proposes a verified selector replacement.</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
 </main>
 
-<footer class="site-footer">
-  <div class="container footer-inner">
-    <div>
-      <strong>PageCraft</strong> · <span data-l="zh">开源实时网页定制与微智能体运行环境（MIT）</span><span data-l="en">Open-Source Live Webpage Customizer &amp; Micro-Agent Runtime (MIT)</span>
+<footer class="footer closing footer--dark ground-inverse" id="contact" aria-labelledby="close-h">
+  <div class="wrap">
+    <div class="closing__cta close--type">
+      <div class="section-head">
+        <h2 id="close-h">Make every webpage yours</h2>
+        <p>MIT open source for Chrome and Edge. Build and load unpacked in under a minute.</p>
+      </div>
+      <a class="btn btn--primary btn--xl btn--wide" href="https://github.com/botshen/plugin-radar">Get PageCraft<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a>
     </div>
-
-    <div class="footer-links">
-      <a href="https://github.com/botshen/plugin-radar" rel="noopener noreferrer">GitHub</a>
-      <a href="https://github.com/botshen/plugin-radar/issues" rel="noopener noreferrer">Issues</a>
-      <a href="./playground/"><span data-l="zh">练习靶场</span><span data-l="en">Sandbox</span></a>
-      <a href="./privacy/"><span data-l="zh">隐私政策</span><span data-l="en">Privacy Policy</span></a>
-      <a href="mailto:botzgbj@gmail.com">botzgbj@gmail.com</a>
+    <div class="closing__links">
+      <div class="grid">
+        <div class="span-4 stack-4">
+          <a class="nav__logo" href="#top"><img class="pc-mark" src="icon.svg" alt="" width="24" height="24" loading="lazy" aria-hidden="true">PageCraft</a>
+          <p class="footer__lede">Local-first webpage customizer and MCP bridge for Chrome.</p>
+        </div>
+        <div class="span-2 footer__col">
+          <h3>Studio</h3>
+          <ul>
+            <li><a href="#studio">Recipe shelf</a></li>
+            <li><a href="./playground/">Live sandbox</a></li>
+          </ul>
+        </div>
+        <div class="span-2 footer__col">
+          <h3>Compute</h3>
+          <ul>
+            <li><a href="#compute">Dual engine</a></li>
+            <li><a href="#compute">Four backends</a></li>
+          </ul>
+        </div>
+        <div class="span-2 footer__col">
+          <h3>Bridge</h3>
+          <ul>
+            <li><a href="#bridge">MCP tools</a></li>
+            <li><a href="https://github.com/botshen/plugin-radar">GitHub repo</a></li>
+          </ul>
+        </div>
+        <div class="span-2 footer__col">
+          <h3>Support</h3>
+          <ul>
+            <li><a href="./privacy/">Privacy</a></li>
+            <li><a href="mailto:botzgbj@gmail.com">Email support</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer__legal">
+        <span>&copy; 2026 PageCraft &nbsp; <a href="./privacy/">Privacy</a> &nbsp; <a href="https://github.com/botshen/plugin-radar/blob/main/LICENSE">MIT License</a></span>
+        <span>Product names and logos are trademarks of their owners.</span>
+      </div>
     </div>
   </div>
 </footer>
 
-<script>
-(function () {
-  var root = document.documentElement;
-  var titles = {
-    zh: 'PageCraft — 开源实时网页定制与浏览器微智能体工坊（100% 无服务端）',
-    en: 'PageCraft — Open-Source Live Webpage Customizer & Browser Micro-Agent Runtime'
-  };
-
-  function applyLang(lang, persist) {
-    var next = lang === 'zh' ? 'zh' : 'en';
-    root.setAttribute('data-lang', next);
-    root.setAttribute('lang', next === 'zh' ? 'zh-CN' : 'en');
-    document.title = titles[next];
-    var zhBtn = document.getElementById('lang-zh');
-    var enBtn = document.getElementById('lang-en');
-    if (zhBtn) zhBtn.setAttribute('aria-pressed', next === 'zh' ? 'true' : 'false');
-    if (enBtn) enBtn.setAttribute('aria-pressed', next === 'en' ? 'true' : 'false');
-    if (persist) {
-      try { localStorage.setItem('pc_site_lang', next); } catch (e) {}
-    }
-  }
-
-  try {
-    var params = new URLSearchParams(window.location.search);
-    var q = params.get('lang');
-    if (q === 'zh' || q === 'en') {
-      applyLang(q, false);
-    } else {
-      var savedLang = localStorage.getItem('pc_site_lang');
-      if (savedLang === 'zh' || savedLang === 'en') applyLang(savedLang, false);
-      else if (navigator.language && /^zh/i.test(navigator.language)) applyLang('zh', false);
-    }
-  } catch (e) {}
-
-  var langBtns = document.querySelectorAll('[data-set-lang]');
-  for (var i = 0; i < langBtns.length; i++) {
-    langBtns[i].addEventListener('click', function () {
-      applyLang(this.getAttribute('data-set-lang') || 'en', true);
-    });
-  }
-
-  try {
-    var savedTheme = localStorage.getItem('pc_site_theme');
-    if (savedTheme === 'light' || savedTheme === 'dark') {
-      root.setAttribute('data-theme', savedTheme);
-    }
-  } catch (e) {}
-
-  var themeBtn = document.getElementById('theme-toggle');
-  if (themeBtn) {
-    themeBtn.addEventListener('click', function () {
-      var cur = root.getAttribute('data-theme');
-      var sysDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      var nextTheme = (cur ? cur === 'dark' : sysDark) ? 'light' : 'dark';
-      root.setAttribute('data-theme', nextTheme);
-      try { localStorage.setItem('pc_site_theme', nextTheme); } catch (e) {}
-    });
-  }
-
-  var tabs = document.querySelectorAll('.recipe-tab');
-  var cards = document.querySelectorAll('.recipe-card');
-  for (var t = 0; t < tabs.length; t++) {
-    tabs[t].addEventListener('click', function () {
-      var filter = this.getAttribute('data-filter') || 'all';
-      for (var j = 0; j < tabs.length; j++) {
-        tabs[j].setAttribute('aria-selected', tabs[j] === this ? 'true' : 'false');
-      }
-      for (var k = 0; k < cards.length; k++) {
-        var eng = cards[k].getAttribute('data-engine');
-        if (filter === 'all' || eng === filter) cards[k].removeAttribute('hidden');
-        else cards[k].setAttribute('hidden', '');
-      }
-    });
-  }
-
-  var copyMcpBtn = document.getElementById('copy-mcp-btn');
-  var mcpCodeEl = document.getElementById('mcp-config-code');
-  if (copyMcpBtn && mcpCodeEl) {
-    copyMcpBtn.addEventListener('click', function () {
-      var text = mcpCodeEl.textContent || '';
-      var lang = root.getAttribute('data-lang') === 'zh' ? 'zh' : 'en';
-      var showDone = function () {
-        copyMcpBtn.textContent = lang === 'zh' ? '✓ 已复制' : '✓ Copied!';
-        setTimeout(function () {
-          copyMcpBtn.innerHTML = '<span data-l="zh">复制 MCP 配置</span><span data-l="en">Copy MCP JSON</span>';
-        }, 1800);
-      };
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(showDone).catch(function () {});
-      }
-    });
-  }
-})();
-</script>
+<script type="module" src="assets/system.js"></script>
+<script type="module" src="assets/motion/motion.js"></script>
+<script type="module" src="assets/layout/layout.js"></script>
+<script type="module" src="assets/diagrams/mount.js"></script>
 </body>
 </html>
