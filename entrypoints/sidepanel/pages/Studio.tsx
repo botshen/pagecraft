@@ -43,6 +43,12 @@ import {
 } from '~/lib/userscripts/css-tweaks';
 import { formatRecipeSharePost } from '~/lib/userscripts/share';
 import {
+  resolveCatalogPack,
+  type CommunityPack,
+  type LocalizedCatalogPack,
+} from '~/lib/userscripts/packs';
+import { COMMUNITY_CATALOG_PACKS } from '~/lib/userscripts/community-catalog.generated';
+import {
   Crosshair,
   Check,
   Copy,
@@ -60,6 +66,7 @@ import {
   EyeOff,
   PlugZap,
   ArrowRight,
+  Package,
 } from 'lucide-react';
 import { cn } from '~/lib/utils';
 import { recheckOrRecoverJsPermission } from '../utils';
@@ -79,6 +86,7 @@ interface Props {
   onRecheckAvailability: () => Promise<UserScriptsAvailability>;
   onCompleteTutorial: () => Promise<void>;
   onNavigateSettings: () => void;
+  onOpenCommunityPack?: (pack: CommunityPack) => void;
   onToast: (msg: string, durationMs?: number) => void;
   lang: Lang;
   t: (k: string) => string;
@@ -180,6 +188,7 @@ export default function StudioPage({
   onRecheckAvailability,
   onCompleteTutorial,
   onNavigateSettings,
+  onOpenCommunityPack,
   onToast,
   lang,
   t,
@@ -1580,6 +1589,63 @@ export default function StudioPage({
       {/* 2B. Scannable 1-Click Recipe List (Idle state) */}
       {!draft && (
         <section className="space-y-2.5">
+          {hostLower && onOpenCommunityPack && (() => {
+            const matchedPacks: LocalizedCatalogPack[] = COMMUNITY_CATALOG_PACKS.filter((p) =>
+              p.siteHints.some((h) => hostLower.includes(h)) ||
+              (activeTab.url && p.zh.mods.some((m) => urlMatchesAny(activeTab.url, m.matches))),
+            );
+            if (matchedPacks.length === 0) return null;
+            return (
+              <div className="rounded-[10px] border border-[var(--pc-accent)]/35 bg-[var(--pc-accent-subtle)]/55 divide-y divide-border overflow-hidden">
+                <div className="px-3.5 py-2 flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                    <Package className="h-3.5 w-3.5 text-primary" />
+                    <span>{t('sitePackRecommendTitle')}</span>
+                  </span>
+                  <span className="font-mono text-[11px] text-muted-foreground">#PCP1</span>
+                </div>
+                {matchedPacks.map((entry) => {
+                  const variant = lang === 'zh' ? entry.zh : entry.en;
+                  const installedCount = mods.filter((m) => m.packId === entry.id).length;
+                  return (
+                    <div
+                      key={entry.id}
+                      className="px-3.5 py-2.5 flex items-start justify-between gap-3 bg-card/75"
+                    >
+                      <div className="min-w-0 space-y-0.5 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[13px] font-semibold text-foreground">
+                            {variant.name}
+                          </span>
+                          <Badge variant="outline" className="px-1.5 py-0 text-[10.5px]">
+                            {variant.mods.length} {lang === 'zh' ? '条规则' : 'rules'}
+                          </Badge>
+                          {installedCount > 0 && (
+                            <Badge variant="default" className="px-1.5 py-0 text-[10.5px]">
+                              {lang === 'zh' ? '已安装' : 'Installed'}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-[12px] text-muted-foreground leading-snug">
+                          {variant.description}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        size="xs"
+                        variant="primary"
+                        onClick={() => onOpenCommunityPack(resolveCatalogPack(entry, lang))}
+                        className="shrink-0 mt-0.5"
+                      >
+                        {t('handoffReviewBtn')}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-[13.5px] font-semibold text-foreground">
               {t('templatesTitle')}

@@ -13,7 +13,7 @@
 [![MCP Ready](https://img.shields.io/badge/MCP-pagecraft--mcp-7c3aed.svg)](#pagecraft-mcp-本地编程智能体桥接claude-code--cursor--codex)
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-2563eb.svg)](./CONTRIBUTING.md)
 
-[English](./README.md) · **简体中文** · [官方网站](https://pagecraft.shenxin.space) · [交互练习靶场](https://pagecraft.shenxin.space/playground) · [问题反馈 Issues](https://github.com/botshen/pagecraft/issues) · [社区讨论 Discussions](https://github.com/botshen/pagecraft/discussions)
+[English](./README.md) · **简体中文** · [官方网站](https://pagecraft.shenxin.space) · [社区配方广场](https://pagecraft.shenxin.space/recipes/) · [交互练习靶场](https://pagecraft.shenxin.space/playground) · [问题反馈 Issues](https://github.com/botshen/pagecraft/issues) · [社区讨论 Discussions](https://github.com/botshen/pagecraft/discussions)
 
 </div>
 
@@ -29,7 +29,7 @@
 | **多模态视觉截图 + 闭环自愈（Auto-Heal）** | 点选元素后自动通过 `OffscreenCanvas` 裁剪目标区域紧凑截图（最长边 `<= 640px`）供视觉模型理解真实排版；遇到纯文本模型返回 HTTP `400`/`415`/`422` 时**自动无感降级为纯文本重试**。每次生成后立即在真实 DOM 验证选择器命中数，若命中为 `0` 则自动拉取最新页面骨架完成 **1 轮闭环自愈修正**。 |
 | **CSS + JS 双引擎分级执行** | **引擎 1（`CSS` 实时样式）** 基于 `chrome.scripting.insertCSS` / `removeCSS`，**免开任何开发者开关，0.1 秒生效**，内置字号/栏宽/暖度实时滑块与 SPA 单页路由同步。<br/>**引擎 2（`JS` 油猴沙箱）** 运行于官方 MV3 `chrome.userScripts` 隔离世界（`csp: "script-src 'self'"`、`messaging: false`），支持表格导出 Excel/CSV（内置 UTF-8 BOM 防中文乱码）、解除复制限制等交互增强。 |
 | **`pagecraft-mcp` 本地智能体桥接** | 通过严格绑定 `127.0.0.1` 的本地 WebSocket 桥接，让终端或 IDE 中的 **Claude Code**、**Cursor**、**Codex** 直接读取已点选元素、验证真实页面选择器并热注入持久化改造规则。 |
-| **`#PC1:...#` 配方口令与油猴互通** | 任意规则可一键编码为 `#PC1:...#` 自包含口令或分享链接，同时 100% 兼容导出/导入标准 `.user.js` 脚本至 **Tampermonkey（篡改猴）** 与 **ScriptCat（脚本猫）**。 |
+| **`#PCP1` 社区配方套装与广场** | 将多条规则一键打包为 `#PCP1:...#` 口令或 `.pagecraft-pack.json`，内置静态 MV3 安全审计与源码审查导入，也可访问[社区配方广场](https://pagecraft.shenxin.space/recipes/)或与 **Tampermonkey / ScriptCat** 双向互通 `.user.js`。 |
 
 ## 四种算力接入方式（在「设置」中随时切换）
 

@@ -1,0 +1,56 @@
+{
+  "id": "youtube-deep-focus",
+  "author": "@pagecraft",
+  "category": "video",
+  "tags": ["youtube", "shorts", "focus"],
+  "siteHints": ["youtube.com"],
+  "updatedAt": "2026-11-15",
+  "zh": {
+    "name": "YouTube 深度专注套装",
+    "description": "纯 CSS 移除 Shorts 短视频货架与首页推广横幅，并精简观看页右侧推荐流干扰。",
+    "mods": [
+      {
+        "id": "remove-shorts-shelves",
+        "name": "屏蔽 YouTube Shorts 货架与入口",
+        "description": "隐藏首页、订阅流和左侧栏中的 Shorts 短视频分区及推广横幅。",
+        "engine": "css",
+        "matches": ["https://*.youtube.com/*"],
+        "runAt": "document_start",
+        "body": "ytd-rich-section-renderer:has(a[title=\"Shorts\"]),\nytd-reel-shelf-renderer,\nytd-guide-entry-renderer:has(a[title=\"Shorts\"]),\nytd-mini-guide-entry-renderer[aria-label=\"Shorts\"],\nytd-banner-promo-renderer,\n#masthead-ad {\n  display: none !important;\n}"
+      },
+      {
+        "id": "calm-watch-sidebar",
+        "name": "观看页专心模式（去右侧推荐与商品）",
+        "description": "隐藏播放页右侧推荐流与视频下方周边商品货架，专注观看当前课程或播放列表。",
+        "engine": "css",
+        "matches": ["https://www.youtube.com/watch*"],
+        "runAt": "document_start",
+        "body": "ytd-watch-next-secondary-results-renderer,\nytd-merch-shelf-renderer,\nytd-ticket-shelf-renderer,\n#clarify-box {\n  display: none !important;\n}"
+      }
+    ]
+  },
+  "en": {
+    "name": "YouTube Deep Focus Pack",
+    "description": "Pure CSS removal of Shorts shelves, promo banners, and distracting watch sidebar recommendations.",
+    "mods": [
+      {
+        "id": "remove-shorts-shelves",
+        "name": "Hide Shorts Shelves & Nav Entry",
+        "description": "Remove Shorts shelves across Home/Subscriptions and hide homepage masthead promos.",
+        "engine": "css",
+        "matches": ["https://*.youtube.com/*"],
+        "runAt": "document_start",
+        "body": "ytd-rich-section-renderer:has(a[title=\"Shorts\"]),\nytd-reel-shelf-renderer,\nytd-guide-entry-renderer:has(a[title=\"Shorts\"]),\nytd-mini-guide-entry-renderer[aria-label=\"Shorts\"],\nytd-banner-promo-renderer,\n#masthead-ad {\n  display: none !important;\n}"
+      },
+      {
+        "id": "calm-watch-sidebar",
+        "name": "Calm Watch Mode (Hide Recommendations)",
+        "description": "Hide watch-page right-rail recommendations and merch shelves for uninterrupted focus.",
+        "engine": "css",
+        "matches": ["https://www.youtube.com/watch*"],
+        "runAt": "document_start",
+        "body": "ytd-watch-next-secondary-results-renderer,\nytd-merch-shelf-renderer,\nytd-ticket-shelf-renderer,\n#clarify-box {\n  display: none !important;\n}"
+      }
+    ]
+  }
+}

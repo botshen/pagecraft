@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import type { AppSettings } from '~/lib/types';
 import { DEFAULT_SETTINGS, STORAGE_KEYS } from '~/lib/shared/constants';
 import { readSettings, updateSettings, writeSettings } from '~/lib/shared/settings';
@@ -9,6 +9,14 @@ import {
 } from '~/lib/shared/builtin-ai';
 import { readUserScripts } from '~/lib/userscripts/store';
 import { urlMatchesAny } from '~/lib/userscripts/matcher';
+import {
+  extractWebHandoffPayload,
+  resolveCatalogPack,
+  slugifyPackId,
+  type CommunityPack,
+} from '~/lib/userscripts/packs';
+import { decodeRecipeShortcode } from '~/lib/userscripts/share';
+import { COMMUNITY_CATALOG_PACKS } from '~/lib/userscripts/community-catalog.generated';
 import {
   MODS_STORAGE_KEY,
   type ActiveTabInfo,
@@ -23,7 +31,7 @@ import { I18nContext, useI18nProvider } from './i18n';
 import StudioPage from './pages/Studio';
 import ModsPage from './pages/Mods';
 import SettingsPage from './pages/Settings';
-import { Globe } from 'lucide-react';
+import { Globe, Package, X } from 'lucide-react';
 import { cn } from '~/lib/utils';
 
 type TabKey = 'studio' | 'mods' | 'settings';
@@ -71,6 +79,8 @@ export default function App() {
 
   const [picking, setPicking] = useState(false);
   const [pickedElement, setPickedElement] = useState<PickedElementContext | null>(null);
+  const [pendingPackToReview, setPendingPackToReview] = useState<CommunityPack | null>(null);
+  const [dismissedHandoffUrl, setDismissedHandoffUrl] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const availabilityRef = useRef<UserScriptsAvailability | null>(null);
@@ -269,6 +279,44 @@ export default function App() {
     ? mods.filter((m) => m.enabled && urlMatchesAny(activeTab.url, m.matches)).length
     : 0;
 
+  const detectedWebHandoff = useMemo<CommunityPack | null>(() => {
+    const payload = extractWebHandoffPayload(activeTab.url);
+    if (!payload) return null;
+    if (payload.kind === 'inline-pack') return payload.pack;
+    if (payload.kind === 'catalog-pack') {
+      const entry = COMMUNITY_CATALOG_PACKS.find((p) => p.id === payload.packId);
+      return entry ? resolveCatalogPack(entry, lang) : null;
+    }
+    const single = decodeRecipeShortcode(payload.shortcode);
+    if (!single) return null;
+    return {
+      kind: 'pagecraft-pack',
+      version: 1,
+      id: slugifyPackId(single.name, 'shared-recipe'),
+      name: single.name,
+      description: single.description,
+      author: '@shared',
+      tags: [],
+      siteHints: [],
+      mods: [
+        {
+          id: slugifyPackId(single.name, 'rule-1'),
+          name: single.name,
+          description: single.description,
+          engine: single.engine,
+          matches: single.matches,
+          body: single.body,
+          runAt: single.runAt,
+          targetSelectors: single.targetSelectors,
+        },
+      ],
+    };
+  }, [activeTab.url, lang]);
+
+  const showHandoffBanner = Boolean(
+    detectedWebHandoff && activeTab.url && dismissedHandoffUrl !== activeTab.url,
+  );
+
   return (
     <I18nContext.Provider value={i18n}>
       <div className="min-h-screen w-full flex flex-col bg-background text-foreground">
@@ -348,6 +396,45 @@ export default function App() {
         {/* Main Scrollable Content on identical .pc-rail */}
         <main className="flex-1 w-full">
           <div className="pc-rail pt-3.5">
+            {showHandoffBanner && detectedWebHandoff && (
+              <div className="mb-3 rounded-[10px] border border-[var(--pc-accent)]/40 bg-[var(--pc-accent-subtle)] px-3 py-2.5 flex items-center justify-between gap-2 pc-enter">
+                <div className="min-w-0 flex items-center gap-2">
+                  <Package className="h-4 w-4 text-primary shrink-0" />
+                  <div className="min-w-0">
+                    <div className="text-[12.5px] font-semibold text-foreground truncate">
+                      {detectedWebHandoff.name}
+                    </div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {lang === 'zh'
+                        ? `检测到页面配方套装（${detectedWebHandoff.mods.length} 条规则）`
+                        : `Detected pack on page (${detectedWebHandoff.mods.length} rule(s))`}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPendingPackToReview(detectedWebHandoff);
+                      setDismissedHandoffUrl(activeTab.url ?? null);
+                      setTab('mods');
+                    }}
+                    className="pc-btn h-7 px-2.5 rounded-[6px] bg-primary text-[#FAF8F5] text-xs font-semibold cursor-pointer"
+                  >
+                    {t('handoffReviewBtn')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDismissedHandoffUrl(activeTab.url ?? null)}
+                    aria-label={t('cancel')}
+                    className="pc-btn p-1 rounded-[6px] text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
+
             {tab === 'studio' && (
               <StudioPage
                 activeTab={activeTab}
@@ -363,6 +450,10 @@ export default function App() {
                 onRecheckAvailability={recheckAvailability}
                 onCompleteTutorial={handleCompleteTutorial}
                 onNavigateSettings={() => setTab('settings')}
+                onOpenCommunityPack={(pack) => {
+                  setPendingPackToReview(pack);
+                  setTab('mods');
+                }}
                 onToast={showToast}
                 lang={lang}
                 t={t}
@@ -374,6 +465,8 @@ export default function App() {
                 activeTab={activeTab}
                 mods={mods}
                 availability={availability}
+                pendingPack={pendingPackToReview}
+                onConsumePendingPack={() => setPendingPackToReview(null)}
                 onModsChanged={loadMods}
                 onRecheckAvailability={recheckAvailability}
                 onNavigateStudio={() => setTab('studio')}

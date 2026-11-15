@@ -13,7 +13,7 @@ Point at any webpage element and reshape the web in plain words — remove clutt
 [![MCP Ready](https://img.shields.io/badge/MCP-pagecraft--mcp-7c3aed.svg)](#pagecraft-mcp-bridge-claude-code--cursor--codex)
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-2563eb.svg)](./CONTRIBUTING.md)
 
-**English** · [简体中文](./README.zh-CN.md) · [Official Website](https://pagecraft.shenxin.space) · [Interactive Sandbox](https://pagecraft.shenxin.space/playground?lang=en) · [Issues](https://github.com/botshen/pagecraft/issues) · [Discussions](https://github.com/botshen/pagecraft/discussions)
+**English** · [简体中文](./README.zh-CN.md) · [Official Website](https://pagecraft.shenxin.space) · [Community Recipe Hub](https://pagecraft.shenxin.space/recipes/) · [Interactive Sandbox](https://pagecraft.shenxin.space/playground?lang=en) · [Issues](https://github.com/botshen/pagecraft/issues) · [Discussions](https://github.com/botshen/pagecraft/discussions)
 
 </div>
 
@@ -29,7 +29,7 @@ Point at any webpage element and reshape the web in plain words — remove clutt
 | **Multimodal Vision + Closed-Loop Auto-Healing** | When you click an element, PageCraft crops a compact region screenshot (`max 640px` via `OffscreenCanvas`) for vision-capable models — and automatically falls back to text-only if an endpoint returns HTTP `400`/`415`/`422`. Every generated mod is live-verified on the DOM; if `0` elements match, PageCraft extracts fresh DOM landmarks and runs a **1-pass self-healing refinement** automatically. |
 | **Dual-Engine Runtime (`CSS` + `JS`)** | **Engine 1 (`CSS`)** injects clean styles in `0.1s` via `chrome.scripting.insertCSS` / `removeCSS` with zero extra browser toggles, live sliders (font size, width, paper warmth), and SPA `pushState` sync. **Engine 2 (`JS`)** runs interactive DOM tools (CSV/Excel export, copy unlockers, custom buttons) inside Chrome MV3's isolated `chrome.userScripts` world (`csp: "script-src 'self'"`, `messaging: false`). |
 | **PageCraft MCP Bridge (`pagecraft-mcp`)** | Connect **Claude Code**, **Cursor**, or **Codex** over a strict `127.0.0.1` loopback WebSocket so your terminal/IDE coding agent can inspect picked elements, test live CSS selectors, and hot-apply persistent mods on real authenticated tabs. |
-| **`#PC1:...#` Recipes & Tampermonkey Interop** | Share any mod as a self-contained `#PC1:...#` shortcode or deep link, or export/import standard `==UserScript==` `.user.js` files compatible with **Tampermonkey** and **ScriptCat**. |
+| **`#PCP1` Community Packs & Hub** | Bundle multiple CSS/JS mods into `#PCP1:...#` shortcodes or `.pagecraft-pack.json` manifests, inspect code & static MV3 safety reports, or browse [Community Recipe Hub](https://pagecraft.shenxin.space/recipes/) & Tampermonkey `.user.js` interop. |
 
 ## 4 Compute Options (Switch Anytime in Settings)
 

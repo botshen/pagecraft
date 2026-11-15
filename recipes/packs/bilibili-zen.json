@@ -1,0 +1,74 @@
+{
+  "id": "bilibili-zen",
+  "author": "@pagecraft",
+  "category": "video",
+  "tags": ["bilibili", "focus", "video-speed"],
+  "siteHints": ["bilibili.com"],
+  "updatedAt": "2026-11-15",
+  "zh": {
+    "name": "B站纯净专注套装",
+    "description": "移除首页推广轮播与直播浮窗、清理播放页右侧推广卡片，并增加 [ ] / \\ 键盘倍速快捷键。",
+    "mods": [
+      {
+        "id": "clean-home-promos",
+        "name": "B站首页去广告与浮窗",
+        "description": "隐藏首页首屏商业轮播推广卡片、客户端下载浮窗及活动角标。",
+        "engine": "css",
+        "matches": ["https://*.bilibili.com/*"],
+        "runAt": "document_start",
+        "body": ".bili-feed-card:has(.bili-video-card__info--ad),\n.floor-single-card:has(.badge),\n.ad-report,\n.ad-floor-exp,\n.palette-button-wrap .vip-login-tip,\n.desktop-download-tip,\n.login-tip,\n.bili-header .download-entry {\n  display: none !important;\n}"
+      },
+      {
+        "id": "focus-watch-sidebar",
+        "name": "播放页右侧栏精简",
+        "description": "隐藏播放页右侧游戏/漫画广告与活动卡片，完整保留选集列表与合集目录。",
+        "engine": "css",
+        "matches": ["https://www.bilibili.com/video/*", "https://www.bilibili.com/list/*"],
+        "runAt": "document_start",
+        "body": ".right-container .ad-report,\n.right-container .slide-ad-exp,\n.right-container .pop-live-small-mode,\n.right-container .video-page-game-card-small,\n.right-container .video-page-special-card-small,\n#right-bottom-banner {\n  display: none !important;\n}\n.right-container .next-play .rec-list {\n  opacity: 0.92;\n}"
+      },
+      {
+        "id": "video-speed-hotkeys",
+        "name": "HTML5 视频倍速快捷键（[ / ] / \\）",
+        "description": "按 ] 加速 +0.25x，[ 减速 -0.25x，\\ 一键还原 1.0x，右上角弹出轻提示。",
+        "engine": "js",
+        "matches": ["https://www.bilibili.com/video/*", "https://www.bilibili.com/bangumi/*"],
+        "runAt": "document_idle",
+        "body": "(() => {\n  if (window.__pcBiliSpeedInit) return;\n  window.__pcBiliSpeedInit = true;\n\n  let toastTimer = null;\n  function showHud(text) {\n    let el = document.getElementById('pc-speed-hud');\n    if (!el) {\n      el = document.createElement('div');\n      el.id = 'pc-speed-hud';\n      el.style.cssText = 'position:fixed;top:18px;right:18px;z-index:2147483647;padding:6px 12px;border-radius:8px;background:rgba(28,25,23,0.88);color:#FAF8F5;font:600 13px/1.3 ui-monospace,monospace;pointer-events:none;transition:opacity .18s ease;box-shadow:0 8px 20px rgba(0,0,0,.22)';\n      document.body.appendChild(el);\n    }\n    el.textContent = text;\n    el.style.opacity = '1';\n    if (toastTimer) clearTimeout(toastTimer);\n    toastTimer = setTimeout(() => {\n      el.style.opacity = '0';\n    }, 1100);\n  }\n\n  window.addEventListener('keydown', (e) => {\n    const t = e.target;\n    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;\n    if (e.metaKey || e.ctrlKey || e.altKey) return;\n    if (e.key !== '[' && e.key !== ']' && e.key !== '\\\\') return;\n    const video = document.querySelector('video');\n    if (!video) return;\n    const next = e.key === '\\\\'\n      ? 1\n      : Math.min(4, Math.max(0.25, Math.round((video.playbackRate + (e.key === ']' ? 0.25 : -0.25)) * 100) / 100));\n    video.playbackRate = next;\n    showHud(next.toFixed(2).replace(/\\.00$/, '') + 'x');\n  });\n})();"
+      }
+    ]
+  },
+  "en": {
+    "name": "Bilibili Zen Focus Pack",
+    "description": "Hide home promo clutter and watch-page ad cards while adding [ / ] / \\ HTML5 video speed hotkeys.",
+    "mods": [
+      {
+        "id": "clean-home-promos",
+        "name": "Clean Home Feed Promos",
+        "description": "Hide sponsored feed cards, app download popups, and login nag floaters.",
+        "engine": "css",
+        "matches": ["https://*.bilibili.com/*"],
+        "runAt": "document_start",
+        "body": ".bili-feed-card:has(.bili-video-card__info--ad),\n.floor-single-card:has(.badge),\n.ad-report,\n.ad-floor-exp,\n.palette-button-wrap .vip-login-tip,\n.desktop-download-tip,\n.login-tip,\n.bili-header .download-entry {\n  display: none !important;\n}"
+      },
+      {
+        "id": "focus-watch-sidebar",
+        "name": "Streamlined Watch Sidebar",
+        "description": "Hide right-rail ad and live promo boxes while keeping multi-part playlists visible.",
+        "engine": "css",
+        "matches": ["https://www.bilibili.com/video/*", "https://www.bilibili.com/list/*"],
+        "runAt": "document_start",
+        "body": ".right-container .ad-report,\n.right-container .slide-ad-exp,\n.right-container .pop-live-small-mode,\n.right-container .video-page-game-card-small,\n.right-container .video-page-special-card-small,\n#right-bottom-banner {\n  display: none !important;\n}\n.right-container .next-play .rec-list {\n  opacity: 0.92;\n}"
+      },
+      {
+        "id": "video-speed-hotkeys",
+        "name": "HTML5 Speed Hotkeys ([ / ] / \\)",
+        "description": "Step playback speed with ] (+0.25x), [ (-0.25x), and \\ (reset 1.0x) with a corner HUD toast.",
+        "engine": "js",
+        "matches": ["https://www.bilibili.com/video/*", "https://www.bilibili.com/bangumi/*"],
+        "runAt": "document_idle",
+        "body": "(() => {\n  if (window.__pcBiliSpeedInit) return;\n  window.__pcBiliSpeedInit = true;\n\n  let toastTimer = null;\n  function showHud(text) {\n    let el = document.getElementById('pc-speed-hud');\n    if (!el) {\n      el = document.createElement('div');\n      el.id = 'pc-speed-hud';\n      el.style.cssText = 'position:fixed;top:18px;right:18px;z-index:2147483647;padding:6px 12px;border-radius:8px;background:rgba(28,25,23,0.88);color:#FAF8F5;font:600 13px/1.3 ui-monospace,monospace;pointer-events:none;transition:opacity .18s ease;box-shadow:0 8px 20px rgba(0,0,0,.22)';\n      document.body.appendChild(el);\n    }\n    el.textContent = text;\n    el.style.opacity = '1';\n    if (toastTimer) clearTimeout(toastTimer);\n    toastTimer = setTimeout(() => {\n      el.style.opacity = '0';\n    }, 1100);\n  }\n\n  window.addEventListener('keydown', (e) => {\n    const t = e.target;\n    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;\n    if (e.metaKey || e.ctrlKey || e.altKey) return;\n    if (e.key !== '[' && e.key !== ']' && e.key !== '\\\\') return;\n    const video = document.querySelector('video');\n    if (!video) return;\n    const next = e.key === '\\\\'\n      ? 1\n      : Math.min(4, Math.max(0.25, Math.round((video.playbackRate + (e.key === ']' ? 0.25 : -0.25)) * 100) / 100));\n    video.playbackRate = next;\n    showHud(next.toFixed(2).replace(/\\.00$/, '') + 'x');\n  });\n})();"
+      }
+    ]
+  }
+}

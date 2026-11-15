@@ -36,10 +36,12 @@ pagecraft/
 │   ├── mcp/                     # Loopback WebSocket bridge contract & extension client (127.0.0.1)
 │   └── shared/                  # Client-side PII redaction (privacy.ts), Built-in AI, BYOK/Ollama & locale
 ├── packages/mcp/                # Standalone @pagecraft/mcp (pagecraft-mcp) stdio server for Claude/Cursor/Codex
-├── site/                        # Zero-telemetry static website on Cloudflare Pages (/, /playground/, /privacy/)
+├── recipes/packs/               # GitOps Community Recipe Packs (*.json validated & compiled at build time)
+├── site/                        # Zero-telemetry static website on Cloudflare (/, /recipes/, /playground/, /privacy/)
 ├── scripts/
 │   ├── build-icons.mjs          # Extension & store icon generator
-│   └── build-site.mjs           # Generates site/privacy/index.html from PRIVACY.md & validates static site
+│   ├── build-recipes.mjs        # Validates recipes/packs/*.json -> TS catalog + site/recipes/
+│   └── build-site.mjs           # Generates site/privacy/index.html, site/recipes/ & validates static site
 └── tests/core/                  # Fast Node native TypeScript unit tests
 ```
 

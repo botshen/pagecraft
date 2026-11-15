@@ -1,0 +1,56 @@
+{
+  "id": "xiaohongshu-clean-desk",
+  "author": "@pagecraft",
+  "category": "reading",
+  "tags": ["xiaohongshu", "rednote", "clean"],
+  "siteHints": ["xiaohongshu.com"],
+  "updatedAt": "2026-11-15",
+  "zh": {
+    "name": "小红书清爽浏览套装",
+    "description": "纯 CSS 隐藏悬浮 App 引导与侧边推广角标，放大笔记详情阅读排版间距。",
+    "mods": [
+      {
+        "id": "hide-app-floaters",
+        "name": "隐藏小红书悬浮推广与下载条",
+        "description": "隐藏页面悬浮客户端下载按钮、右下角反馈引导及非必要提示角标。",
+        "engine": "css",
+        "matches": ["https://*.xiaohongshu.com/*"],
+        "runAt": "document_start",
+        "body": ".floating-btn-sets .download-btn,\n.side-bar .bottom-channel,\n.reds-tooltip-container,\n.note-detail-mask .bottom-download-banner {\n  display: none !important;\n}"
+      },
+      {
+        "id": "comfortable-note-reading",
+        "name": "小红书笔记详情精读优化",
+        "description": "提升笔记详情正文行高与段落呼吸感，让图文攻略阅读更轻松。",
+        "engine": "css",
+        "matches": ["https://*.xiaohongshu.com/explore*", "https://*.xiaohongshu.com/discovery*"],
+        "runAt": "document_start",
+        "body": ".note-detail-mask .note-content .desc {\n  font-size: 15.5px !important;\n  line-height: 1.75 !important;\n}\n.note-detail-mask .note-content .title {\n  font-size: 19px !important;\n  line-height: 1.45 !important;\n}"
+      }
+    ]
+  },
+  "en": {
+    "name": "Xiaohongshu Clean Desk Pack",
+    "description": "Pure CSS cleanup removing floating app download badges and polishing note detail typography.",
+    "mods": [
+      {
+        "id": "hide-app-floaters",
+        "name": "Hide Floating App Promos",
+        "description": "Hide floating app download badges and promotional corner overlays.",
+        "engine": "css",
+        "matches": ["https://*.xiaohongshu.com/*"],
+        "runAt": "document_start",
+        "body": ".floating-btn-sets .download-btn,\n.side-bar .bottom-channel,\n.reds-tooltip-container,\n.note-detail-mask .bottom-download-banner {\n  display: none !important;\n}"
+      },
+      {
+        "id": "comfortable-note-reading",
+        "name": "Readable Note Detail Typography",
+        "description": "Improve note modal line height and title hierarchy for long-form posts.",
+        "engine": "css",
+        "matches": ["https://*.xiaohongshu.com/explore*", "https://*.xiaohongshu.com/discovery*"],
+        "runAt": "document_start",
+        "body": ".note-detail-mask .note-content .desc {\n  font-size: 15.5px !important;\n  line-height: 1.75 !important;\n}\n.note-detail-mask .note-content .title {\n  font-size: 19px !important;\n  line-height: 1.45 !important;\n}"
+      }
+    ]
+  }
+}

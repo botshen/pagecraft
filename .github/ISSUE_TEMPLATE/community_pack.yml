@@ -1,0 +1,54 @@
+name: "📦 投稿社区配方包 / Submit Community Pack"
+description: 投稿一组或单条经过 MV3 安全规范验证的网页改造配方，审核合并后将上线至 pagecraft.shenxin.space/recipes/
+title: "[Community Pack] "
+labels: ["community-pack"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢分享你的 PageCraft 配方包！你可以直接在插件「规则库 → 打包分享 / 投稿」中点击生成此表单，或粘贴 `.pagecraft-pack.json` / `#PCP1:...#` 口令。
+  - type: input
+    id: pack_id
+    attributes:
+      label: 配方包 ID（小写字母与短横线 / kebab-case）
+      placeholder: "例如：notion-calm-reader"
+    validations:
+      required: true
+  - type: input
+    id: pack_name
+    attributes:
+      label: 配方包名称（中/英文）
+      placeholder: "例如：Notion 清爽专注套装 / Notion Calm Reader"
+    validations:
+      required: true
+  - type: input
+    id: sites
+    attributes:
+      label: 适用网站域名 / Target Domains
+      placeholder: "例如：notion.so, notion.site"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: 功能简介 / What does this pack do?
+      placeholder: "简述每条规则的用途及效果（CSS 隐藏干扰 / 阅读排版 / 快捷键脚本等）"
+    validations:
+      required: true
+  - type: textarea
+    id: pack_json
+    attributes:
+      label: .pagecraft-pack.json 或 #PCP1:...# 口令
+      placeholder: "在此粘贴从 PageCraft 导出的 JSON 或 #PCP1:...# 口令（请确保不含敏感隐私域名或密钥）"
+      render: json
+    validations:
+      required: true
+  - type: checkboxes
+    id: mv3_safety
+    attributes:
+      label: Chrome MV3 安全规范确认
+      options:
+        - label: 不包含 eval()、new Function()、动态插入外部 <script> 或远程 @require
+          required: true
+        - label: 不包含向第三方服务器外传页面内容、Cookie 或密钥的行为
+          required: true

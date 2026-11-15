@@ -17,6 +17,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildRecipes } from './build-recipes.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = resolve(__dirname, '..');
@@ -570,6 +571,7 @@ blockquote {
     </a>
     <div class="nav-right">
       <a href="../"><span data-l="zh">← 返回首页</span><span data-l="en">← Home</span></a>
+      <a href="../recipes/"><span data-l="zh">配方广场</span><span data-l="en">Recipe Hub</span></a>
       <a href="../playground/"><span data-l="zh">练习靶场</span><span data-l="en">Live Sandbox</span></a>
       <a href="https://github.com/botshen/pagecraft" rel="noopener noreferrer">GitHub</a>
       <div class="lang-seg" role="group" aria-label="Language">
@@ -651,6 +653,7 @@ ${renderedBody}
     <span>PageCraft · MIT Open Source</span>
     <div class="foot-links">
       <a href="../"><span data-l="zh">官网首页</span><span data-l="en">Home</span></a>
+      <a href="../recipes/"><span data-l="zh">配方广场</span><span data-l="en">Recipe Hub</span></a>
       <a href="../playground/"><span data-l="zh">练习靶场</span><span data-l="en">Sandbox</span></a>
       <a href="https://github.com/botshen/pagecraft/issues" rel="noopener noreferrer">GitHub Issues</a>
       <a href="mailto:botzgbj@gmail.com">Email support</a>
@@ -773,11 +776,15 @@ function main() {
     console.log(`Generated ${PRIVACY_OUT} (${expectedPrivacyHtml.length} bytes)`);
   }
 
+  // Build / validate curated Community Recipe Packs & /recipes/ hub
+  buildRecipes({ checkOnly: CHECK_ONLY });
+
   // Validate all static site pages & assets
   assertValidHtmlFile(resolve(SITE_DIR, 'index.html'), [
     '#C95533',
     '#FAF8F5',
     'https://github.com/botshen/pagecraft',
+    './recipes/',
     './playground/',
     './privacy/',
     'mailto:botzgbj@gmail.com',
@@ -785,6 +792,12 @@ function main() {
     'Gemini Nano',
     'Ollama',
     'chrome.userScripts',
+  ]);
+
+  assertValidHtmlFile(resolve(SITE_DIR, 'recipes/index.html'), [
+    '#C95533',
+    'PCP1:',
+    'https://github.com/botshen/pagecraft',
   ]);
 
   assertValidHtmlFile(resolve(SITE_DIR, 'playground/index.html'), [

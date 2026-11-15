@@ -1,0 +1,74 @@
+{
+  "id": "github-power-dev",
+  "author": "@pagecraft",
+  "category": "dev",
+  "tags": ["github", "code-review", "dev"],
+  "siteHints": ["github.com"],
+  "updatedAt": "2026-11-15",
+  "zh": {
+    "name": "GitHub 开发者宽屏效率套装",
+    "description": "PR Diff 视图自动适配宽屏、代码统一 2 空格缩进显示，并支持 Alt+Shift+C 一键复制 Markdown 引用链接。",
+    "mods": [
+      {
+        "id": "wide-pr-and-code",
+        "name": "GitHub 仓库与 PR Diff 宽屏视图",
+        "description": "释放两侧冗余留白，让 Pull Request 代码对比与文件树在大屏上一屏看全。",
+        "engine": "css",
+        "matches": ["https://github.com/*"],
+        "runAt": "document_start",
+        "body": ".container-xl,\n.container-lg {\n  max-width: min(1600px, 95vw) !important;\n}"
+      },
+      {
+        "id": "crisp-two-space-tabs",
+        "name": "代码 2 空格 Tab 与吸顶文件头增强",
+        "description": "将代码页与 Diff 的制表符宽度统一设为 2，并加粗文件栏底部分隔线。",
+        "engine": "css",
+        "matches": ["https://github.com/*"],
+        "runAt": "document_start",
+        "body": ".blob-code-inner,\n.markdown-body pre,\n.react-code-text {\n  tab-size: 2 !important;\n  -moz-tab-size: 2 !important;\n}\n.file-header.js-file-header {\n  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);\n}"
+      },
+      {
+        "id": "copy-markdown-link-shortcut",
+        "name": "Alt+Shift+C 一键复制 Markdown 链接",
+        "description": "在 Issue / PR / 仓库页按下 Alt+Shift+C，自动复制 [标题](URL) 格式链接。",
+        "engine": "js",
+        "matches": ["https://github.com/*"],
+        "runAt": "document_idle",
+        "body": "(() => {\n  if (window.__pcGhMdCopyInit) return;\n  window.__pcGhMdCopyInit = true;\n\n  function showToast(text) {\n    const el = document.createElement('div');\n    el.textContent = text;\n    el.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:2147483647;padding:8px 14px;border-radius:8px;background:#1C1917;color:#FAF8F5;font:500 12.5px/1.4 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.22)';\n    document.body.appendChild(el);\n    setTimeout(() => el.remove(), 1600);\n  }\n\n  window.addEventListener('keydown', (e) => {\n    if (!(e.altKey && e.shiftKey && e.key.toLowerCase() === 'c')) return;\n    e.preventDefault();\n    const cleanTitle = document.title.replace(/\\s+by\\s+[^·]+·.*$/, '').replace(/\\s*·\\s*GitHub$/, '').trim();\n    const md = `[${cleanTitle}](${location.href})`;\n    navigator.clipboard.writeText(md).then(() => showToast('Copied Markdown link')).catch(() => {});\n  });\n})();"
+      }
+    ]
+  },
+  "en": {
+    "name": "GitHub Power Dev Pack",
+    "description": "Full-width PR diffs, consistent 2-space tab width, and Alt+Shift+C Markdown link copy hotkey.",
+    "mods": [
+      {
+        "id": "wide-pr-and-code",
+        "name": "Wide PR Diff & Repo Container",
+        "description": "Expand repo and pull-request containers up to 1600px on wide monitors.",
+        "engine": "css",
+        "matches": ["https://github.com/*"],
+        "runAt": "document_start",
+        "body": ".container-xl,\n.container-lg {\n  max-width: min(1600px, 95vw) !important;\n}"
+      },
+      {
+        "id": "crisp-two-space-tabs",
+        "name": "2-Space Tab Size & File Header Polish",
+        "description": "Render tab-size: 2 across diffs and Markdown code blocks with crisp sticky headers.",
+        "engine": "css",
+        "matches": ["https://github.com/*"],
+        "runAt": "document_start",
+        "body": ".blob-code-inner,\n.markdown-body pre,\n.react-code-text {\n  tab-size: 2 !important;\n  -moz-tab-size: 2 !important;\n}\n.file-header.js-file-header {\n  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);\n}"
+      },
+      {
+        "id": "copy-markdown-link-shortcut",
+        "name": "Alt+Shift+C Markdown Link Copy",
+        "description": "Press Alt+Shift+C on any GitHub page to copy [Title](URL) cleanly to clipboard.",
+        "engine": "js",
+        "matches": ["https://github.com/*"],
+        "runAt": "document_idle",
+        "body": "(() => {\n  if (window.__pcGhMdCopyInit) return;\n  window.__pcGhMdCopyInit = true;\n\n  function showToast(text) {\n    const el = document.createElement('div');\n    el.textContent = text;\n    el.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:2147483647;padding:8px 14px;border-radius:8px;background:#1C1917;color:#FAF8F5;font:500 12.5px/1.4 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.22)';\n    document.body.appendChild(el);\n    setTimeout(() => el.remove(), 1600);\n  }\n\n  window.addEventListener('keydown', (e) => {\n    if (!(e.altKey && e.shiftKey && e.key.toLowerCase() === 'c')) return;\n    e.preventDefault();\n    const cleanTitle = document.title.replace(/\\s+by\\s+[^·]+·.*$/, '').replace(/\\s*·\\s*GitHub$/, '').trim();\n    const md = `[${cleanTitle}](${location.href})`;\n    navigator.clipboard.writeText(md).then(() => showToast('Copied Markdown link')).catch(() => {});\n  });\n})();"
+      }
+    ]
+  }
+}

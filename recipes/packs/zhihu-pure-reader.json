@@ -1,0 +1,74 @@
+{
+  "id": "zhihu-pure-reader",
+  "author": "@pagecraft",
+  "category": "reading",
+  "tags": ["zhihu", "reading", "clean", "links"],
+  "siteHints": ["zhihu.com"],
+  "updatedAt": "2026-11-15",
+  "zh": {
+    "name": "知乎沉浸阅读套装",
+    "description": "屏蔽登录弹窗与盐选推广、拓宽问答正文至舒适栏宽，并自动净化 link.zhihu.com 外链直达。",
+    "mods": [
+      {
+        "id": "block-login-promos",
+        "name": "移除知乎登录弹窗与右侧栏广告",
+        "description": "隐藏强制登录遮罩并恢复页面滚动，同时隐藏右侧推广与底部下载条。",
+        "engine": "css",
+        "matches": ["https://*.zhihu.com/*"],
+        "runAt": "document_start",
+        "body": "html,\nbody {\n  overflow: auto !important;\n}\n.Modal-wrapper:has(.signFlowModal),\n.SignFlowHomepage,\n.Question-sideColumnAd,\n.Pc-card,\n.MCNLinkCard,\n.Sticky .RightSideBar,\n.AppBanner {\n  display: none !important;\n}"
+      },
+      {
+        "id": "wide-editorial-column",
+        "name": "知乎居中宽屏精读排版",
+        "description": "问答主栏与专栏正文居中展示并调优字距行高，减少长文阅读视觉疲劳。",
+        "engine": "css",
+        "matches": ["https://www.zhihu.com/question/*", "https://zhuanlan.zhihu.com/p/*"],
+        "runAt": "document_start",
+        "body": ".Question-main {\n  width: min(920px, 92vw) !important;\n  margin: 0 auto !important;\n}\n.Question-mainColumn,\n.Post-Main {\n  width: 100% !important;\n  max-width: 820px !important;\n  margin: 0 auto !important;\n}\n.RichText {\n  font-size: 16px !important;\n  line-height: 1.8 !important;\n}"
+      },
+      {
+        "id": "direct-external-links",
+        "name": "知乎外链直达免跳转",
+        "description": "纯本地解析 link.zhihu.com/?target=... 链接并还原为真实目标地址。",
+        "engine": "js",
+        "matches": ["https://*.zhihu.com/*"],
+        "runAt": "document_idle",
+        "body": "(() => {\n  function unwrapLinks(root) {\n    const anchors = (root || document).querySelectorAll('a[href*=\"link.zhihu.com\"]');\n    for (const a of anchors) {\n      try {\n        const u = new URL(a.href);\n        const target = u.searchParams.get('target');\n        if (target && /^https?:\\/\\//i.test(target)) {\n          a.href = target;\n          a.removeAttribute('data-za-detail-view-id');\n        }\n      } catch {\n        /* skip malformed URL */\n      }\n    }\n  }\n  unwrapLinks(document);\n  const obs = new MutationObserver(() => unwrapLinks(document));\n  if (document.body) obs.observe(document.body, { childList: true, subtree: true });\n})();"
+      }
+    ]
+  },
+  "en": {
+    "name": "Zhihu Pure Reader Pack",
+    "description": "Block login overlays & sidebar promos, widen reading columns, and unwrap link.zhihu.com redirects locally.",
+    "mods": [
+      {
+        "id": "block-login-promos",
+        "name": "Block Login Overlays & Ads",
+        "description": "Remove sign-in popups, restore page scroll, and hide sidebar promo cards.",
+        "engine": "css",
+        "matches": ["https://*.zhihu.com/*"],
+        "runAt": "document_start",
+        "body": "html,\nbody {\n  overflow: auto !important;\n}\n.Modal-wrapper:has(.signFlowModal),\n.SignFlowHomepage,\n.Question-sideColumnAd,\n.Pc-card,\n.MCNLinkCard,\n.Sticky .RightSideBar,\n.AppBanner {\n  display: none !important;\n}"
+      },
+      {
+        "id": "wide-editorial-column",
+        "name": "Centered Editorial Reading Column",
+        "description": "Center questions and Zhuanlan articles around 820px with comfortable 1.8 line height.",
+        "engine": "css",
+        "matches": ["https://www.zhihu.com/question/*", "https://zhuanlan.zhihu.com/p/*"],
+        "runAt": "document_start",
+        "body": ".Question-main {\n  width: min(920px, 92vw) !important;\n  margin: 0 auto !important;\n}\n.Question-mainColumn,\n.Post-Main {\n  width: 100% !important;\n  max-width: 820px !important;\n  margin: 0 auto !important;\n}\n.RichText {\n  font-size: 16px !important;\n  line-height: 1.8 !important;\n}"
+      },
+      {
+        "id": "direct-external-links",
+        "name": "Direct External Links Unwrapper",
+        "description": "Rewrite link.zhihu.com/?target=... anchors locally to their direct destinations.",
+        "engine": "js",
+        "matches": ["https://*.zhihu.com/*"],
+        "runAt": "document_idle",
+        "body": "(() => {\n  function unwrapLinks(root) {\n    const anchors = (root || document).querySelectorAll('a[href*=\"link.zhihu.com\"]');\n    for (const a of anchors) {\n      try {\n        const u = new URL(a.href);\n        const target = u.searchParams.get('target');\n        if (target && /^https?:\\/\\//i.test(target)) {\n          a.href = target;\n          a.removeAttribute('data-za-detail-view-id');\n        }\n      } catch {\n        /* skip malformed URL */\n      }\n    }\n  }\n  unwrapLinks(document);\n  const obs = new MutationObserver(() => unwrapLinks(document));\n  if (document.body) obs.observe(document.body, { childList: true, subtree: true });\n})();"
+      }
+    ]
+  }
+}

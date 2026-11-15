@@ -10,6 +10,7 @@ import {
   exportAsUserScript,
   hostPatternFromUrl,
   isBroadMatch,
+  mergeImportedUserScripts,
   normalizeMod,
   parseUserScriptHeader,
   upsertUserScript,
@@ -22,7 +23,26 @@ import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Switch } from '../components/ui/switch';
 import { SegmentedControl } from '../components/ui/segmented';
-import { decodeRecipeShortcode, formatRecipeSharePost } from '~/lib/userscripts/share';
+import {
+  decodeRecipeShortcode,
+  formatRecipeSharePost,
+} from '~/lib/userscripts/share';
+import {
+  DEFAULT_PACK_HUB_URL,
+  buildGitHubPackSubmissionUrl,
+  buildPackFromUserScripts,
+  decodePackShortcode,
+  formatPackSharePost,
+  instantiatePackMods,
+  parsePackJson,
+  resolveCatalogPack,
+  serializePackJson,
+  slugifyPackId,
+  type CommunityPack,
+  type LocalizedCatalogPack,
+} from '~/lib/userscripts/packs';
+import { COMMUNITY_CATALOG_PACKS } from '~/lib/userscripts/community-catalog.generated';
+import { auditPackSafety } from '~/lib/userscripts/safety-audit';
 import {
   Plus,
   Download,
@@ -38,6 +58,11 @@ import {
   FileDown,
   FileUp,
   Share2,
+  Package,
+  ShieldCheck,
+  ChevronDown,
+  ChevronUp,
+  Send,
 } from 'lucide-react';
 import { cn } from '~/lib/utils';
 import { recheckOrRecoverJsPermission } from '../utils';
@@ -73,6 +98,8 @@ interface Props {
   activeTab: ActiveTabInfo;
   mods: UserScript[];
   availability: UserScriptsAvailability | null;
+  pendingPack?: CommunityPack | null;
+  onConsumePendingPack?: () => void;
   onModsChanged: () => Promise<void>;
   onRecheckAvailability: () => Promise<UserScriptsAvailability>;
   onNavigateStudio: () => void;
@@ -85,6 +112,8 @@ export default function ModsPage({
   activeTab,
   mods,
   availability,
+  pendingPack,
+  onConsumePendingPack,
   onModsChanged,
   onRecheckAvailability,
   onNavigateStudio,
@@ -94,6 +123,15 @@ export default function ModsPage({
 }: Props) {
   const [editing, setEditing] = useState<UserScript | null>(null);
   const [importOpen, setImportOpen] = useState(false);
+  const [hubOpen, setHubOpen] = useState(false);
+  const [packBuilderOpen, setPackBuilderOpen] = useState(false);
+  const [reviewingPack, setReviewingPack] = useState<CommunityPack | null>(null);
+  const [reviewSelectedIds, setReviewSelectedIds] = useState<Set<string>>(() => new Set());
+  const [expandedRuleIds, setExpandedRuleIds] = useState<Set<string>>(() => new Set());
+  const [builderModIds, setBuilderModIds] = useState<Set<string>>(() => new Set());
+  const [builderName, setBuilderName] = useState('');
+  const [builderAuthor, setBuilderAuthor] = useState('@community');
+  const [builderDesc, setBuilderDesc] = useState('');
   const [importSource, setImportSource] = useState('');
   const [draggingFile, setDraggingFile] = useState(false);
   const [importWarn, setImportWarn] = useState<string | null>(null);
@@ -105,6 +143,23 @@ export default function ModsPage({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const backupInputRef = useRef<HTMLInputElement | null>(null);
   const confirmTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function openPackReview(pack: CommunityPack) {
+    setReviewingPack(pack);
+    setReviewSelectedIds(new Set(pack.mods.map((m) => m.id)));
+    setExpandedRuleIds(new Set());
+    setImportOpen(false);
+    setHubOpen(false);
+    setPackBuilderOpen(false);
+    setFormError(null);
+  }
+
+  useEffect(() => {
+    if (pendingPack) {
+      openPackReview(pendingPack);
+      onConsumePendingPack?.();
+    }
+  }, [pendingPack, onConsumePendingPack]);
 
   useEffect(() => {
     return () => {
@@ -128,6 +183,108 @@ export default function ModsPage({
       return haystack.includes(q);
     });
   }, [mods, modFilter, searchQuery]);
+
+  const installedPackIds = useMemo(
+    () => new Set(mods.map((m) => m.packId).filter((id): id is string => Boolean(id))),
+    [mods],
+  );
+
+  const sortedCatalogPacks = useMemo<LocalizedCatalogPack[]>(() => {
+    const host = (activeTab.host ?? '').toLowerCase();
+    return [...COMMUNITY_CATALOG_PACKS].sort((a, b) => {
+      const aMatch =
+        (host && a.siteHints.some((h) => host.includes(h))) ||
+        (activeTab.url && a.zh.mods.some((m) => urlMatchesAny(activeTab.url, m.matches)));
+      const bMatch =
+        (host && b.siteHints.some((h) => host.includes(h))) ||
+        (activeTab.url && b.zh.mods.some((m) => urlMatchesAny(activeTab.url, m.matches)));
+      if (aMatch && !bMatch) return -1;
+      if (!aMatch && bMatch) return 1;
+      return 0;
+    });
+  }, [activeTab.host, activeTab.url]);
+
+  const packSafetyReport = useMemo(() => {
+    if (!reviewingPack) return null;
+    const pickedMods = reviewingPack.mods.filter((m) => reviewSelectedIds.has(m.id));
+    return auditPackSafety(pickedMods.length > 0 ? pickedMods : reviewingPack.mods);
+  }, [reviewingPack, reviewSelectedIds]);
+
+  const builtPackPreview = useMemo<CommunityPack | null>(() => {
+    if (!packBuilderOpen) return null;
+    const selected = mods.filter((m) => builderModIds.has(m.id));
+    if (selected.length === 0) return null;
+    return buildPackFromUserScripts(selected, {
+      name: builderName.trim() || (lang === 'zh' ? '我的 PageCraft 配方包' : 'My PageCraft Pack'),
+      author: builderAuthor.trim() || '@community',
+      description: builderDesc.trim(),
+    });
+  }, [packBuilderOpen, mods, builderModIds, builderName, builderAuthor, builderDesc, lang]);
+
+  function openExternalUrl(url: string) {
+    if (typeof chrome !== 'undefined' && chrome.tabs?.create) {
+      void chrome.tabs.create({ url }).catch(() => window.open(url, '_blank', 'noopener'));
+    } else {
+      window.open(url, '_blank', 'noopener');
+    }
+  }
+
+  function startPackBuilder() {
+    const nextOpen = !packBuilderOpen;
+    setPackBuilderOpen(nextOpen);
+    if (!nextOpen) return;
+    setImportOpen(false);
+    setHubOpen(false);
+    setReviewingPack(null);
+    const siteMatches = activeTab.url
+      ? mods.filter((m) => urlMatchesAny(activeTab.url, m.matches))
+      : [];
+    const defaultSet = (siteMatches.length > 0 ? siteMatches : mods.filter((m) => m.enabled).length > 0 ? mods.filter((m) => m.enabled) : mods).slice(0, 12);
+    setBuilderModIds(new Set(defaultSet.map((m) => m.id)));
+    setBuilderName(
+      activeTab.host
+        ? lang === 'zh'
+          ? `${activeTab.host} 定制套装`
+          : `${activeTab.host} Custom Pack`
+        : lang === 'zh'
+          ? '我的网页定制套装'
+          : 'My Custom Recipe Pack',
+    );
+    setBuilderDesc('');
+  }
+
+  async function handleConfirmPackImport() {
+    if (!reviewingPack || reviewSelectedIds.size === 0) return;
+    if (packSafetyReport?.level === 'blocked') return;
+
+    const instantiated = instantiatePackMods(reviewingPack, reviewSelectedIds);
+    if (instantiated.length === 0) return;
+
+    await mergeImportedUserScripts(instantiated);
+    await syncRuntime();
+    await onModsChanged();
+
+    const usesJs = instantiated.some((m) => m.engine === 'js');
+    if (usesJs) {
+      const avail = await onRecheckAvailability();
+      if (!avail.available) {
+        onToast(
+          lang === 'zh'
+            ? `已导入「${reviewingPack.name}」${instantiated.length} 条规则（JS 规则需开启允许用户脚本）`
+            : `Imported ${instantiated.length} rule(s) from "${reviewingPack.name}" (enable Allow User Scripts for JS)`,
+        );
+        setReviewingPack(null);
+        return;
+      }
+    }
+
+    onToast(
+      lang === 'zh'
+        ? `已导入并启用《${reviewingPack.name}》（${instantiated.length} 条规则）`
+        : `Imported & activated "${reviewingPack.name}" (${instantiated.length} rule(s))`,
+    );
+    setReviewingPack(null);
+  }
 
   const activeSiteList = activeTab.url
     ? filteredMods.filter((m) => urlMatchesAny(activeTab.url, m.matches))
@@ -262,6 +419,12 @@ export default function ModsPage({
     }
     try {
       const rawText = await file.text();
+      const packManifest = parsePackJson(rawText);
+      if (packManifest) {
+        openPackReview(packManifest);
+        return;
+      }
+
       const parsed: unknown = JSON.parse(rawText);
       const rawItems: unknown[] = Array.isArray(parsed)
         ? parsed
@@ -344,6 +507,14 @@ export default function ModsPage({
     let sawRemoteWarn = false;
 
     for (const entry of validEntries) {
+      const decodedPack =
+        decodePackShortcode(entry.raw) ?? parsePackJson(entry.raw);
+      if (decodedPack) {
+        setImportSource('');
+        openPackReview(decodedPack);
+        return true;
+      }
+
       const sharedRecipe = decodeRecipeShortcode(entry.raw);
       if (sharedRecipe) {
         const broad = sharedRecipe.matches.some((m) => isBroadMatch(m));
@@ -352,26 +523,30 @@ export default function ModsPage({
           setFormError(err);
           return false;
         }
-        const now = Date.now();
-        const mod: UserScript = {
-          id: crypto.randomUUID(),
+        setImportSource('');
+        openPackReview({
+          kind: 'pagecraft-pack',
+          version: 1,
+          id: slugifyPackId(sharedRecipe.name, 'shared-recipe'),
           name: sharedRecipe.name,
           description: sharedRecipe.description,
-          engine: sharedRecipe.engine,
-          matches: sharedRecipe.matches,
-          code: sharedRecipe.engine === 'js' ? sharedRecipe.body : '',
-          css: sharedRecipe.engine === 'css' ? sharedRecipe.body : undefined,
-          targetSelectors: sharedRecipe.targetSelectors,
-          enabled: true,
-          source: 'manual',
-          runAt: sharedRecipe.runAt,
-          allowAllUrls: broad,
-          createdAt: now,
-          updatedAt: now,
-        };
-        await upsertUserScript(mod);
-        importedNames.push(mod.name);
-        continue;
+          author: '@shared',
+          tags: [],
+          siteHints: [],
+          mods: [
+            {
+              id: slugifyPackId(sharedRecipe.name, 'rule-1'),
+              name: sharedRecipe.name,
+              description: sharedRecipe.description,
+              engine: sharedRecipe.engine,
+              matches: sharedRecipe.matches,
+              body: sharedRecipe.body,
+              runAt: sharedRecipe.runAt,
+              targetSelectors: sharedRecipe.targetSelectors,
+            },
+          ],
+        });
+        return true;
       }
 
       const parsed = parseUserScriptHeader(entry.raw, lang);
@@ -633,7 +808,7 @@ export default function ModsPage({
       <input
         ref={fileInputRef}
         type="file"
-        accept=".js,.user.js,text/javascript,application/javascript"
+        accept=".js,.user.js,.json,text/javascript,application/javascript,application/json"
         multiple
         className="hidden"
         onChange={(e) => {
@@ -656,9 +831,27 @@ export default function ModsPage({
       <div className="flex items-center gap-1.5 flex-wrap">
         <Button
           size="sm"
+          variant={hubOpen ? 'primary' : 'secondary'}
+          onClick={() => {
+            setHubOpen((v) => !v);
+            setImportOpen(false);
+            setPackBuilderOpen(false);
+            setReviewingPack(null);
+            setFormError(null);
+          }}
+          className="text-xs px-2.5"
+        >
+          <Package className="h-3.5 w-3.5" />
+          <span>{t('communityHubBtn')}</span>
+        </Button>
+        <Button
+          size="sm"
           variant={importOpen ? 'primary' : 'secondary'}
           onClick={() => {
             setImportOpen((v) => !v);
+            setHubOpen(false);
+            setPackBuilderOpen(false);
+            setReviewingPack(null);
             setFormError(null);
           }}
           className="text-xs px-2.5"
@@ -675,6 +868,17 @@ export default function ModsPage({
           <Plus className="h-3.5 w-3.5" />
           <span>{t('newManualMod')}</span>
         </Button>
+        {mods.length > 0 && (
+          <Button
+            size="sm"
+            variant={packBuilderOpen ? 'primary' : 'secondary'}
+            onClick={startPackBuilder}
+            className="text-xs px-2.5"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+            <span>{t('packShareBtn')}</span>
+          </Button>
+        )}
 
         <div className="ml-auto flex items-center gap-1">
           {mods.length > 0 && (
@@ -701,6 +905,368 @@ export default function ModsPage({
           </Button>
         </div>
       </div>
+
+      {/* Security Audit & Source Review Import Sheet (MV3 User-Confirmed Import) */}
+      {reviewingPack && packSafetyReport && (
+        <section className="pc-enter rounded-[10px] border border-[var(--pc-accent)]/45 bg-card divide-y divide-border overflow-hidden">
+          <div className="px-3.5 py-2.5 bg-secondary/40 flex items-start justify-between gap-2">
+            <div className="min-w-0 space-y-0.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <ShieldCheck className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-[13px] font-semibold text-foreground">
+                  {t('reviewPackTitle')}
+                </span>
+              </div>
+              <p className="text-[12px] text-muted-foreground truncate">
+                {reviewingPack.name} · {reviewingPack.author} · {reviewingPack.mods.length}{' '}
+                {lang === 'zh' ? '条规则' : 'rule(s)'}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setReviewingPack(null)}
+              aria-label={t('cancel')}
+              className="pc-btn p-1 rounded-[5px] text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          <div
+            className={cn(
+              'px-3.5 py-2.5 text-xs leading-relaxed space-y-1',
+              packSafetyReport.level === 'blocked'
+                ? 'bg-destructive/10 text-destructive'
+                : packSafetyReport.level === 'review_warning'
+                  ? 'bg-amber-500/10 text-foreground'
+                  : 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300',
+            )}
+          >
+            <div className="font-semibold">
+              {packSafetyReport.level === 'safe_css'
+                ? `✓ ${t('safetySafeCss')}`
+                : packSafetyReport.level === 'clean_local_js'
+                  ? `✓ ${t('safetyCleanLocalJs')}`
+                  : packSafetyReport.level === 'blocked'
+                    ? `✕ ${t('safetyBlocked')}`
+                    : `⚠ ${t('safetyReviewWarn')}`}
+            </div>
+            {packSafetyReport.findings.map((f) => (
+              <div key={f.code} className="text-[11.5px] opacity-90">
+                • {lang === 'zh' ? f.messageZh : f.messageEn}
+              </div>
+            ))}
+          </div>
+
+          <div className="divide-y divide-border max-h-[300px] overflow-y-auto">
+            {reviewingPack.mods.map((rule) => {
+              const checked = reviewSelectedIds.has(rule.id);
+              const expanded = expandedRuleIds.has(rule.id);
+              return (
+                <div key={rule.id} className="px-3.5 py-2.5 space-y-1.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <label className="flex items-start gap-2 min-w-0 flex-1 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(e) => {
+                          setReviewSelectedIds((prev) => {
+                            const next = new Set(prev);
+                            if (e.target.checked) next.add(rule.id);
+                            else next.delete(rule.id);
+                            return next;
+                          });
+                        }}
+                        className="mt-0.5 accent-[var(--pc-accent)] shrink-0"
+                      />
+                      <div className="min-w-0 space-y-0.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[12.5px] font-medium text-foreground">
+                            {rule.name}
+                          </span>
+                          <Badge
+                            variant={rule.engine === 'css' ? 'default' : 'secondary'}
+                            className="font-mono uppercase px-1.5 py-0 text-[10px]"
+                          >
+                            {rule.engine}
+                          </Badge>
+                        </div>
+                        {rule.description && (
+                          <p className="text-[11.5px] text-muted-foreground leading-snug">
+                            {rule.description}
+                          </p>
+                        )}
+                        <div className="font-mono text-[11px] text-muted-foreground truncate">
+                          {rule.matches.join(', ')}
+                        </div>
+                      </div>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setExpandedRuleIds((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(rule.id)) next.delete(rule.id);
+                          else next.add(rule.id);
+                          return next;
+                        });
+                      }}
+                      className="pc-btn inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-[5px] text-[11px] text-muted-foreground hover:text-foreground hover:bg-secondary shrink-0 cursor-pointer"
+                    >
+                      <span>{expanded ? t('hideSource') : t('viewSource')}</span>
+                      {expanded ? (
+                        <ChevronUp className="h-3 w-3" />
+                      ) : (
+                        <ChevronDown className="h-3 w-3" />
+                      )}
+                    </button>
+                  </div>
+                  {expanded && (
+                    <pre className="p-2.5 rounded-[7px] bg-secondary/75 border border-border font-mono text-[11px] leading-relaxed overflow-x-auto max-h-40 text-foreground whitespace-pre">
+                      {rule.body}
+                    </pre>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="px-3.5 py-2.5 bg-secondary/25 flex items-center justify-end gap-2">
+            <Button size="xs" variant="ghost" onClick={() => setReviewingPack(null)}>
+              {t('cancel')}
+            </Button>
+            <Button
+              size="xs"
+              variant="primary"
+              disabled={reviewSelectedIds.size === 0 || packSafetyReport.level === 'blocked'}
+              onClick={() => void handleConfirmPackImport()}
+            >
+              {t('reviewConfirmBtn')} ({reviewSelectedIds.size})
+            </Button>
+          </div>
+        </section>
+      )}
+
+      {/* Offline Bundled Community Recipe Hub Drawer */}
+      {hubOpen && (
+        <section className="pc-enter rounded-[10px] border border-border bg-card divide-y divide-border overflow-hidden">
+          <div className="px-3.5 py-2.5 bg-secondary/35 flex items-center justify-between gap-2">
+            <div className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-foreground">
+              <Package className="h-4 w-4 text-primary" />
+              <span>{t('communityHubBtn')}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => openExternalUrl(DEFAULT_PACK_HUB_URL)}
+                className="pc-focus inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline cursor-pointer"
+              >
+                <span>{t('openWebHubBtn')}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setHubOpen(false)}
+                aria-label={t('cancel')}
+                className="pc-btn p-1 rounded-[5px] text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+          <div className="divide-y divide-border max-h-[340px] overflow-y-auto">
+            {sortedCatalogPacks.map((entry) => {
+              const v = lang === 'zh' ? entry.zh : entry.en;
+              const isInstalled = installedPackIds.has(entry.id);
+              const host = (activeTab.host ?? '').toLowerCase();
+              const isForSite = Boolean(
+                (host && entry.siteHints.some((h) => host.includes(h))) ||
+                (activeTab.url && entry.zh.mods.some((m) => urlMatchesAny(activeTab.url, m.matches))),
+              );
+              return (
+                <div
+                  key={entry.id}
+                  className={cn(
+                    'px-3.5 py-2.5 flex items-start justify-between gap-3',
+                    isForSite && 'bg-[var(--pc-accent-subtle)]/35',
+                  )}
+                >
+                  <div className="min-w-0 space-y-1 flex-1">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[13px] font-medium text-foreground">{v.name}</span>
+                      <Badge variant="outline" className="px-1.5 py-0 text-[10.5px]">
+                        {v.mods.length} {lang === 'zh' ? '条规则' : 'rules'}
+                      </Badge>
+                      {isForSite && (
+                        <Badge variant="default" className="px-1.5 py-0 text-[10.5px]">
+                          {t('forThisSite')}
+                        </Badge>
+                      )}
+                      {isInstalled && (
+                        <Badge variant="secondary" className="px-1.5 py-0 text-[10.5px]">
+                          {lang === 'zh' ? '已安装' : 'Installed'}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-[12px] text-muted-foreground leading-snug">
+                      {v.description}
+                    </p>
+                    <div className="font-mono text-[11px] text-muted-foreground truncate">
+                      {entry.siteHints.join(' · ')}
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    size="xs"
+                    variant={isInstalled ? 'secondary' : 'primary'}
+                    onClick={() => openPackReview(resolveCatalogPack(entry, lang))}
+                    className="shrink-0 mt-0.5"
+                  >
+                    {isInstalled
+                      ? lang === 'zh'
+                        ? '查看 / 更新'
+                        : 'Update'
+                      : t('handoffReviewBtn')}
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Bundle & Submit Community Pack Sheet */}
+      {packBuilderOpen && (
+        <section className="pc-enter rounded-[10px] border border-border bg-card divide-y divide-border overflow-hidden">
+          <div className="px-3.5 py-2.5 bg-secondary/35 flex items-center justify-between gap-2">
+            <div className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-foreground">
+              <Share2 className="h-4 w-4 text-primary" />
+              <span>{t('packBuilderTitle')}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPackBuilderOpen(false)}
+              aria-label={t('cancel')}
+              className="pc-btn p-1 rounded-[5px] text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <div className="p-3.5 space-y-2.5">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="text-[11.5px] font-medium text-muted-foreground">
+                  {t('packNameLabel')}
+                </label>
+                <Input
+                  value={builderName}
+                  onChange={(e) => setBuilderName(e.target.value)}
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11.5px] font-medium text-muted-foreground">
+                  {t('packAuthorLabel')}
+                </label>
+                <Input
+                  value={builderAuthor}
+                  onChange={(e) => setBuilderAuthor(e.target.value)}
+                  className="h-8 text-xs font-mono"
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[11.5px] font-medium text-muted-foreground">
+                {t('packDescLabel')}
+              </label>
+              <Input
+                value={builderDesc}
+                onChange={(e) => setBuilderDesc(e.target.value)}
+                placeholder={
+                  lang === 'zh'
+                    ? '例如：屏蔽推荐流并优化阅读排版'
+                    : 'e.g. Clean feed promos and polish article typography'
+                }
+                className="h-8 text-xs"
+              />
+            </div>
+            <div className="rounded-[8px] border border-border divide-y divide-border max-h-36 overflow-y-auto">
+              {mods.map((m) => (
+                <label
+                  key={m.id}
+                  className="px-2.5 py-1.5 flex items-center gap-2 text-xs cursor-pointer hover:bg-secondary/35"
+                >
+                  <input
+                    type="checkbox"
+                    checked={builderModIds.has(m.id)}
+                    onChange={(e) => {
+                      setBuilderModIds((prev) => {
+                        const next = new Set(prev);
+                        if (e.target.checked) next.add(m.id);
+                        else next.delete(m.id);
+                        return next;
+                      });
+                    }}
+                    className="accent-[var(--pc-accent)] shrink-0"
+                  />
+                  <span className="truncate flex-1 font-medium text-foreground">{m.name}</span>
+                  <Badge variant="outline" className="font-mono uppercase px-1 py-0 text-[10px]">
+                    {m.engine}
+                  </Badge>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div className="px-3.5 py-2.5 bg-secondary/25 flex items-center gap-1.5 flex-wrap">
+            <Button
+              type="button"
+              size="xs"
+              variant="primary"
+              disabled={!builtPackPreview}
+              onClick={() => {
+                if (!builtPackPreview) return;
+                void navigator.clipboard.writeText(formatPackSharePost(builtPackPreview, lang));
+                onToast(t('copiedPackPostToast'));
+              }}
+            >
+              <Copy className="h-3 w-3" />
+              <span>{t('copyPackPostBtn')}</span>
+            </Button>
+            <Button
+              type="button"
+              size="xs"
+              variant="secondary"
+              disabled={!builtPackPreview}
+              onClick={() => {
+                if (!builtPackPreview) return;
+                const filename = `${builtPackPreview.id}.pagecraft-pack.json`;
+                triggerBrowserDownload(
+                  filename,
+                  serializePackJson(builtPackPreview),
+                  'application/json;charset=utf-8',
+                );
+                onToast(lang === 'zh' ? `已下载：${filename}` : `Downloaded: ${filename}`);
+              }}
+            >
+              <FileDown className="h-3 w-3" />
+              <span>{t('downloadPackJsonBtn')}</span>
+            </Button>
+            <Button
+              type="button"
+              size="xs"
+              variant="secondary"
+              disabled={!builtPackPreview}
+              onClick={() => {
+                if (!builtPackPreview) return;
+                openExternalUrl(buildGitHubPackSubmissionUrl(builtPackPreview));
+              }}
+              className="ml-auto"
+            >
+              <Send className="h-3 w-3" />
+              <span>{t('submitGitHubHubBtn')}</span>
+            </Button>
+          </div>
+        </section>
+      )}
 
       {/* Flat-Divided Drag-and-Drop / #PC1:...# Import Sheet (strict max 2 boxes deep) */}
       {(importOpen || draggingFile) && (
@@ -750,7 +1316,7 @@ export default function ModsPage({
 
           <div className="px-3.5 py-2 bg-secondary/25 flex items-center justify-between gap-2">
             <span className="font-mono text-[11px] text-muted-foreground truncate">
-              ==UserScript== · #PC1:...#
+              ==UserScript== · #PC1 · #PCP1 · .json
             </span>
             <div className="flex items-center gap-1.5 shrink-0">
               <Button
@@ -1001,6 +1567,11 @@ function ModGroup({
                     >
                       {mod.engine}
                     </Badge>
+                    {mod.packName && (
+                      <Badge variant="outline" className="px-1.5 py-0 font-normal">
+                        {mod.packName}
+                      </Badge>
+                    )}
                   </div>
                   {mod.description && (
                     <p className="text-[12.5px] text-muted-foreground leading-relaxed">

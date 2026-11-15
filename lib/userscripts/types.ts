@@ -13,7 +13,7 @@ export const LEGACY_USERSCRIPTS_STORAGE_KEY = 'pr_userscripts';
 
 export type ModEngine = 'css' | 'js';
 
-export type UserScriptSource = 'ai' | 'template' | 'manual';
+export type UserScriptSource = 'ai' | 'template' | 'manual' | 'community';
 
 export type UserScriptRunAt =
   | 'document_start'
@@ -36,6 +36,8 @@ export interface UserScript {
   enabled: boolean;
   source: UserScriptSource;
   templateId?: string;
+  packId?: string;
+  packName?: string;
   runAt: UserScriptRunAt;
   /** User explicitly opted into a broad <all_urls>-style match. */
   allowAllUrls?: boolean;

@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; base-uri 'self'; form-action 'self' mailto:" />
+<title>PageCraft 社区配方广场 — Community Recipe Hub</title>
+<meta name="description" content="PageCraft 社区精选网页改造配方包：B站专注、知乎精读、GitHub 宽屏、YouTube 去 Shorts、论文精读与表格导出。零远程加载，全部源码透明可审计，一键口令或侧栏直装。" />
+<link rel="icon" type="image/svg+xml" href="../icon.svg" />
+<link rel="stylesheet" href="../fonts/fonts.css" />
+<style>
+:root {
+  --bg: #FAF8F5;
+  --bg-subtle: #F1ECE4;
+  --surface: #FFFFFF;
+  --surface-2: #F6F2EB;
+  --ink: #1C1917;
+  --ink-secondary: #3F3B37;
+  --muted: #686562;
+  --primary: #C95533;
+  --primary-hover: #B24627;
+  --primary-soft: rgba(201, 85, 51, 0.10);
+  --primary-border: rgba(201, 85, 51, 0.30);
+  --emerald: #15803D;
+  --emerald-soft: rgba(21, 128, 61, 0.10);
+  --emerald-border: rgba(21, 128, 61, 0.28);
+  --border: rgba(28, 25, 23, 0.11);
+  --border-strong: rgba(28, 25, 23, 0.20);
+  --gut: clamp(20px, 5vw, 72px);
+  --display: "Epilogue", system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --sans: "Epilogue", system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1C1917;
+    --bg-subtle: #292624;
+    --surface: #23201E;
+    --surface-2: #292624;
+    --ink: #FAF8F5;
+    --ink-secondary: #D8D4CE;
+    --muted: #9D9B98;
+    --primary: #D96543;
+    --primary-hover: #E37453;
+    --primary-soft: rgba(217, 101, 67, 0.16);
+    --primary-border: rgba(217, 101, 67, 0.36);
+    --emerald: #4ADE80;
+    --emerald-soft: rgba(74, 222, 128, 0.13);
+    --emerald-border: rgba(74, 222, 128, 0.28);
+    --border: rgba(250, 248, 245, 0.11);
+    --border-strong: rgba(250, 248, 245, 0.22);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1C1917;
+  --bg-subtle: #292624;
+  --surface: #23201E;
+  --surface-2: #292624;
+  --ink: #FAF8F5;
+  --ink-secondary: #D8D4CE;
+  --muted: #9D9B98;
+  --primary: #D96543;
+  --primary-hover: #E37453;
+  --primary-soft: rgba(217, 101, 67, 0.16);
+  --primary-border: rgba(217, 101, 67, 0.36);
+  --emerald: #4ADE80;
+  --emerald-soft: rgba(74, 222, 128, 0.13);
+  --emerald-border: rgba(74, 222, 128, 0.28);
+  --border: rgba(250, 248, 245, 0.11);
+  --border-strong: rgba(250, 248, 245, 0.22);
+}
+*, *::before, *::after { box-sizing: border-box; }
+html[data-lang="zh"] [data-l="en"] { display: none !important; }
+html[data-lang="en"] [data-l="zh"] { display: none !important; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15.5px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.topbar__inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--gut);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  text-decoration: none;
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 16.5px;
+  letter-spacing: -0.02em;
+}
+.brand img { width: 28px; height: 28px; border-radius: 7px; }
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.nav-links a {
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+.nav-links a:hover, .nav-links a.is-active { color: var(--ink); font-weight: 600; }
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--ink-secondary);
+  font: 500 12.5px/1 var(--sans);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.pill-btn:hover { background: var(--bg-subtle); color: var(--ink); }
+.pill-btn--primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #FAF8F5;
+}
+.pill-btn--primary:hover { background: var(--primary-hover); color: #FAF8F5; }
+.lang-toggle {
+  display: inline-flex;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  padding: 2px;
+}
+.lang-toggle button {
+  height: 26px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: 500 12px/1 var(--sans);
+  cursor: pointer;
+}
+.lang-toggle button.is-on {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px var(--gut) 80px;
+}
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.9fr);
+  gap: 24px;
+  align-items: end;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 10px;
+}
+h1 {
+  margin: 0 0 12px;
+  font-size: clamp(28px, 4vw, 44px);
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+}
+.hero__sub {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15.5px;
+  max-width: 58ch;
+}
+.hero__box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  font-size: 13.5px;
+  color: var(--ink-secondary);
+}
+.hero__box strong { color: var(--ink); display: block; margin-bottom: 6px; }
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.filter-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.filter-pill {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--ink-secondary);
+  font: 500 13px/1 var(--sans);
+  cursor: pointer;
+}
+.filter-pill.is-active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+}
+.search-input {
+  width: min(320px, 100%);
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--ink);
+  font: 400 13.5px/1 var(--sans);
+}
+.search-input:focus {
+  outline: 2px solid var(--primary-border);
+  border-color: var(--primary);
+}
+.notice-bar {
+  display: none;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--emerald-border);
+  background: var(--emerald-soft);
+  color: var(--ink);
+  font-size: 14px;
+}
+.notice-bar.is-visible { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.pack-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.pack-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+.pack-card.is-highlighted {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+.pack-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.pack-card__title {
+  margin: 0 0 4px;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.pack-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.safety-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--emerald-border);
+  background: var(--emerald-soft);
+  color: var(--emerald);
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.pack-card__desc {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-secondary);
+}
+.site-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.site-chip {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--ink-secondary);
+}
+.mods-list {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.mod-row {
+  padding: 9px 12px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+}
+.mod-row + .mod-row { border-top: 1px solid var(--border); }
+.mod-row__name { font-weight: 600; color: var(--ink); }
+.mod-row__desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.engine-pill {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 5px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--ink-secondary);
+  text-transform: uppercase;
+  flex: none;
+}
+details.source-drawer {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  padding: 8px 12px;
+}
+details.source-drawer summary {
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+}
+.code-block {
+  margin: 8px 0 0;
+  padding: 10px;
+  border-radius: 8px;
+  background: #1C1917;
+  color: #FAF8F5;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.5;
+  overflow-x: auto;
+  white-space: pre;
+}
+.pack-card__actions {
+  margin-top: auto;
+  padding-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.btn-install {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 0;
+  background: var(--primary);
+  color: #FAF8F5;
+  font: 600 13px/1 var(--sans);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+.btn-install:hover { background: var(--primary-hover); }
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--ink-secondary);
+  font: 500 12.5px/1 var(--sans);
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn-secondary:hover { background: var(--bg-subtle); color: var(--ink); }
+.empty-box {
+  grid-column: 1 / -1;
+  padding: 48px 20px;
+  text-align: center;
+  border: 1px dashed var(--border-strong);
+  border-radius: 14px;
+  color: var(--muted);
+}
+footer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px var(--gut) 48px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+footer a { color: var(--muted); text-decoration: none; }
+footer a:hover { color: var(--ink); text-decoration: underline; }
+@media (max-width: 860px) {
+  .hero { grid-template-columns: minmax(0, 1fr); }
+  .pack-grid { grid-template-columns: minmax(0, 1fr); }
+  .nav-links { display: none; }
+}
+</style>
+<script>
+(function () {
+  try {
+    var qs = new URLSearchParams(window.location.search).get('lang');
+    var lang = qs === 'en' ? 'en' : qs === 'zh' ? 'zh' : localStorage.getItem('pc_site_lang');
+    if (lang !== 'zh' && lang !== 'en') {
+      lang = (navigator.language || '').toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en';
+    }
+    document.documentElement.setAttribute('data-lang', lang);
+    document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+    var t = localStorage.getItem('pc_site_theme');
+    if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {}
+})();
+</script>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar__inner">
+    <a class="brand" href="../">
+      <img src="../icon.svg" alt="PageCraft" />
+      <span>PageCraft</span>
+    </a>
+    <nav class="nav-links" aria-label="Main navigation">
+      <a href="../"><span data-l="zh">首页</span><span data-l="en">Home</span></a>
+      <a href="../recipes/" class="is-active"><span data-l="zh">配方广场</span><span data-l="en">Recipe Hub</span></a>
+      <a href="../playground/"><span data-l="zh">交互靶场</span><span data-l="en">Playground</span></a>
+      <a href="../privacy/"><span data-l="zh">隐私承诺</span><span data-l="en">Privacy</span></a>
+    </nav>
+    <div class="nav-actions">
+      <div class="lang-toggle" role="group" aria-label="Language">
+        <button type="button" id="lang-zh">中文</button>
+        <button type="button" id="lang-en">EN</button>
+      </div>
+      <button type="button" class="pill-btn" id="theme-toggle" title="Toggle theme">◐</button>
+      <a class="pill-btn" href="https://github.com/botshen/pagecraft" target="_blank" rel="noopener">★ Star</a>
+      <a class="pill-btn pill-btn--primary" href="https://github.com/botshen/pagecraft/issues/new?template=community_pack.yml" target="_blank" rel="noopener">
+        <span data-l="zh">+ 投稿配方</span><span data-l="en">+ Submit Pack</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <div>
+      <div class="eyebrow">
+        <span>GitOps Registry</span>
+        <span>·</span>
+        <span>#PCP1 Protocol</span>
+        <span>·</span>
+        <span>100% MV3 Safe</span>
+      </div>
+      <h1>
+        <span data-l="zh">社区配方广场</span>
+        <span data-l="en">Community Recipe Hub</span>
+      </h1>
+      <p class="hero__sub">
+        <span data-l="zh">一组规则打通整个网站体验：纯本地 CSS 样式与静态审计通过的 DOM 脚本，源码完全透明，绝无后台静默拉取远程代码。</span>
+        <span data-l="en">Multi-rule site packs with full source transparency. Pure CSS and statically audited local DOM scripts — zero remote execution, one-click review &amp; install.</span>
+      </p>
+    </div>
+    <aside class="hero__box">
+      <strong>
+        <span data-l="zh">三步安装任意社区套装</span>
+        <span data-l="en">Install any pack in 3 seconds</span>
+      </strong>
+      <div data-l="zh">1. 点击下方「在侧栏安装 &amp; 复制口令」<br />2. 若已打开 PageCraft 侧边栏，顶部将直接弹出安全审查导入条；或粘贴 <code>#PCP1:...#</code> 到「规则库 → 导入」<br />3. 勾选规则确认源码后立即永久生效</div>
+      <div data-l="en">1. Click “Install in SidePanel &amp; Copy Code” below<br />2. Your open PageCraft SidePanel immediately prompts a security review banner — or paste <code>#PCP1:...#</code> into My mods → Import<br />3. Inspect source &amp; confirm to activate</div>
+    </aside>
+  </section>
+
+  <div class="notice-bar" id="install-notice" role="status">
+    <span id="install-notice-text"></span>
+    <span style="font-family: var(--mono); font-size: 12px; opacity: 0.85;">#PCP1:...#</span>
+  </div>
+
+  <div class="controls">
+    <div class="filter-pills" id="category-pills">
+      <button type="button" class="filter-pill is-active" data-cat="all"><span data-l="zh">全部套装</span><span data-l="en">All Packs</span></button>
+      <button type="button" class="filter-pill" data-cat="video"><span data-l="zh">视频专注</span><span data-l="en">Video Focus</span></button>
+      <button type="button" class="filter-pill" data-cat="reading"><span data-l="zh">深度阅读</span><span data-l="en">Deep Reading</span></button>
+      <button type="button" class="filter-pill" data-cat="dev"><span data-l="zh">开发者效率</span><span data-l="en">Developer</span></button>
+      <button type="button" class="filter-pill" data-cat="productivity"><span data-l="zh">数据与办公</span><span data-l="en">Data &amp; Ops</span></button>
+    </div>
+    <input
+      type="search"
+      id="pack-search"
+      class="search-input"
+      placeholder="搜索站点域名或关键词 (bilibili, github, arxiv…)"
+      aria-label="Search community packs"
+    />
+  </div>
+
+  <div class="pack-grid" id="pack-grid"></div>
+</main>
+
+<footer>
+  <div>PageCraft — MIT Open Source · 100% Client-Side &amp; Zero Telemetry</div>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;">
+    <a href="./catalog.json">catalog.json</a>
+    <a href="../playground/"><span data-l="zh">练习靶场</span><span data-l="en">Playground</span></a>
+    <a href="../privacy/"><span data-l="zh">隐私声明</span><span data-l="en">Privacy</span></a>
+    <a href="https://github.com/botshen/pagecraft" target="_blank" rel="noopener">GitHub</a>
+  </div>
+</footer>
+
+<script id="pc-catalog-data" type="application/json">{
+  "schema": "pagecraft-recipe-catalog-v1",
+  "count": 8,
+  "packs": [
+    {
+      "id": "bilibili-zen",
+      "author": "@pagecraft",
+      "category": "video",
+      "tags": [
+        "bilibili",
+        "focus",
+        "video-speed"
+      ],
+      "siteHints": [
+        "bilibili.com"
+      ],
+      "updatedAt": "2026-11-15",
+      "zh": {
+        "name": "B站纯净专注套装",
+        "description": "移除首页推广轮播与直播浮窗、清理播放页右侧推广卡片，并增加 [ ] / \\ 键盘倍速快捷键。",
+        "mods": [
+          {
+            "id": "clean-home-promos",
+            "name": "B站首页去广告与浮窗",
+            "description": "隐藏首页首屏商业轮播推广卡片、客户端下载浮窗及活动角标。",
+            "engine": "css",
+            "matches": [
+              "https://*.bilibili.com/*"
+            ],
+            "runAt": "document_start",
+            "body": ".bili-feed-card:has(.bili-video-card__info--ad),\n.floor-single-card:has(.badge),\n.ad-report,\n.ad-floor-exp,\n.palette-button-wrap .vip-login-tip,\n.desktop-download-tip,\n.login-tip,\n.bili-header .download-entry {\n  display: none !important;\n}"
+          },
+          {
+            "id": "focus-watch-sidebar",
+            "name": "播放页右侧栏精简",
+            "description": "隐藏播放页右侧游戏/漫画广告与活动卡片，完整保留选集列表与合集目录。",
+            "engine": "css",
+            "matches": [
+              "https://www.bilibili.com/video/*",
+              "https://www.bilibili.com/list/*"
+            ],
+            "runAt": "document_start",
+            "body": ".right-container .ad-report,\n.right-container .slide-ad-exp,\n.right-container .pop-live-small-mode,\n.right-container .video-page-game-card-small,\n.right-container .video-page-special-card-small,\n#right-bottom-banner {\n  display: none !important;\n}\n.right-container .next-play .rec-list {\n  opacity: 0.92;\n}"
+          },
+          {
+            "id": "video-speed-hotkeys",
+            "name": "HTML5 视频倍速快捷键（[ / ] / \\）",
+            "description": "按 ] 加速 +0.25x，[ 减速 -0.25x，\\ 一键还原 1.0x，右上角弹出轻提示。",
+            "engine": "js",
+            "matches": [
+              "https://www.bilibili.com/video/*",
+              "https://www.bilibili.com/bangumi/*"
+            ],
+            "runAt": "document_idle",
+            "body": "(() => {\n  if (window.__pcBiliSpeedInit) return;\n  window.__pcBiliSpeedInit = true;\n\n  let toastTimer = null;\n  function showHud(text) {\n    let el = document.getElementById('pc-speed-hud');\n    if (!el) {\n      el = document.createElement('div');\n      el.id = 'pc-speed-hud';\n      el.style.cssText = 'position:fixed;top:18px;right:18px;z-index:2147483647;padding:6px 12px;border-radius:8px;background:rgba(28,25,23,0.88);color:#FAF8F5;font:600 13px/1.3 ui-monospace,monospace;pointer-events:none;transition:opacity .18s ease;box-shadow:0 8px 20px rgba(0,0,0,.22)';\n      document.body.appendChild(el);\n    }\n    el.textContent = text;\n    el.style.opacity = '1';\n    if (toastTimer) clearTimeout(toastTimer);\n    toastTimer = setTimeout(() => {\n      el.style.opacity = '0';\n    }, 1100);\n  }\n\n  window.addEventListener('keydown', (e) => {\n    const t = e.target;\n    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;\n    if (e.metaKey || e.ctrlKey || e.altKey) return;\n    if (e.key !== '[' && e.key !== ']' && e.key !== '\\\\') return;\n    const video = document.querySelector('video');\n    if (!video) return;\n    const next = e.key === '\\\\'\n      ? 1\n      : Math.min(4, Math.max(0.25, Math.round((video.playbackRate + (e.key === ']' ? 0.25 : -0.25)) * 100) / 100));\n    video.playbackRate = next;\n    showHud(next.toFixed(2).replace(/\\.00$/, '') + 'x');\n  });\n})();"
+          }
+        ]
+      },
+      "en": {
+        "name": "Bilibili Zen Focus Pack",
+        "description": "Hide home promo clutter and watch-page ad cards while adding [ / ] / \\ HTML5 video speed hotkeys.",
+        "mods": [
+          {
+            "id": "clean-home-promos",
+            "name": "Clean Home Feed Promos",
+            "description": "Hide sponsored feed cards, app download popups, and login nag floaters.",
+            "engine": "css",
+            "matches": [
+              "https://*.bilibili.com/*"
+            ],
+            "runAt": "document_start",
+            "body": ".bili-feed-card:has(.bili-video-card__info--ad),\n.floor-single-card:has(.badge),\n.ad-report,\n.ad-floor-exp,\n.palette-button-wrap .vip-login-tip,\n.desktop-download-tip,\n.login-tip,\n.bili-header .download-entry {\n  display: none !important;\n}"
+          },
+          {
+            "id": "focus-watch-sidebar",
+            "name": "Streamlined Watch Sidebar",
+            "description": "Hide right-rail ad and live promo boxes while keeping multi-part playlists visible.",
+            "engine": "css",
+            "matches": [
+              "https://www.bilibili.com/video/*",
+              "https://www.bilibili.com/list/*"
+            ],
+            "runAt": "document_start",
+            "body": ".right-container .ad-report,\n.right-container .slide-ad-exp,\n.right-container .pop-live-small-mode,\n.right-container .video-page-game-card-small,\n.right-container .video-page-special-card-small,\n#right-bottom-banner {\n  display: none !important;\n}\n.right-container .next-play .rec-list {\n  opacity: 0.92;\n}"
+          },
+          {
+            "id": "video-speed-hotkeys",
+            "name": "HTML5 Speed Hotkeys ([ / ] / \\)",
+            "description": "Step playback speed with ] (+0.25x), [ (-0.25x), and \\ (reset 1.0x) with a corner HUD toast.",
+            "engine": "js",
+            "matches": [
+              "https://www.bilibili.com/video/*",
+              "https://www.bilibili.com/bangumi/*"
+            ],
+            "runAt": "document_idle",
+            "body": "(() => {\n  if (window.__pcBiliSpeedInit) return;\n  window.__pcBiliSpeedInit = true;\n\n  let toastTimer = null;\n  function showHud(text) {\n    let el = document.getElementById('pc-speed-hud');\n    if (!el) {\n      el = document.createElement('div');\n      el.id = 'pc-speed-hud';\n      el.style.cssText = 'position:fixed;top:18px;right:18px;z-index:2147483647;padding:6px 12px;border-radius:8px;background:rgba(28,25,23,0.88);color:#FAF8F5;font:600 13px/1.3 ui-monospace,monospace;pointer-events:none;transition:opacity .18s ease;box-shadow:0 8px 20px rgba(0,0,0,.22)';\n      document.body.appendChild(el);\n    }\n    el.textContent = text;\n    el.style.opacity = '1';\n    if (toastTimer) clearTimeout(toastTimer);\n    toastTimer = setTimeout(() => {\n      el.style.opacity = '0';\n    }, 1100);\n  }\n\n  window.addEventListener('keydown', (e) => {\n    const t = e.target;\n    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;\n    if (e.metaKey || e.ctrlKey || e.altKey) return;\n    if (e.key !== '[' && e.key !== ']' && e.key !== '\\\\') return;\n    const video = document.querySelector('video');\n    if (!video) return;\n    const next = e.key === '\\\\'\n      ? 1\n      : Math.min(4, Math.max(0.25, Math.round((video.playbackRate + (e.key === ']' ? 0.25 : -0.25)) * 100) / 100));\n    video.playbackRate = next;\n    showHud(next.toFixed(2).replace(/\\.00$/, '') + 'x');\n  });\n})();"
+          }
+        ]
+      },
+      "safetyLevel": "clean_local_js",
+      "shortcodeZh": "PCP1:eyJ2IjoxLCJpZCI6ImJpbGliaWxpLXplbiIsIm4iOiJC56uZ57qv5YeA5LiT5rOo5aWX6KOFIiwibXMiOlt7ImkiOiJjbGVhbi1ob21lLXByb21vcyIsIm4iOiJC56uZ6aaW6aG15Y675bm_5ZGK5LiO5rWu56qXIiwiZSI6ImNzcyIsIm0iOlsiaHR0cHM6Ly8qLmJpbGliaWxpLmNvbS8qIl0sImIiOiIuYmlsaS1mZWVkLWNhcmQ6aGFzKC5iaWxpLXZpZGVvLWNhcmRfX2luZm8tLWFkKSxcbi5mbG9vci1zaW5nbGUtY2FyZDpoYXMoLmJhZGdlKSxcbi5hZC1yZXBvcnQsXG4uYWQtZmxvb3ItZXhwLFxuLnBhbGV0dGUtYnV0dG9uLXdyYXAgLnZpcC1sb2dpbi10aXAsXG4uZGVza3RvcC1kb3dubG9hZC10aXAsXG4ubG9naW4tdGlwLFxuLmJpbGktaGVhZGVyIC5kb3dubG9hZC1lbnRyeSB7XG4gIGRpc3BsYXk6IG5vbmUgIWltcG9ydGFudDtcbn0iLCJkIjoi6ZqQ6JeP6aaW6aG16aaW5bGP5ZWG5Lia6L2u5pKt5o6o5bm_5Y2h54mH44CB5a6i5oi356uv5LiL6L295rWu56qX5Y-K5rS75Yqo6KeS5qCH44CCIiwiciI6ImRvY3VtZW50X3N0YXJ0In0seyJpIjoiZm9jdXMtd2F0Y2gtc2lkZWJhciIsIm4iOiLmkq3mlL7pobXlj7PkvqfmoI_nsr7nroAiLCJlIjoiY3NzIiwibSI6WyJodHRwczovL3d3dy5iaWxpYmlsaS5jb20vdmlkZW8vKiIsImh0dHBzOi8vd3d3LmJpbGliaWxpLmNvbS9saXN0LyoiXSwiYiI6Ii5yaWdodC1jb250YWluZXIgLmFkLXJlcG9ydCxcbi5yaWdodC1jb250YWluZXIgLnNsaWRlLWFkLWV4cCxcbi5yaWdodC1jb250YWluZXIgLnBvcC1saXZlLXNtYWxsLW1vZGUsXG4ucmlnaHQtY29udGFpbmVyIC52aWRlby1wYWdlLWdhbWUtY2FyZC1zbWFsbCxcbi5yaWdodC1jb250YWluZXIgLnZpZGVvLXBhZ2Utc3BlY2lhbC1jYXJkLXNtYWxsLFxuI3JpZ2h0LWJvdHRvbS1iYW5uZXIge1xuICBkaXNwbGF5OiBub25lICFpbXBvcnRhbnQ7XG59XG4ucmlnaHQtY29udGFpbmVyIC5uZXh0LXBsYXkgLnJlYy1saXN0IHtcbiAgb3BhY2l0eTogMC45Mjtcbn0iLCJkIjoi6ZqQ6JeP5pKt5pS-6aG15Y-z5L6n5ri45oiPL-a8q-eUu-W5v-WRiuS4jua0u-WKqOWNoeeJh--8jOWujOaVtOS_neeVmemAiembhuWIl-ihqOS4juWQiOmbhuebruW9leOAgiIsInIiOiJkb2N1bWVudF9zdGFydCJ9LHsiaSI6InZpZGVvLXNwZWVkLWhvdGtleXMiLCJuIjoiSFRNTDUg6KeG6aKR5YCN6YCf5b-r5o236ZSu77yIWyAvIF0gLyBcXO-8iSIsImUiOiJqcyIsIm0iOlsiaHR0cHM6Ly93d3cuYmlsaWJpbGkuY29tL3ZpZGVvLyoiLCJodHRwczovL3d3dy5iaWxpYmlsaS5jb20vYmFuZ3VtaS8qIl0sImIiOiIoKCkgPT4ge1xuICBpZiAod2luZG93Ll9fcGNCaWxpU3BlZWRJbml0KSByZXR1cm47XG4gIHdpbmRvdy5fX3BjQmlsaVNwZWVkSW5pdCA9IHRydWU7XG5cbiAgbGV0IHRvYXN0VGltZXIgPSBudWxsO1xuICBmdW5jdGlvbiBzaG93SHVkKHRleHQpIHtcbiAgICBsZXQgZWwgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgncGMtc3BlZWQtaHVkJyk7XG4gICAgaWYgKCFlbCkge1xuICAgICAgZWwgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCdkaXYnKTtcbiAgICAgIGVsLmlkID0gJ3BjLXNwZWVkLWh1ZCc7XG4gICAgICBlbC5zdHlsZS5jc3NUZXh0ID0gJ3Bvc2l0aW9uOmZpeGVkO3RvcDoxOHB4O3JpZ2h0OjE4cHg7ei1pbmRleDoyMTQ3NDgzNjQ3O3BhZGRpbmc6NnB4IDEycHg7Ym9yZGVyLXJhZGl1czo4cHg7YmFja2dyb3VuZDpyZ2JhKDI4LDI1LDIzLDAuODgpO2NvbG9yOiNGQUY4RjU7Zm9udDo2MDAgMTNweC8xLjMgdWktbW9ub3NwYWNlLG1vbm9zcGFjZTtwb2ludGVyLWV2ZW50czpub25lO3RyYW5zaXRpb246b3BhY2l0eSAuMThzIGVhc2U7Ym94LXNoYWRvdzowIDhweCAyMHB4IHJnYmEoMCwwLDAsLjIyKSc7XG4gICAgICBkb2N1bWVudC5ib2R5LmFwcGVuZENoaWxkKGVsKTtcbiAgICB9XG4gICAgZWwudGV4dENvbnRlbnQgPSB0ZXh0O1xuICAgIGVsLnN0eWxlLm9wYWNpdHkgPSAnMSc7XG4gICAgaWYgKHRvYXN0VGltZXIpIGNsZWFyVGltZW91dCh0b2FzdFRpbWVyKTtcbiAgICB0b2FzdFRpbWVyID0gc2V0VGltZW91dCgoKSA9PiB7XG4gICAgICBlbC5zdHlsZS5vcGFjaXR5ID0gJzAnO1xuICAgIH0sIDExMDApO1xuICB9XG5cbiAgd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoJ2tleWRvd24nLCAoZSkgPT4ge1xuICAgIGNvbnN0IHQgPSBlLnRhcmdldDtcbiAgICBpZiAodCAmJiAodC50YWdOYW1lID09PSAnSU5QVVQnIHx8IHQudGFnTmFtZSA9PT0gJ1RFWFRBUkVBJyB8fCB0LmlzQ29udGVudEVkaXRhYmxlKSkgcmV0dXJuO1xuICAgIGlmIChlLm1ldGFLZXkgfHwgZS5jdHJsS2V5IHx8IGUuYWx0S2V5KSByZXR1cm47XG4gICAgaWYgKGUua2V5ICE9PSAnWycgJiYgZS5rZXkgIT09ICddJyAmJiBlLmtleSAhPT0gJ1xcXFwnKSByZXR1cm47XG4gICAgY29uc3QgdmlkZW8gPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKCd2aWRlbycpO1xuICAgIGlmICghdmlkZW8pIHJldHVybjtcbiAgICBjb25zdCBuZXh0ID0gZS5rZXkgPT09ICdcXFxcJ1xuICAgICAgPyAxXG4gICAgICA6IE1hdGgubWluKDQsIE1hdGgubWF4KDAuMjUsIE1hdGgucm91bmQoKHZpZGVvLnBsYXliYWNrUmF0ZSArIChlLmtleSA9PT0gJ10nID8gMC4yNSA6IC0wLjI1KSkgKiAxMDApIC8gMTAwKSk7XG4gICAgdmlkZW8ucGxheWJhY2tSYXRlID0gbmV4dDtcbiAgICBzaG93SHVkKG5leHQudG9GaXhlZCgyKS5yZXBsYWNlKC9cXC4wMCQvLCAnJykgKyAneCcpO1xuICB9KTtcbn0pKCk7IiwiZCI6IuaMiSBdIOWKoOmAnyArMC4yNXjvvIxbIOWHj-mAnyAtMC4yNXjvvIxcXCDkuIDplK7ov5jljp8gMS4weO-8jOWPs-S4iuinkuW8ueWHuui9u-aPkOekuuOAgiIsInIiOiJkb2N1bWVudF9pZGxlIn1dLCJkIjoi56e76Zmk6aaW6aG15o6o5bm_6L2u5pKt5LiO55u05pKt5rWu56qX44CB5riF55CG5pKt5pS-6aG15Y-z5L6n5o6o5bm_5Y2h54mH77yM5bm25aKe5YqgIFsgXSAvIFxcIOmUruebmOWAjemAn-W_q-aNt-mUruOAgiIsImEiOiJAcGFnZWNyYWZ0IiwiYyI6InZpZGVvIiwidGciOlsiYmlsaWJpbGkiLCJmb2N1cyIsInZpZGVvLXNwZWVkIl0sInNoIjpbImJpbGliaWxpLmNvbSJdLCJ1IjoiMjAyNi0xMS0xNSJ9",
+      "shortcodeEn": "PCP1:eyJ2IjoxLCJpZCI6ImJpbGliaWxpLXplbiIsIm4iOiJCaWxpYmlsaSBaZW4gRm9jdXMgUGFjayIsIm1zIjpbeyJpIjoiY2xlYW4taG9tZS1wcm9tb3MiLCJuIjoiQ2xlYW4gSG9tZSBGZWVkIFByb21vcyIsImUiOiJjc3MiLCJtIjpbImh0dHBzOi8vKi5iaWxpYmlsaS5jb20vKiJdLCJiIjoiLmJpbGktZmVlZC1jYXJkOmhhcyguYmlsaS12aWRlby1jYXJkX19pbmZvLS1hZCksXG4uZmxvb3Itc2luZ2xlLWNhcmQ6aGFzKC5iYWRnZSksXG4uYWQtcmVwb3J0LFxuLmFkLWZsb29yLWV4cCxcbi5wYWxldHRlLWJ1dHRvbi13cmFwIC52aXAtbG9naW4tdGlwLFxuLmRlc2t0b3AtZG93bmxvYWQtdGlwLFxuLmxvZ2luLXRpcCxcbi5iaWxpLWhlYWRlciAuZG93bmxvYWQtZW50cnkge1xuICBkaXNwbGF5OiBub25lICFpbXBvcnRhbnQ7XG59IiwiZCI6IkhpZGUgc3BvbnNvcmVkIGZlZWQgY2FyZHMsIGFwcCBkb3dubG9hZCBwb3B1cHMsIGFuZCBsb2dpbiBuYWcgZmxvYXRlcnMuIiwiciI6ImRvY3VtZW50X3N0YXJ0In0seyJpIjoiZm9jdXMtd2F0Y2gtc2lkZWJhciIsIm4iOiJTdHJlYW1saW5lZCBXYXRjaCBTaWRlYmFyIiwiZSI6ImNzcyIsIm0iOlsiaHR0cHM6Ly93d3cuYmlsaWJpbGkuY29tL3ZpZGVvLyoiLCJodHRwczovL3d3dy5iaWxpYmlsaS5jb20vbGlzdC8qIl0sImIiOiIucmlnaHQtY29udGFpbmVyIC5hZC1yZXBvcnQsXG4ucmlnaHQtY29udGFpbmVyIC5zbGlkZS1hZC1leHAsXG4ucmlnaHQtY29udGFpbmVyIC5wb3AtbGl2ZS1zbWFsbC1tb2RlLFxuLnJpZ2h0LWNvbnRhaW5lciAudmlkZW8tcGFnZS1nYW1lLWNhcmQtc21hbGwsXG4ucmlnaHQtY29udGFpbmVyIC52aWRlby1wYWdlLXNwZWNpYWwtY2FyZC1zbWFsbCxcbiNyaWdodC1ib3R0b20tYmFubmVyIHtcbiAgZGlzcGxheTogbm9uZSAhaW1wb3J0YW50O1xufVxuLnJpZ2h0LWNvbnRhaW5lciAubmV4dC1wbGF5IC5yZWMtbGlzdCB7XG4gIG9wYWNpdHk6IDAuOTI7XG59IiwiZCI6IkhpZGUgcmlnaHQtcmFpbCBhZCBhbmQgbGl2ZSBwcm9tbyBib3hlcyB3aGlsZSBrZWVwaW5nIG11bHRpLXBhcnQgcGxheWxpc3RzIHZpc2libGUuIiwiciI6ImRvY3VtZW50X3N0YXJ0In0seyJpIjoidmlkZW8tc3BlZWQtaG90a2V5cyIsIm4iOiJIVE1MNSBTcGVlZCBIb3RrZXlzIChbIC8gXSAvIFxcKSIsImUiOiJqcyIsIm0iOlsiaHR0cHM6Ly93d3cuYmlsaWJpbGkuY29tL3ZpZGVvLyoiLCJodHRwczovL3d3dy5iaWxpYmlsaS5jb20vYmFuZ3VtaS8qIl0sImIiOiIoKCkgPT4ge1xuICBpZiAod2luZG93Ll9fcGNCaWxpU3BlZWRJbml0KSByZXR1cm47XG4gIHdpbmRvdy5fX3BjQmlsaVNwZWVkSW5pdCA9IHRydWU7XG5cbiAgbGV0IHRvYXN0VGltZXIgPSBudWxsO1xuICBmdW5jdGlvbiBzaG93SHVkKHRleHQpIHtcbiAgICBsZXQgZWwgPSBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgncGMtc3BlZWQtaHVkJyk7XG4gICAgaWYgKCFlbCkge1xuICAgICAgZWwgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCdkaXYnKTtcbiAgICAgIGVsLmlkID0gJ3BjLXNwZWVkLWh1ZCc7XG4gICAgICBlbC5zdHlsZS5jc3NUZXh0ID0gJ3Bvc2l0aW9uOmZpeGVkO3RvcDoxOHB4O3JpZ2h0OjE4cHg7ei1pbmRleDoyMTQ3NDgzNjQ3O3BhZGRpbmc6NnB4IDEycHg7Ym9yZGVyLXJhZGl1czo4cHg7YmFja2dyb3VuZDpyZ2JhKDI4LDI1LDIzLDAuODgpO2NvbG9yOiNGQUY4RjU7Zm9udDo2MDAgMTNweC8xLjMgdWktbW9ub3NwYWNlLG1vbm9zcGFjZTtwb2ludGVyLWV2ZW50czpub25lO3RyYW5zaXRpb246b3BhY2l0eSAuMThzIGVhc2U7Ym94LXNoYWRvdzowIDhweCAyMHB4IHJnYmEoMCwwLDAsLjIyKSc7XG4gICAgICBkb2N1bWVudC5ib2R5LmFwcGVuZENoaWxkKGVsKTtcbiAgICB9XG4gICAgZWwudGV4dENvbnRlbnQgPSB0ZXh0O1xuICAgIGVsLnN0eWxlLm9wYWNpdHkgPSAnMSc7XG4gICAgaWYgKHRvYXN0VGltZXIpIGNsZWFyVGltZW91dCh0b2FzdFRpbWVyKTtcbiAgICB0b2FzdFRpbWVyID0gc2V0VGltZW91dCgoKSA9PiB7XG4gICAgICBlbC5zdHlsZS5vcGFjaXR5ID0gJzAnO1xuICAgIH0sIDExMDApO1xuICB9XG5cbiAgd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoJ2tleWRvd24nLCAoZSkgPT4ge1xuICAgIGNvbnN0IHQgPSBlLnRhcmdldDtcbiAgICBpZiAodCAmJiAodC50YWdOYW1lID09PSAnSU5QVVQnIHx8IHQudGFnTmFtZSA9PT0gJ1RFWFRBUkVBJyB8fCB0LmlzQ29udGVudEVkaXRhYmxlKSkgcmV0dXJuO1xuICAgIGlmIChlLm1ldGFLZXkgfHwgZS5jdHJsS2V5IHx8IGUuYWx0S2V5KSByZXR1cm47XG4gICAgaWYgKGUua2V5ICE9PSAnWycgJiYgZS5rZXkgIT09ICddJyAmJiBlLmtleSAhPT0gJ1xcXFwnKSByZXR1cm47XG4gICAgY29uc3QgdmlkZW8gPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKCd2aWRlbycpO1xuICAgIGlmICghdmlkZW8pIHJldHVybjtcbiAgICBjb25zdCBuZXh0ID0gZS5rZXkgPT09ICdcXFxcJ1xuICAgICAgPyAxXG4gICAgICA6IE1hdGgubWluKDQsIE1hdGgubWF4KDAuMjUsIE1hdGgucm91bmQoKHZpZGVvLnBsYXliYWNrUmF0ZSArIChlLmtleSA9PT0gJ10nID8gMC4yNSA6IC0wLjI1KSkgKiAxMDApIC8gMTAwKSk7XG4gICAgdmlkZW8ucGxheWJhY2tSYXRlID0gbmV4dDtcbiAgICBzaG93SHVkKG5leHQudG9GaXhlZCgyKS5yZXBsYWNlKC9cXC4wMCQvLCAnJykgKyAneCcpO1xuICB9KTtcbn0pKCk7IiwiZCI6IlN0ZXAgcGxheWJhY2sgc3BlZWQgd2l0aCBdICgrMC4yNXgpLCBbICgtMC4yNXgpLCBhbmQgXFwgKHJlc2V0IDEuMHgpIHdpdGggYSBjb3JuZXIgSFVEIHRvYXN0LiIsInIiOiJkb2N1bWVudF9pZGxlIn1dLCJkIjoiSGlkZSBob21lIHByb21vIGNsdXR0ZXIgYW5kIHdhdGNoLXBhZ2UgYWQgY2FyZHMgd2hpbGUgYWRkaW5nIFsgLyBdIC8gXFwgSFRNTDUgdmlkZW8gc3BlZWQgaG90a2V5cy4iLCJhIjoiQHBhZ2VjcmFmdCIsImMiOiJ2aWRlbyIsInRnIjpbImJpbGliaWxpIiwiZm9jdXMiLCJ2aWRlby1zcGVlZCJdLCJzaCI6WyJiaWxpYmlsaS5jb20iXSwidSI6IjIwMjYtMTEtMTUifQ"
+    },
+    {
+      "id": "zhihu-pure-reader",
+      "author": "@pagecraft",
+      "category": "reading",
+      "tags": [
+        "zhihu",
+        "reading",
+        "clean",
+        "links"
+      ],
+      "siteHints": [
+        "zhihu.com"
+      ],
+      "updatedAt": "2026-11-15",
+      "zh": {
+        "name": "知乎沉浸阅读套装",
+        "description": "屏蔽登录弹窗与盐选推广、拓宽问答正文至舒适栏宽，并自动净化 link.zhihu.com 外链直达。",
+        "mods": [
+          {
+            "id": "block-login-promos",
+            "name": "移除知乎登录弹窗与右侧栏广告",
+            "description": "隐藏强制登录遮罩并恢复页面滚动，同时隐藏右侧推广与底部下载条。",
+            "engine": "css",
+            "matches": [
+              "https://*.zhihu.com/*"
+            ],
+            "runAt": "document_start",
+            "body": "html,\nbody {\n  overflow: auto !important;\n}\n.Modal-wrapper:has(.signFlowModal),\n.SignFlowHomepage,\n.Question-sideColumnAd,\n.Pc-card,\n.MCNLinkCard,\n.Sticky .RightSideBar,\n.AppBanner {\n  display: none !important;\n}"
+          },
+          {
+            "id": "wide-editorial-column",
+            "name": "知乎居中宽屏精读排版",
+            "description": "问答主栏与专栏正文居中展示并调优字距行高，减少长文阅读视觉疲劳。",
+            "engine": "css",
+            "matches": [
+              "https://www.zhihu.com/question/*",
+              "https://zhuanlan.zhihu.com/p/*"
+            ],
+            "runAt": "document_start",
+            "body": ".Question-main {\n  width: min(920px, 92vw) !important;\n  margin: 0 auto !important;\n}\n.Question-mainColumn,\n.Post-Main {\n  width: 100% !important;\n  max-width: 820px !important;\n  margin: 0 auto !important;\n}\n.RichText {\n  font-size: 16px !important;\n  line-height: 1.8 !important;\n}"
+          },
+          {
+            "id": "direct-external-links",
+            "name": "知乎外链直达免跳转",
+            "description": "纯本地解析 link.zhihu.com/?target=... 链接并还原为真实目标地址。",
+            "engine": "js",
+            "matches": [
+              "https://*.zhihu.com/*"
+            ],
+            "runAt": "document_idle",
+            "body": "(() => {\n  function unwrapLinks(root) {\n    const anchors = (root || document).querySelectorAll('a[href*=\"link.zhihu.com\"]');\n    for (const a of anchors) {\n      try {\n        const u = new URL(a.href);\n        const target = u.searchParams.get('target');\n        if (target && /^https?:\\/\\//i.test(target)) {\n          a.href = target;\n          a.removeAttribute('data-za-detail-view-id');\n        }\n      } catch {\n        /* skip malformed URL */\n      }\n    }\n  }\n  unwrapLinks(document);\n  const obs = new MutationObserver(() => unwrapLinks(document));\n  if (document.body) obs.observe(document.body, { childList: true, subtree: true });\n})();"
+          }
+        ]
+      },
+      "en": {
+        "name": "Zhihu Pure Reader Pack",
+        "description": "Block login overlays & sidebar promos, widen reading columns, and unwrap link.zhihu.com redirects locally.",
+        "mods": [
+          {
+            "id": "block-login-promos",
+            "name": "Block Login Overlays & Ads",
+            "description": "Remove sign-in popups, restore page scroll, and hide sidebar promo cards.",
+            "engine": "css",
+            "matches": [
+              "https://*.zhihu.com/*"
+            ],
+            "runAt": "document_start",
+            "body": "html,\nbody {\n  overflow: auto !important;\n}\n.Modal-wrapper:has(.signFlowModal),\n.SignFlowHomepage,\n.Question-sideColumnAd,\n.Pc-card,\n.MCNLinkCard,\n.Sticky .RightSideBar,\n.AppBanner {\n  display: none !important;\n}"
+          },
+          {
+            "id": "wide-editorial-column",
+            "name": "Centered Editorial Reading Column",
+            "description": "Center questions and Zhuanlan articles around 820px with comfortable 1.8 line height.",
+            "engine": "css",
+            "matches": [
+              "https://www.zhihu.com/question/*",
+              "https://zhuanlan.zhihu.com/p/*"
+            ],
+            "runAt": "document_start",
+            "body": ".Question-main {\n  width: min(920px, 92vw) !important;\n  margin: 0 auto !important;\n}\n.Question-mainColumn,\n.Post-Main {\n  width: 100% !important;\n  max-width: 820px !important;\n  margin: 0 auto !important;\n}\n.RichText {\n  font-size: 16px !important;\n  line-height: 1.8 !important;\n}"
+          },
+          {
+            "id": "direct-external-links",
+            "name": "Direct External Links Unwrapper",
+            "description": "Rewrite link.zhihu.com/?target=... anchors locally to their direct destinations.",
+            "engine": "js",
+            "matches": [
+              "https://*.zhihu.com/*"
+            ],
+            "runAt": "document_idle",
+            "body": "(() => {\n  function unwrapLinks(root) {\n    const anchors = (root || document).querySelectorAll('a[href*=\"link.zhihu.com\"]');\n    for (const a of anchors) {\n      try {\n        const u = new URL(a.href);\n        const target = u.searchParams.get('target');\n        if (target && /^https?:\\/\\//i.test(target)) {\n          a.href = target;\n          a.removeAttribute('data-za-detail-view-id');\n        }\n      } catch {\n        /* skip malformed URL */\n      }\n    }\n  }\n  unwrapLinks(document);\n  const obs = new MutationObserver(() => unwrapLinks(document));\n  if (document.body) obs.observe(document.body, { childList: true, subtree: true });\n})();"
+          }
+        ]
+      },
+      "safetyLevel": "clean_local_js",
+      "shortcodeZh": "PCP1:eyJ2IjoxLCJpZCI6InpoaWh1LXB1cmUtcmVhZGVyIiwibiI6IuefpeS5juayiea1uOmYheivu-Wll-ijhSIsIm1zIjpbeyJpIjoiYmxvY2stbG9naW4tcHJvbW9zIiwibiI6Iuenu-mZpOefpeS5jueZu-W9leW8ueeql-S4juWPs-S-p-agj-W5v-WRiiIsImUiOiJjc3MiLCJtIjpbImh0dHBzOi8vKi56aGlodS5jb20vKiJdLCJiIjoiaHRtbCxcbmJvZHkge1xuICBvdmVyZmxvdzogYXV0byAhaW1wb3J0YW50O1xufVxuLk1vZGFsLXdyYXBwZXI6aGFzKC5zaWduRmxvd01vZGFsKSxcbi5TaWduRmxvd0hvbWVwYWdlLFxuLlF1ZXN0aW9uLXNpZGVDb2x1bW5BZCxcbi5QYy1jYXJkLFxuLk1DTkxpbmtDYXJkLFxuLlN0aWNreSAuUmlnaHRTaWRlQmFyLFxuLkFwcEJhbm5lciB7XG4gIGRpc3BsYXk6IG5vbmUgIWltcG9ydGFudDtcbn0iLCJkIjoi6ZqQ6JeP5by65Yi255m75b2V6YGu572p5bm25oGi5aSN6aG16Z2i5rua5Yqo77yM5ZCM5pe26ZqQ6JeP5Y-z5L6n5o6o5bm_5LiO5bqV6YOo5LiL6L295p2h44CCIiwiciI6ImRvY3VtZW50X3N0YXJ0In0seyJpIjoid2lkZS1lZGl0b3JpYWwtY29sdW1uIiwibiI6IuefpeS5juWxheS4reWuveWxj-eyvuivu-aOkueJiCIsImUiOiJjc3MiLCJtIjpbImh0dHBzOi8vd3d3LnpoaWh1LmNvbS9xdWVzdGlvbi8qIiwiaHR0cHM6Ly96aHVhbmxhbi56aGlodS5jb20vcC8qIl0sImIiOiIuUXVlc3Rpb24tbWFpbiB7XG4gIHdpZHRoOiBtaW4oOTIwcHgsIDkydncpICFpbXBvcnRhbnQ7XG4gIG1hcmdpbjogMCBhdXRvICFpbXBvcnRhbnQ7XG59XG4uUXVlc3Rpb24tbWFpbkNvbHVtbixcbi5Qb3N0LU1haW4ge1xuICB3aWR0aDogMTAwJSAhaW1wb3J0YW50O1xuICBtYXgtd2lkdGg6IDgyMHB4ICFpbXBvcnRhbnQ7XG4gIG1hcmdpbjogMCBhdXRvICFpbXBvcnRhbnQ7XG59XG4uUmljaFRleHQge1xuICBmb250LXNpemU6IDE2cHggIWltcG9ydGFudDtcbiAgbGluZS1oZWlnaHQ6IDEuOCAhaW1wb3J0YW50O1xufSIsImQiOiLpl67nrZTkuLvmoI_kuI7kuJPmoI_mraPmloflsYXkuK3lsZXnpLrlubbosIPkvJjlrZfot53ooYzpq5jvvIzlh4_lsJHplb_mlofpmIXor7vop4bop4nnlrLlirPjgIIiLCJyIjoiZG9jdW1lbnRfc3RhcnQifSx7ImkiOiJkaXJlY3QtZXh0ZXJuYWwtbGlua3MiLCJuIjoi55-l5LmO5aSW6ZO-55u06L6-5YWN6Lez6L2sIiwiZSI6ImpzIiwibSI6WyJodHRwczovLyouemhpaHUuY29tLyoiXSwiYiI6IigoKSA9PiB7XG4gIGZ1bmN0aW9uIHVud3JhcExpbmtzKHJvb3QpIHtcbiAgICBjb25zdCBhbmNob3JzID0gKHJvb3QgfHwgZG9jdW1lbnQpLnF1ZXJ5U2VsZWN0b3JBbGwoJ2FbaHJlZio9XCJsaW5rLnpoaWh1LmNvbVwiXScpO1xuICAgIGZvciAoY29uc3QgYSBvZiBhbmNob3JzKSB7XG4gICAgICB0cnkge1xuICAgICAgICBjb25zdCB1ID0gbmV3IFVSTChhLmhyZWYpO1xuICAgICAgICBjb25zdCB0YXJnZXQgPSB1LnNlYXJjaFBhcmFtcy5nZXQoJ3RhcmdldCcpO1xuICAgICAgICBpZiAodGFyZ2V0ICYmIC9eaHR0cHM_OlxcL1xcLy9pLnRlc3QodGFyZ2V0KSkge1xuICAgICAgICAgIGEuaHJlZiA9IHRhcmdldDtcbiAgICAgICAgICBhLnJlbW92ZUF0dHJpYnV0ZSgnZGF0YS16YS1kZXRhaWwtdmlldy1pZCcpO1xuICAgICAgICB9XG4gICAgICB9IGNhdGNoIHtcbiAgICAgICAgLyogc2tpcCBtYWxmb3JtZWQgVVJMICovXG4gICAgICB9XG4gICAgfVxuICB9XG4gIHVud3JhcExpbmtzKGRvY3VtZW50KTtcbiAgY29uc3Qgb2JzID0gbmV3IE11dGF0aW9uT2JzZXJ2ZXIoKCkgPT4gdW53cmFwTGlua3MoZG9jdW1lbnQpKTtcbiAgaWYgKGRvY3VtZW50LmJvZHkpIG9icy5vYnNlcnZlKGRvY3VtZW50LmJvZHksIHsgY2hpbGRMaXN0OiB0cnVlLCBzdWJ0cmVlOiB0cnVlIH0pO1xufSkoKTsiLCJkIjoi57qv5pys5Zyw6Kej5p6QIGxpbmsuemhpaHUuY29tLz90YXJnZXQ9Li4uIOmTvuaOpeW5tui_mOWOn-S4uuecn-Wunuebruagh-WcsOWdgOOAgiIsInIiOiJkb2N1bWVudF9pZGxlIn1dLCJkIjoi5bGP6JS955m75b2V5by556qX5LiO55uQ6YCJ5o6o5bm_44CB5ouT5a696Zeu562U5q2j5paH6Iez6IiS6YCC5qCP5a6977yM5bm26Ieq5Yqo5YeA5YyWIGxpbmsuemhpaHUuY29tIOWklumTvuebtOi-vuOAgiIsImEiOiJAcGFnZWNyYWZ0IiwiYyI6InJlYWRpbmciLCJ0ZyI6WyJ6aGlodSIsInJlYWRpbmciLCJjbGVhbiIsImxpbmtzIl0sInNoIjpbInpoaWh1LmNvbSJdLCJ1IjoiMjAyNi0xMS0xNSJ9",
+      "shortcodeEn": "PCP1:eyJ2IjoxLCJpZCI6InpoaWh1LXB1cmUtcmVhZGVyIiwibiI6IlpoaWh1IFB1cmUgUmVhZGVyIFBhY2siLCJtcyI6W3siaSI6ImJsb2NrLWxvZ2luLXByb21vcyIsIm4iOiJCbG9jayBMb2dpbiBPdmVybGF5cyAmIEFkcyIsImUiOiJjc3MiLCJtIjpbImh0dHBzOi8vKi56aGlodS5jb20vKiJdLCJiIjoiaHRtbCxcbmJvZHkge1xuICBvdmVyZmxvdzogYXV0byAhaW1wb3J0YW50O1xufVxuLk1vZGFsLXdyYXBwZXI6aGFzKC5zaWduRmxvd01vZGFsKSxcbi5TaWduRmxvd0hvbWVwYWdlLFxuLlF1ZXN0aW9uLXNpZGVDb2x1bW5BZCxcbi5QYy1jYXJkLFxuLk1DTkxpbmtDYXJkLFxuLlN0aWNreSAuUmlnaHRTaWRlQmFyLFxuLkFwcEJhbm5lciB7XG4gIGRpc3BsYXk6IG5vbmUgIWltcG9ydGFudDtcbn0iLCJkIjoiUmVtb3ZlIHNpZ24taW4gcG9wdXBzLCByZXN0b3JlIHBhZ2Ugc2Nyb2xsLCBhbmQgaGlkZSBzaWRlYmFyIHByb21vIGNhcmRzLiIsInIiOiJkb2N1bWVudF9zdGFydCJ9LHsiaSI6IndpZGUtZWRpdG9yaWFsLWNvbHVtbiIsIm4iOiJDZW50ZXJlZCBFZGl0b3JpYWwgUmVhZGluZyBDb2x1bW4iLCJlIjoiY3NzIiwibSI6WyJodHRwczovL3d3dy56aGlodS5jb20vcXVlc3Rpb24vKiIsImh0dHBzOi8vemh1YW5sYW4uemhpaHUuY29tL3AvKiJdLCJiIjoiLlF1ZXN0aW9uLW1haW4ge1xuICB3aWR0aDogbWluKDkyMHB4LCA5MnZ3KSAhaW1wb3J0YW50O1xuICBtYXJnaW46IDAgYXV0byAhaW1wb3J0YW50O1xufVxuLlF1ZXN0aW9uLW1haW5Db2x1bW4sXG4uUG9zdC1NYWluIHtcbiAgd2lkdGg6IDEwMCUgIWltcG9ydGFudDtcbiAgbWF4LXdpZHRoOiA4MjBweCAhaW1wb3J0YW50O1xuICBtYXJnaW46IDAgYXV0byAhaW1wb3J0YW50O1xufVxuLlJpY2hUZXh0IHtcbiAgZm9udC1zaXplOiAxNnB4ICFpbXBvcnRhbnQ7XG4gIGxpbmUtaGVpZ2h0OiAxLjggIWltcG9ydGFudDtcbn0iLCJkIjoiQ2VudGVyIHF1ZXN0aW9ucyBhbmQgWmh1YW5sYW4gYXJ0aWNsZXMgYXJvdW5kIDgyMHB4IHdpdGggY29tZm9ydGFibGUgMS44IGxpbmUgaGVpZ2h0LiIsInIiOiJkb2N1bWVudF9zdGFydCJ9LHsiaSI6ImRpcmVjdC1leHRlcm5hbC1saW5rcyIsIm4iOiJEaXJlY3QgRXh0ZXJuYWwgTGlua3MgVW53cmFwcGVyIiwiZSI6ImpzIiwibSI6WyJodHRwczovLyouemhpaHUuY29tLyoiXSwiYiI6IigoKSA9PiB7XG4gIGZ1bmN0aW9uIHVud3JhcExpbmtzKHJvb3QpIHtcbiAgICBjb25zdCBhbmNob3JzID0gKHJvb3QgfHwgZG9jdW1lbnQpLnF1ZXJ5U2VsZWN0b3JBbGwoJ2FbaHJlZio9XCJsaW5rLnpoaWh1LmNvbVwiXScpO1xuICAgIGZvciAoY29uc3QgYSBvZiBhbmNob3JzKSB7XG4gICAgICB0cnkge1xuICAgICAgICBjb25zdCB1ID0gbmV3IFVSTChhLmhyZWYpO1xuICAgICAgICBjb25zdCB0YXJnZXQgPSB1LnNlYXJjaFBhcmFtcy5nZXQoJ3RhcmdldCcpO1xuICAgICAgICBpZiAodGFyZ2V0ICYmIC9eaHR0cHM_OlxcL1xcLy9pLnRlc3QodGFyZ2V0KSkge1xuICAgICAgICAgIGEuaHJlZiA9IHRhcmdldDtcbiAgICAgICAgICBhLnJlbW92ZUF0dHJpYnV0ZSgnZGF0YS16YS1kZXRhaWwtdmlldy1pZCcpO1xuICAgICAgICB9XG4gICAgICB9IGNhdGNoIHtcbiAgICAgICAgLyogc2tpcCBtYWxmb3JtZWQgVVJMICovXG4gICAgICB9XG4gICAgfVxuICB9XG4gIHVud3JhcExpbmtzKGRvY3VtZW50KTtcbiAgY29uc3Qgb2JzID0gbmV3IE11dGF0aW9uT2JzZXJ2ZXIoKCkgPT4gdW53cmFwTGlua3MoZG9jdW1lbnQpKTtcbiAgaWYgKGRvY3VtZW50LmJvZHkpIG9icy5vYnNlcnZlKGRvY3VtZW50LmJvZHksIHsgY2hpbGRMaXN0OiB0cnVlLCBzdWJ0cmVlOiB0cnVlIH0pO1xufSkoKTsiLCJkIjoiUmV3cml0ZSBsaW5rLnpoaWh1LmNvbS8_dGFyZ2V0PS4uLiBhbmNob3JzIGxvY2FsbHkgdG8gdGhlaXIgZGlyZWN0IGRlc3RpbmF0aW9ucy4iLCJyIjoiZG9jdW1lbnRfaWRsZSJ9XSwiZCI6IkJsb2NrIGxvZ2luIG92ZXJsYXlzICYgc2lkZWJhciBwcm9tb3MsIHdpZGVuIHJlYWRpbmcgY29sdW1ucywgYW5kIHVud3JhcCBsaW5rLnpoaWh1LmNvbSByZWRpcmVjdHMgbG9jYWxseS4iLCJhIjoiQHBhZ2VjcmFmdCIsImMiOiJyZWFkaW5nIiwidGciOlsiemhpaHUiLCJyZWFkaW5nIiwiY2xlYW4iLCJsaW5rcyJdLCJzaCI6WyJ6aGlodS5jb20iXSwidSI6IjIwMjYtMTEtMTUifQ"
+    },
+    {
+      "id": "xiaohongshu-clean-desk",
+      "author": "@pagecraft",
+      "category": "reading",
+      "tags": [
+        "xiaohongshu",
+        "rednote",
+        "clean"
+      ],
+      "siteHints": [
+        "xiaohongshu.com"
+      ],
+      "updatedAt": "2026-11-15",
+      "zh": {
+        "name": "小红书清爽浏览套装",
+        "description": "纯 CSS 隐藏悬浮 App 引导与侧边推广角标，放大笔记详情阅读排版间距。",
+        "mods": [
+          {
+            "id": "hide-app-floaters",
+            "name": "隐藏小红书悬浮推广与下载条",
+            "description": "隐藏页面悬浮客户端下载按钮、右下角反馈引导及非必要提示角标。",
+            "engine": "css",
+            "matches": [
+              "https://*.xiaohongshu.com/*"
+            ],
+            "runAt": "document_start",
+            "body": ".floating-btn-sets .download-btn,\n.side-bar .bottom-channel,\n.reds-tooltip-container,\n.note-detail-mask .bottom-download-banner {\n  display: none !important;\n}"
+          },
+          {
+            "id": "comfortable-note-reading",
+            "name": "小红书笔记详情精读优化",
+            "description": "提升笔记详情正文行高与段落呼吸感，让图文攻略阅读更轻松。",
+            "engine": "css",
+            "matches": [
+              "https://*.xiaohongshu.com/explore*",
+              "https://*.xiaohongshu.com/discovery*"
+            ],
+            "runAt": "document_start",
+            "body": ".note-detail-mask .note-content .desc {\n  font-size: 15.5px !important;\n  line-height: 1.75 !important;\n}\n.note-detail-mask .note-content .title {\n  font-size: 19px !important;\n  line-height: 1.45 !important;\n}"
+          }
+        ]
+      },
+      "en": {
+        "name": "Xiaohongshu Clean Desk Pack",
+        "description": "Pure CSS cleanup removing floating app download badges and polishing note detail typography.",
+        "mods": [
+          {
+            "id": "hide-app-floaters",
+            "name": "Hide Floating App Promos",
+            "description": "Hide floating app download badges and promotional corner overlays.",
+            "engine": "css",
+            "matches": [
+              "https://*.xiaohongshu.com/*"
+            ],
+            "runAt": "document_start",
+            "body": ".floating-btn-sets .download-btn,\n.side-bar .bottom-channel,\n.reds-tooltip-container,\n.note-detail-mask .bottom-download-banner {\n  display: none !important;\n}"
+          },
+          {
+            "id": "comfortable-note-reading",
+            "name": "Readable Note Detail Typography",
+            "description": "Improve note modal line height and title hierarchy for long-form posts.",
+            "engine": "css",
+            "matches": [
+              "https://*.xiaohongshu.com/explore*",
+              "https://*.xiaohongshu.com/discovery*"
+            ],
+            "runAt": "document_start",
+            "body": ".note-detail-mask .note-content .desc {\n  font-size: 15.5px !important;\n  line-height: 1.75 !important;\n}\n.note-detail-mask .note-content .title {\n  font-size: 19px !important;\n  line-height: 1.45 !important;\n}"
+          }
+        ]
+      },
+      "safetyLevel": "safe_css",
+      "shortcodeZh": "PCP1:eyJ2IjoxLCJpZCI6InhpYW9ob25nc2h1LWNsZWFuLWRlc2siLCJuIjoi5bCP57qi5Lmm5riF54i95rWP6KeI5aWX6KOFIiwibXMiOlt7ImkiOiJoaWRlLWFwcC1mbG9hdGVycyIsIm4iOiLpmpDol4_lsI_nuqLkuabmgqzmta7mjqjlub_kuI7kuIvovb3mnaEiLCJlIjoiY3NzIiwibSI6WyJodHRwczovLyoueGlhb2hvbmdzaHUuY29tLyoiXSwiYiI6Ii5mbG9hdGluZy1idG4tc2V0cyAuZG93bmxvYWQtYnRuLFxuLnNpZGUtYmFyIC5ib3R0b20tY2hhbm5lbCxcbi5yZWRzLXRvb2x0aXAtY29udGFpbmVyLFxuLm5vdGUtZGV0YWlsLW1hc2sgLmJvdHRvbS1kb3dubG9hZC1iYW5uZXIge1xuICBkaXNwbGF5OiBub25lICFpbXBvcnRhbnQ7XG59IiwiZCI6IumakOiXj-mhtemdouaCrOa1ruWuouaIt-err-S4i-i9veaMiemSruOAgeWPs-S4i-inkuWPjemmiOW8leWvvOWPiumdnuW_heimgeaPkOekuuinkuagh-OAgiIsInIiOiJkb2N1bWVudF9zdGFydCJ9LHsiaSI6ImNvbWZvcnRhYmxlLW5vdGUtcmVhZGluZyIsIm4iOiLlsI_nuqLkuabnrJTorrDor6bmg4Xnsr7or7vkvJjljJYiLCJlIjoiY3NzIiwibSI6WyJodHRwczovLyoueGlhb2hvbmdzaHUuY29tL2V4cGxvcmUqIiwiaHR0cHM6Ly8qLnhpYW9ob25nc2h1LmNvbS9kaXNjb3ZlcnkqIl0sImIiOiIubm90ZS1kZXRhaWwtbWFzayAubm90ZS1jb250ZW50IC5kZXNjIHtcbiAgZm9udC1zaXplOiAxNS41cHggIWltcG9ydGFudDtcbiAgbGluZS1oZWlnaHQ6IDEuNzUgIWltcG9ydGFudDtcbn1cbi5ub3RlLWRldGFpbC1tYXNrIC5ub3RlLWNvbnRlbnQgLnRpdGxlIHtcbiAgZm9udC1zaXplOiAxOXB4ICFpbXBvcnRhbnQ7XG4gIGxpbmUtaGVpZ2h0OiAxLjQ1ICFpbXBvcnRhbnQ7XG59IiwiZCI6IuaPkOWNh-eslOiusOivpuaDheato-aWh-ihjOmrmOS4juauteiQveWRvOWQuOaEn--8jOiuqeWbvuaWh-aUu-eVpemYheivu-abtOi9u-advuOAgiIsInIiOiJkb2N1bWVudF9zdGFydCJ9XSwiZCI6Iue6ryBDU1Mg6ZqQ6JeP5oKs5rWuIEFwcCDlvJXlr7zkuI7kvqfovrnmjqjlub_op5LmoIfvvIzmlL7lpKfnrJTorrDor6bmg4XpmIXor7vmjpLniYjpl7Tot53jgIIiLCJhIjoiQHBhZ2VjcmFmdCIsImMiOiJyZWFkaW5nIiwidGciOlsieGlhb2hvbmdzaHUiLCJyZWRub3RlIiwiY2xlYW4iXSwic2giOlsieGlhb2hvbmdzaHUuY29tIl0sInUiOiIyMDI2LTExLTE1In0",
+      "shortcodeEn": "PCP1:eyJ2IjoxLCJpZCI6InhpYW9ob25nc2h1LWNsZWFuLWRlc2siLCJuIjoiWGlhb2hvbmdzaHUgQ2xlYW4gRGVzayBQYWNrIiwibXMiOlt7ImkiOiJoaWRlLWFwcC1mbG9hdGVycyIsIm4iOiJIaWRlIEZsb2F0aW5nIEFwcCBQcm9tb3MiLCJlIjoiY3NzIiwibSI6WyJodHRwczovLyoueGlhb2hvbmdzaHUuY29tLyoiXSwiYiI6Ii5mbG9hdGluZy1idG4tc2V0cyAuZG93bmxvYWQtYnRuLFxuLnNpZGUtYmFyIC5ib3R0b20tY2hhbm5lbCxcbi5yZWRzLXRvb2x0aXAtY29udGFpbmVyLFxuLm5vdGUtZGV0YWlsLW1hc2sgLmJvdHRvbS1kb3dubG9hZC1iYW5uZXIge1xuICBkaXNwbGF5OiBub25lICFpbXBvcnRhbnQ7XG59IiwiZCI6IkhpZGUgZmxvYXRpbmcgYXBwIGRvd25sb2FkIGJhZGdlcyBhbmQgcHJvbW90aW9uYWwgY29ybmVyIG92ZXJsYXlzLiIsInIiOiJkb2N1bWVudF9zdGFydCJ9LHsiaSI6ImNvbWZvcnRhYmxlLW5vdGUtcmVhZGluZyIsIm4iOiJSZWFkYWJsZSBOb3RlIERldGFpbCBUeXBvZ3JhcGh5IiwiZSI6ImNzcyIsIm0iOlsiaHR0cHM6Ly8qLnhpYW9ob25nc2h1LmNvbS9leHBsb3JlKiIsImh0dHBzOi8vKi54aWFvaG9uZ3NodS5jb20vZGlzY292ZXJ5KiJdLCJiIjoiLm5vdGUtZGV0YWlsLW1hc2sgLm5vdGUtY29udGVudCAuZGVzYyB7XG4gIGZvbnQtc2l6ZTogMTUuNXB4ICFpbXBvcnRhbnQ7XG4gIGxpbmUtaGVpZ2h0OiAxLjc1ICFpbXBvcnRhbnQ7XG59XG4ubm90ZS1kZXRhaWwtbWFzayAubm90ZS1jb250ZW50IC50aXRsZSB7XG4gIGZvbnQtc2l6ZTogMTlweCAhaW1wb3J0YW50O1xuICBsaW5lLWhlaWdodDogMS40NSAhaW1wb3J0YW50O1xufSIsImQiOiJJbXByb3ZlIG5vdGUgbW9kYWwgbGluZSBoZWlnaHQgYW5kIHRpdGxlIGhpZXJhcmNoeSBmb3IgbG9uZy1mb3JtIHBvc3RzLiIsInIiOiJkb2N1bWVudF9zdGFydCJ9XSwiZCI6IlB1cmUgQ1NTIGNsZWFudXAgcmVtb3ZpbmcgZmxvYXRpbmcgYXBwIGRvd25sb2FkIGJhZGdlcyBhbmQgcG9saXNoaW5nIG5vdGUgZGV0YWlsIHR5cG9ncmFwaHkuIiwiYSI6IkBwYWdlY3JhZnQiLCJjIjoicmVhZGluZyIsInRnIjpbInhpYW9ob25nc2h1IiwicmVkbm90ZSIsImNsZWFuIl0sInNoIjpbInhpYW9ob25nc2h1LmNvbSJdLCJ1IjoiMjAyNi0xMS0xNSJ9"
+    },
+    {
+      "id": "github-power-dev",
+      "author": "@pagecraft",
+      "category": "dev",
+      "tags": [
+        "github",
+        "code-review",
+        "dev"
+      ],
+      "siteHints": [
+        "github.com"
+      ],
+      "updatedAt": "2026-11-15",
+      "zh": {
+        "name": "GitHub 开发者宽屏效率套装",
+        "description": "PR Diff 视图自动适配宽屏、代码统一 2 空格缩进显示，并支持 Alt+Shift+C 一键复制 Markdown 引用链接。",
+        "mods": [
+          {
+            "id": "wide-pr-and-code",
+            "name": "GitHub 仓库与 PR Diff 宽屏视图",
+            "description": "释放两侧冗余留白，让 Pull Request 代码对比与文件树在大屏上一屏看全。",
+            "engine": "css",
+            "matches": [
+              "https://github.com/*"
+            ],
+            "runAt": "document_start",
+            "body": ".container-xl,\n.container-lg {\n  max-width: min(1600px, 95vw) !important;\n}"
+          },
+          {
+            "id": "crisp-two-space-tabs",
+            "name": "代码 2 空格 Tab 与吸顶文件头增强",
+            "description": "将代码页与 Diff 的制表符宽度统一设为 2，并加粗文件栏底部分隔线。",
+            "engine": "css",
+            "matches": [
+              "https://github.com/*"
+            ],
+            "runAt": "document_start",
+            "body": ".blob-code-inner,\n.markdown-body pre,\n.react-code-text {\n  tab-size: 2 !important;\n  -moz-tab-size: 2 !important;\n}\n.file-header.js-file-header {\n  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);\n}"
+          },
+          {
+            "id": "copy-markdown-link-shortcut",
+            "name": "Alt+Shift+C 一键复制 Markdown 链接",
+            "description": "在 Issue / PR / 仓库页按下 Alt+Shift+C，自动复制 [标题](URL) 格式链接。",
+            "engine": "js",
+            "matches": [
+              "https://github.com/*"
+            ],
+            "runAt": "document_idle",
+            "body": "(() => {\n  if (window.__pcGhMdCopyInit) return;\n  window.__pcGhMdCopyInit = true;\n\n  function showToast(text) {\n    const el = document.createElement('div');\n    el.textContent = text;\n    el.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:2147483647;padding:8px 14px;border-radius:8px;background:#1C1917;color:#FAF8F5;font:500 12.5px/1.4 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.22)';\n    document.body.appendChild(el);\n    setTimeout(() => el.remove(), 1600);\n  }\n\n  window.addEventListener('keydown', (e) => {\n    if (!(e.altKey && e.shiftKey && e.key.toLowerCase() === 'c')) return;\n    e.preventDefault();\n    const cleanTitle = document.title.replace(/\\s+by\\s+[^·]+·.*$/, '').replace(/\\s*·\\s*GitHub$/, '').trim();\n    const md = `[${cleanTitle}](${location.href})`;\n    navigator.clipboard.writeText(md).then(() => showToast('Copied Markdown link')).catch(() => {});\n  });\n})();"
+          }
+        ]
+      },
+      "en": {
+        "name": "GitHub Power Dev Pack",
+        "description": "Full-width PR diffs, consistent 2-space tab width, and Alt+Shift+C Markdown link copy hotkey.",
+        "mods": [
+          {
+            "id": "wide-pr-and-code",
+            "name": "Wide PR Diff & Repo Container",
+            "description": "Expand repo and pull-request containers up to 1600px on wide monitors.",
+            "engine": "css",
+            "matches": [
+              "https://github.com/*"
+            ],
+            "runAt": "document_start",
+            "body": ".container-xl,\n.container-lg {\n  max-width: min(1600px, 95vw) !important;\n}"
+          },
+          {
+            "id": "crisp-two-space-tabs",
+            "name": "2-Space Tab Size & File Header Polish",
+            "description": "Render tab-size: 2 across diffs and Markdown code blocks with crisp sticky headers.",
+            "engine": "css",
+            "matches": [
+              "https://github.com/*"
+            ],
+            "runAt": "document_start",
+            "body": ".blob-code-inner,\n.markdown-body pre,\n.react-code-text {\n  tab-size: 2 !important;\n  -moz-tab-size: 2 !important;\n}\n.file-header.js-file-header {\n  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);\n}"
+          },
+          {
+            "id": "copy-markdown-link-shortcut",
+            "name": "Alt+Shift+C Markdown Link Copy",
+            "description": "Press Alt+Shift+C on any GitHub page to copy [Title](URL) cleanly to clipboard.",
+            "engine": "js",
+            "matches": [
+              "https://github.com/*"
+            ],
+            "runAt": "document_idle",
+            "body": "(() => {\n  if (window.__pcGhMdCopyInit) return;\n  window.__pcGhMdCopyInit = true;\n\n  function showToast(text) {\n    const el = document.createElement('div');\n    el.textContent = text;\n    el.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:2147483647;padding:8px 14px;border-radius:8px;background:#1C1917;color:#FAF8F5;font:500 12.5px/1.4 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.22)';\n    document.body.appendChild(el);\n    setTimeout(() => el.remove(), 1600);\n  }\n\n  window.addEventListener('keydown', (e) => {\n    if (!(e.altKey && e.shiftKey && e.key.toLowerCase() === 'c')) return;\n    e.preventDefault();\n    const cleanTitle = document.title.replace(/\\s+by\\s+[^·]+·.*$/, '').replace(/\\s*·\\s*GitHub$/, '').trim();\n    const md = `[${cleanTitle}](${location.href})`;\n    navigator.clipboard.writeText(md).then(() => showToast('Copied Markdown link')).catch(() => {});\n  });\n})();"
+          }
+        ]
+      },
+      "safetyLevel": "clean_local_js",
+      "shortcodeZh": "PCP1:eyJ2IjoxLCJpZCI6ImdpdGh1Yi1wb3dlci1kZXYiLCJuIjoiR2l0SHViIOW8gOWPkeiAheWuveWxj-aViOeOh-Wll-ijhSIsIm1zIjpbeyJpIjoid2lkZS1wci1hbmQtY29kZSIsIm4iOiJHaXRIdWIg5LuT5bqT5LiOIFBSIERpZmYg5a695bGP6KeG5Zu-IiwiZSI6ImNzcyIsIm0iOlsiaHR0cHM6Ly9naXRodWIuY29tLyoiXSwiYiI6Ii5jb250YWluZXIteGwsXG4uY29udGFpbmVyLWxnIHtcbiAgbWF4LXdpZHRoOiBtaW4oMTYwMHB4LCA5NXZ3KSAhaW1wb3J0YW50O1xufSIsImQiOiLph4rmlL7kuKTkvqflhpfkvZnnlZnnmb3vvIzorqkgUHVsbCBSZXF1ZXN0IOS7o-eggeWvueavlOS4juaWh-S7tuagkeWcqOWkp-Wxj-S4iuS4gOWxj-eci-WFqOOAgiIsInIiOiJkb2N1bWVudF9zdGFydCJ9LHsiaSI6ImNyaXNwLXR3by1zcGFjZS10YWJzIiwibiI6IuS7o-eggSAyIOepuuagvCBUYWIg5LiO5ZC46aG25paH5Lu25aS05aKe5by6IiwiZSI6ImNzcyIsIm0iOlsiaHR0cHM6Ly9naXRodWIuY29tLyoiXSwiYiI6Ii5ibG9iLWNvZGUtaW5uZXIsXG4ubWFya2Rvd24tYm9keSBwcmUsXG4ucmVhY3QtY29kZS10ZXh0IHtcbiAgdGFiLXNpemU6IDIgIWltcG9ydGFudDtcbiAgLW1vei10YWItc2l6ZTogMiAhaW1wb3J0YW50O1xufVxuLmZpbGUtaGVhZGVyLmpzLWZpbGUtaGVhZGVyIHtcbiAgYm94LXNoYWRvdzogMCAycHggNnB4IHJnYmEoMCwgMCwgMCwgMC4wNik7XG59IiwiZCI6IuWwhuS7o-eggemhteS4jiBEaWZmIOeahOWItuihqOespuWuveW6pue7n-S4gOiuvuS4uiAy77yM5bm25Yqg57KX5paH5Lu25qCP5bqV6YOo5YiG6ZqU57q_44CCIiwiciI6ImRvY3VtZW50X3N0YXJ0In0seyJpIjoiY29weS1tYXJrZG93bi1saW5rLXNob3J0Y3V0IiwibiI6IkFsdCtTaGlmdCtDIOS4gOmUruWkjeWItiBNYXJrZG93biDpk77mjqUiLCJlIjoianMiLCJtIjpbImh0dHBzOi8vZ2l0aHViLmNvbS8qIl0sImIiOiIoKCkgPT4ge1xuICBpZiAod2luZG93Ll9fcGNHaE1kQ29weUluaXQpIHJldHVybjtcbiAgd2luZG93Ll9fcGNHaE1kQ29weUluaXQgPSB0cnVlO1xuXG4gIGZ1bmN0aW9uIHNob3dUb2FzdCh0ZXh0KSB7XG4gICAgY29uc3QgZWwgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCdkaXYnKTtcbiAgICBlbC50ZXh0Q29udGVudCA9IHRleHQ7XG4gICAgZWwuc3R5bGUuY3NzVGV4dCA9ICdwb3NpdGlvbjpmaXhlZDtib3R0b206MjBweDtyaWdodDoyMHB4O3otaW5kZXg6MjE0NzQ4MzY0NztwYWRkaW5nOjhweCAxNHB4O2JvcmRlci1yYWRpdXM6OHB4O2JhY2tncm91bmQ6IzFDMTkxNztjb2xvcjojRkFGOEY1O2ZvbnQ6NTAwIDEyLjVweC8xLjQgc3lzdGVtLXVpLHNhbnMtc2VyaWY7Ym94LXNoYWRvdzowIDhweCAyNHB4IHJnYmEoMCwwLDAsLjIyKSc7XG4gICAgZG9jdW1lbnQuYm9keS5hcHBlbmRDaGlsZChlbCk7XG4gICAgc2V0VGltZW91dCgoKSA9PiBlbC5yZW1vdmUoKSwgMTYwMCk7XG4gIH1cblxuICB3aW5kb3cuYWRkRXZlbnRMaXN0ZW5lcigna2V5ZG93bicsIChlKSA9PiB7XG4gICAgaWYgKCEoZS5hbHRLZXkgJiYgZS5zaGlmdEtleSAmJiBlLmtleS50b0xvd2VyQ2FzZSgpID09PSAnYycpKSByZXR1cm47XG4gICAgZS5wcmV2ZW50RGVmYXVsdCgpO1xuICAgIGNvbnN0IGNsZWFuVGl0bGUgPSBkb2N1bWVudC50aXRsZS5yZXBsYWNlKC9cXHMrYnlcXHMrW17Ct10rwrcuKiQvLCAnJykucmVwbGFjZSgvXFxzKsK3XFxzKkdpdEh1YiQvLCAnJykudHJpbSgpO1xuICAgIGNvbnN0IG1kID0gYFske2NsZWFuVGl0bGV9XSgke2xvY2F0aW9uLmhyZWZ9KWA7XG4gICAgbmF2aWdhdG9yLmNsaXBib2FyZC53cml0ZVRleHQobWQpLnRoZW4oKCkgPT4gc2hvd1RvYXN0KCdDb3BpZWQgTWFya2Rvd24gbGluaycpKS5jYXRjaCgoKSA9PiB7fSk7XG4gIH0pO1xufSkoKTsiLCJkIjoi5ZyoIElzc3VlIC8gUFIgLyDku5PlupPpobXmjInkuIsgQWx0K1NoaWZ0K0PvvIzoh6rliqjlpI3liLYgW-agh-mimF0oVVJMKSDmoLzlvI_pk77mjqXjgIIiLCJyIjoiZG9jdW1lbnRfaWRsZSJ9XSwiZCI6IlBSIERpZmYg6KeG5Zu-6Ieq5Yqo6YCC6YWN5a695bGP44CB5Luj56CB57uf5LiAIDIg56m65qC857yp6L-b5pi-56S677yM5bm25pSv5oyBIEFsdCtTaGlmdCtDIOS4gOmUruWkjeWItiBNYXJrZG93biDlvJXnlKjpk77mjqXjgIIiLCJhIjoiQHBhZ2VjcmFmdCIsImMiOiJkZXYiLCJ0ZyI6WyJnaXRodWIiLCJjb2RlLXJldmlldyIsImRldiJdLCJzaCI6WyJnaXRodWIuY29tIl0sInUiOiIyMDI2LTExLTE1In0",
+      "shortcodeEn": "PCP1:eyJ2IjoxLCJpZCI6ImdpdGh1Yi1wb3dlci1kZXYiLCJuIjoiR2l0SHViIFBvd2VyIERldiBQYWNrIiwibXMiOlt7ImkiOiJ3aWRlLXByLWFuZC1jb2RlIiwibiI6IldpZGUgUFIgRGlmZiAmIFJlcG8gQ29udGFpbmVyIiwiZSI6ImNzcyIsIm0iOlsiaHR0cHM6Ly9naXRodWIuY29tLyoiXSwiYiI6Ii5jb250YWluZXIteGwsXG4uY29udGFpbmVyLWxnIHtcbiAgbWF4LXdpZHRoOiBtaW4oMTYwMHB4LCA5NXZ3KSAhaW1wb3J0YW50O1xufSIsImQiOiJFeHBhbmQgcmVwbyBhbmQgcHVsbC1yZXF1ZXN0IGNvbnRhaW5lcnMgdXAgdG8gMTYwMHB4IG9uIHdpZGUgbW9uaXRvcnMuIiwiciI6ImRvY3VtZW50X3N0YXJ0In0seyJpIjoiY3Jpc3AtdHdvLXNwYWNlLXRhYnMiLCJuIjoiMi1TcGFjZSBUYWIgU2l6ZSAmIEZpbGUgSGVhZGVyIFBvbGlzaCIsImUiOiJjc3MiLCJtIjpbImh0dHBzOi8vZ2l0aHViLmNvbS8qIl0sImIiOiIuYmxvYi1jb2RlLWlubmVyLFxuLm1hcmtkb3duLWJvZHkgcHJlLFxuLnJlYWN0LWNvZGUtdGV4dCB7XG4gIHRhYi1zaXplOiAyICFpbXBvcnRhbnQ7XG4gIC1tb3otdGFiLXNpemU6IDIgIWltcG9ydGFudDtcbn1cbi5maWxlLWhlYWRlci5qcy1maWxlLWhlYWRlciB7XG4gIGJveC1zaGFkb3c6IDAgMnB4IDZweCByZ2JhKDAsIDAsIDAsIDAuMDYpO1xufSIsImQiOiJSZW5kZXIgdGFiLXNpemU6IDIgYWNyb3NzIGRpZmZzIGFuZCBNYXJrZG93biBjb2RlIGJsb2NrcyB3aXRoIGNyaXNwIHN0aWNreSBoZWFkZXJzLiIsInIiOiJkb2N1bWVudF9zdGFydCJ9LHsiaSI6ImNvcHktbWFya2Rvd24tbGluay1zaG9ydGN1dCIsIm4iOiJBbHQrU2hpZnQrQyBNYXJrZG93biBMaW5rIENvcHkiLCJlIjoianMiLCJtIjpbImh0dHBzOi8vZ2l0aHViLmNvbS8qIl0sImIiOiIoKCkgPT4ge1xuICBpZiAod2luZG93Ll9fcGNHaE1kQ29weUluaXQpIHJldHVybjtcbiAgd2luZG93Ll9fcGNHaE1kQ29weUluaXQgPSB0cnVlO1xuXG4gIGZ1bmN0aW9uIHNob3dUb2FzdCh0ZXh0KSB7XG4gICAgY29uc3QgZWwgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCdkaXYnKTtcbiAgICBlbC50ZXh0Q29udGVudCA9IHRleHQ7XG4gICAgZWwuc3R5bGUuY3NzVGV4dCA9ICdwb3NpdGlvbjpmaXhlZDtib3R0b206MjBweDtyaWdodDoyMHB4O3otaW5kZXg6MjE0NzQ4MzY0NztwYWRkaW5nOjhweCAxNHB4O2JvcmRlci1yYWRpdXM6OHB4O2JhY2tncm91bmQ6IzFDMTkxNztjb2xvcjojRkFGOEY1O2ZvbnQ6NTAwIDEyLjVweC8xLjQgc3lzdGVtLXVpLHNhbnMtc2VyaWY7Ym94LXNoYWRvdzowIDhweCAyNHB4IHJnYmEoMCwwLDAsLjIyKSc7XG4gICAgZG9jdW1lbnQuYm9keS5hcHBlbmRDaGlsZChlbCk7XG4gICAgc2V0VGltZW91dCgoKSA9PiBlbC5yZW1vdmUoKSwgMTYwMCk7XG4gIH1cblxuICB3aW5kb3cuYWRkRXZlbnRMaXN0ZW5lcigna2V5ZG93bicsIChlKSA9PiB7XG4gICAgaWYgKCEoZS5hbHRLZXkgJiYgZS5zaGlmdEtleSAmJiBlLmtleS50b0xvd2VyQ2FzZSgpID09PSAnYycpKSByZXR1cm47XG4gICAgZS5wcmV2ZW50RGVmYXVsdCgpO1xuICAgIGNvbnN0IGNsZWFuVGl0bGUgPSBkb2N1bWVudC50aXRsZS5yZXBsYWNlKC9cXHMrYnlcXHMrW17Ct10rwrcuKiQvLCAnJykucmVwbGFjZSgvXFxzKsK3XFxzKkdpdEh1YiQvLCAnJykudHJpbSgpO1xuICAgIGNvbnN0IG1kID0gYFske2NsZWFuVGl0bGV9XSgke2xvY2F0aW9uLmhyZWZ9KWA7XG4gICAgbmF2aWdhdG9yLmNsaXBib2FyZC53cml0ZVRleHQobWQpLnRoZW4oKCkgPT4gc2hvd1RvYXN0KCdDb3BpZWQgTWFya2Rvd24gbGluaycpKS5jYXRjaCgoKSA9PiB7fSk7XG4gIH0pO1xufSkoKTsiLCJkIjoiUHJlc3MgQWx0K1NoaWZ0K0Mgb24gYW55IEdpdEh1YiBwYWdlIHRvIGNvcHkgW1RpdGxlXShVUkwpIGNsZWFubHkgdG8gY2xpcGJvYXJkLiIsInIiOiJkb2N1bWVudF9pZGxlIn1dLCJkIjoiRnVsbC13aWR0aCBQUiBkaWZmcywgY29uc2lzdGVudCAyLXNwYWNlIHRhYiB3aWR0aCwgYW5kIEFsdCtTaGlmdCtDIE1hcmtkb3duIGxpbmsgY29weSBob3RrZXkuIiwiYSI6IkBwYWdlY3JhZnQiLCJjIjoiZGV2IiwidGciOlsiZ2l0aHViIiwiY29kZS1yZXZpZXciLCJkZXYiXSwic2giOlsiZ2l0aHViLmNvbSJdLCJ1IjoiMjAyNi0xMS0xNSJ9"
+    },
+    {
+      "id": "youtube-deep-focus",
+      "author": "@pagecraft",
+      "category": "video",
+      "tags": [
+        "youtube",
+        "shorts",
+        "focus"
+      ],
+      "siteHints": [
+        "youtube.com"
+      ],
+      "updatedAt": "2026-11-15",
+      "zh": {
+        "name": "YouTube 深度专注套装",
+        "description": "纯 CSS 移除 Shorts 短视频货架与首页推广横幅，并精简观看页右侧推荐流干扰。",
+        "mods": [
+          {
+            "id": "remove-shorts-shelves",
+            "name": "屏蔽 YouTube Shorts 货架与入口",
+            "description": "隐藏首页、订阅流和左侧栏中的 Shorts 短视频分区及推广横幅。",
+            "engine": "css",
+            "matches": [
+              "https://*.youtube.com/*"
+            ],
+            "runAt": "document_start",
+            "body": "ytd-rich-section-renderer:has(a[title=\"Shorts\"]),\nytd-reel-shelf-renderer,\nytd-guide-entry-renderer:has(a[title=\"Shorts\"]),\nytd-mini-guide-entry-renderer[aria-label=\"Shorts\"],\nytd-banner-promo-renderer,\n#masthead-ad {\n  display: none !important;\n}"
+          },
+          {
+            "id": "calm-watch-sidebar",
+            "name": "观看页专心模式（去右侧推荐与商品）",
+            "description": "隐藏播放页右侧推荐流与视频下方周边商品货架，专注观看当前课程或播放列表。",
+            "engine": "css",
+            "matches": [
+              "https://www.youtube.com/watch*"
+            ],
+            "runAt": "document_start",
+            "body": "ytd-watch-next-secondary-results-renderer,\nytd-merch-shelf-renderer,\nytd-ticket-shelf-renderer,\n#clarify-box {\n  display: none !important;\n}"
+          }
+        ]
+      },
+      "en": {
+        "name": "YouTube Deep Focus Pack",
+        "description": "Pure CSS removal of Shorts shelves, promo banners, and distracting watch sidebar recommendations.",
+        "mods": [
+          {
+            "id": "remove-shorts-shelves",
+            "name": "Hide Shorts Shelves & Nav Entry",
+            "description": "Remove Shorts shelves across Home/Subscriptions and hide homepage masthead promos.",
+            "engine": "css",
+            "matches": [
+              "https://*.youtube.com/*"
+            ],
+            "runAt": "document_start",
+            "body": "ytd-rich-section-renderer:has(a[title=\"Shorts\"]),\nytd-reel-shelf-renderer,\nytd-guide-entry-renderer:has(a[title=\"Shorts\"]),\nytd-mini-guide-entry-renderer[aria-label=\"Shorts\"],\nytd-banner-promo-renderer,\n#masthead-ad {\n  display: none !important;\n}"
+          },
+          {
+            "id": "calm-watch-sidebar",
+            "name": "Calm Watch Mode (Hide Recommendations)",
+            "description": "Hide watch-page right-rail recommendations and merch shelves for uninterrupted focus.",
+            "engine": "css",
+            "matches": [
+              "https://www.youtube.com/watch*"
+            ],
+            "runAt": "document_start",
+            "body": "ytd-watch-next-secondary-results-renderer,\nytd-merch-shelf-renderer,\nytd-ticket-shelf-renderer,\n#clarify-box {\n  display: none !important;\n}"
+          }
+        ]
+      },
+      "safetyLevel": "safe_css",
+      "shortcodeZh": "PCP1:eyJ2IjoxLCJpZCI6InlvdXR1YmUtZGVlcC1mb2N1cyIsIm4iOiJZb3VUdWJlIOa3seW6puS4k-azqOWll-ijhSIsIm1zIjpbeyJpIjoicmVtb3ZlLXNob3J0cy1zaGVsdmVzIiwibiI6IuWxj-iUvSBZb3VUdWJlIFNob3J0cyDotKfmnrbkuI7lhaXlj6MiLCJlIjoiY3NzIiwibSI6WyJodHRwczovLyoueW91dHViZS5jb20vKiJdLCJiIjoieXRkLXJpY2gtc2VjdGlvbi1yZW5kZXJlcjpoYXMoYVt0aXRsZT1cIlNob3J0c1wiXSksXG55dGQtcmVlbC1zaGVsZi1yZW5kZXJlcixcbnl0ZC1ndWlkZS1lbnRyeS1yZW5kZXJlcjpoYXMoYVt0aXRsZT1cIlNob3J0c1wiXSksXG55dGQtbWluaS1ndWlkZS1lbnRyeS1yZW5kZXJlclthcmlhLWxhYmVsPVwiU2hvcnRzXCJdLFxueXRkLWJhbm5lci1wcm9tby1yZW5kZXJlcixcbiNtYXN0aGVhZC1hZCB7XG4gIGRpc3BsYXk6IG5vbmUgIWltcG9ydGFudDtcbn0iLCJkIjoi6ZqQ6JeP6aaW6aG144CB6K6i6ZiF5rWB5ZKM5bem5L6n5qCP5Lit55qEIFNob3J0cyDnn63op4bpopHliIbljLrlj4rmjqjlub_mqKrluYXjgIIiLCJyIjoiZG9jdW1lbnRfc3RhcnQifSx7ImkiOiJjYWxtLXdhdGNoLXNpZGViYXIiLCJuIjoi6KeC55yL6aG15LiT5b-D5qih5byP77yI5Y675Y-z5L6n5o6o6I2Q5LiO5ZWG5ZOB77yJIiwiZSI6ImNzcyIsIm0iOlsiaHR0cHM6Ly93d3cueW91dHViZS5jb20vd2F0Y2gqIl0sImIiOiJ5dGQtd2F0Y2gtbmV4dC1zZWNvbmRhcnktcmVzdWx0cy1yZW5kZXJlcixcbnl0ZC1tZXJjaC1zaGVsZi1yZW5kZXJlcixcbnl0ZC10aWNrZXQtc2hlbGYtcmVuZGVyZXIsXG4jY2xhcmlmeS1ib3gge1xuICBkaXNwbGF5OiBub25lICFpbXBvcnRhbnQ7XG59IiwiZCI6IumakOiXj-aSreaUvumhteWPs-S-p-aOqOiNkOa1geS4juinhumikeS4i-aWueWRqOi-ueWVhuWTgei0p-aetu-8jOS4k-azqOingueci-W9k-WJjeivvueoi-aIluaSreaUvuWIl-ihqOOAgiIsInIiOiJkb2N1bWVudF9zdGFydCJ9XSwiZCI6Iue6ryBDU1Mg56e76ZmkIFNob3J0cyDnn63op4bpopHotKfmnrbkuI7pppbpobXmjqjlub_mqKrluYXvvIzlubbnsr7nroDop4LnnIvpobXlj7PkvqfmjqjojZDmtYHlubLmibDjgIIiLCJhIjoiQHBhZ2VjcmFmdCIsImMiOiJ2aWRlbyIsInRnIjpbInlvdXR1YmUiLCJzaG9ydHMiLCJmb2N1cyJdLCJzaCI6WyJ5b3V0dWJlLmNvbSJdLCJ1IjoiMjAyNi0xMS0xNSJ9",
+      "shortcodeEn": "PCP1:eyJ2IjoxLCJpZCI6InlvdXR1YmUtZGVlcC1mb2N1cyIsIm4iOiJZb3VUdWJlIERlZXAgRm9jdXMgUGFjayIsIm1zIjpbeyJpIjoicmVtb3ZlLXNob3J0cy1zaGVsdmVzIiwibiI6IkhpZGUgU2hvcnRzIFNoZWx2ZXMgJiBOYXYgRW50cnkiLCJlIjoiY3NzIiwibSI6WyJodHRwczovLyoueW91dHViZS5jb20vKiJdLCJiIjoieXRkLXJpY2gtc2VjdGlvbi1yZW5kZXJlcjpoYXMoYVt0aXRsZT1cIlNob3J0c1wiXSksXG55dGQtcmVlbC1zaGVsZi1yZW5kZXJlcixcbnl0ZC1ndWlkZS1lbnRyeS1yZW5kZXJlcjpoYXMoYVt0aXRsZT1cIlNob3J0c1wiXSksXG55dGQtbWluaS1ndWlkZS1lbnRyeS1yZW5kZXJlclthcmlhLWxhYmVsPVwiU2hvcnRzXCJdLFxueXRkLWJhbm5lci1wcm9tby1yZW5kZXJlcixcbiNtYXN0aGVhZC1hZCB7XG4gIGRpc3BsYXk6IG5vbmUgIWltcG9ydGFudDtcbn0iLCJkIjoiUmVtb3ZlIFNob3J0cyBzaGVsdmVzIGFjcm9zcyBIb21lL1N1YnNjcmlwdGlvbnMgYW5kIGhpZGUgaG9tZXBhZ2UgbWFzdGhlYWQgcHJvbW9zLiIsInIiOiJkb2N1bWVudF9zdGFydCJ9LHsiaSI6ImNhbG0td2F0Y2gtc2lkZWJhciIsIm4iOiJDYWxtIFdhdGNoIE1vZGUgKEhpZGUgUmVjb21tZW5kYXRpb25zKSIsImUiOiJjc3MiLCJtIjpbImh0dHBzOi8vd3d3LnlvdXR1YmUuY29tL3dhdGNoKiJdLCJiIjoieXRkLXdhdGNoLW5leHQtc2Vjb25kYXJ5LXJlc3VsdHMtcmVuZGVyZXIsXG55dGQtbWVyY2gtc2hlbGYtcmVuZGVyZXIsXG55dGQtdGlja2V0LXNoZWxmLXJlbmRlcmVyLFxuI2NsYXJpZnktYm94IHtcbiAgZGlzcGxheTogbm9uZSAhaW1wb3J0YW50O1xufSIsImQiOiJIaWRlIHdhdGNoLXBhZ2UgcmlnaHQtcmFpbCByZWNvbW1lbmRhdGlvbnMgYW5kIG1lcmNoIHNoZWx2ZXMgZm9yIHVuaW50ZXJydXB0ZWQgZm9jdXMuIiwiciI6ImRvY3VtZW50X3N0YXJ0In1dLCJkIjoiUHVyZSBDU1MgcmVtb3ZhbCBvZiBTaG9ydHMgc2hlbHZlcywgcHJvbW8gYmFubmVycywgYW5kIGRpc3RyYWN0aW5nIHdhdGNoIHNpZGViYXIgcmVjb21tZW5kYXRpb25zLiIsImEiOiJAcGFnZWNyYWZ0IiwiYyI6InZpZGVvIiwidGciOlsieW91dHViZSIsInNob3J0cyIsImZvY3VzIl0sInNoIjpbInlvdXR1YmUuY29tIl0sInUiOiIyMDI2LTExLTE1In0"
+    },
+    {
+      "id": "hn-arxiv-research",
+      "author": "@pagecraft",
+      "category": "reading",
+      "tags": [
+        "hacker-news",
+        "arxiv",
+        "research",
+        "typography"
+      ],
+      "siteHints": [
+        "news.ycombinator.com",
+        "arxiv.org"
+      ],
+      "updatedAt": "2026-11-15",
+      "zh": {
+        "name": "HN + arXiv 论文精读套装",
+        "description": "为 Hacker News 与 arXiv 换上暖纸居中长文排版，并在 arXiv 摘要页注入一键复制论文引用按钮。",
+        "mods": [
+          {
+            "id": "hn-warm-typography",
+            "name": "Hacker News 暖纸精读排版",
+            "description": "860px 居中流式布局、#FAF8F5 护眼纸色底与更清晰的评论层级间距。",
+            "engine": "css",
+            "matches": [
+              "https://news.ycombinator.com/*"
+            ],
+            "runAt": "document_start",
+            "body": "body {\n  background: #f5f2eb !important;\n  margin: 0 !important;\n  padding: 18px 12px 48px !important;\n}\n#hnmain {\n  width: min(860px, 100%) !important;\n  background: #faf8f5 !important;\n  border: 1px solid rgba(28, 25, 23, 0.12) !important;\n  border-radius: 10px !important;\n  overflow: hidden !important;\n}\n.titleline a,\n.commtext {\n  font-size: 15px !important;\n  line-height: 1.65 !important;\n}"
+          },
+          {
+            "id": "arxiv-abstract-polish",
+            "name": "arXiv 论文摘要居中宽栏优化",
+            "description": "限制摘要正文最大栏宽为 820px，放大标题对比度与行距。",
+            "engine": "css",
+            "matches": [
+              "https://arxiv.org/*",
+              "https://*.arxiv.org/*"
+            ],
+            "runAt": "document_start",
+            "body": "#abs-outer,\n#content {\n  max-width: 820px !important;\n  margin: 0 auto !important;\n  padding: 20px !important;\n}\nh1.title {\n  font-size: 1.65rem !important;\n  line-height: 1.3 !important;\n  margin-bottom: 12px !important;\n}\nblockquote.abstract {\n  font-size: 16px !important;\n  line-height: 1.78 !important;\n  color: #1c1917 !important;\n}"
+          },
+          {
+            "id": "arxiv-copy-citation",
+            "name": "arXiv 标题旁注入「复制 Markdown 引用」按钮",
+            "description": "在论文摘要标题上方添加快捷复制按钮，一键生成 [标题](arXiv URL) 笔记卡片。",
+            "engine": "js",
+            "matches": [
+              "https://arxiv.org/abs/*",
+              "https://*.arxiv.org/abs/*"
+            ],
+            "runAt": "document_idle",
+            "body": "(() => {\n  const titleEl = document.querySelector('h1.title');\n  if (!titleEl || document.getElementById('pc-arxiv-cite-btn')) return;\n  const btn = document.createElement('button');\n  btn.id = 'pc-arxiv-cite-btn';\n  btn.type = 'button';\n  btn.textContent = 'Copy Citation';\n  btn.style.cssText = 'display:inline-flex;align-items:center;gap:6px;margin:0 0 10px;padding:5px 11px;border-radius:7px;border:1px solid #C95533;background:#FAF8F5;color:#9A3412;font:600 12px/1.3 system-ui,sans-serif;cursor:pointer';\n  btn.addEventListener('click', () => {\n    const cleanTitle = titleEl.textContent.replace(/^Title:\\s*/i, '').replace(/\\s+/g, ' ').trim();\n    const md = `[${cleanTitle}](${location.href})`;\n    navigator.clipboard.writeText(md).then(() => {\n      const prev = btn.textContent;\n      btn.textContent = 'Copied ✓';\n      setTimeout(() => { btn.textContent = prev; }, 1400);\n    }).catch(() => {});\n  });\n  titleEl.parentNode.insertBefore(btn, titleEl);\n})();"
+          }
+        ]
+      },
+      "en": {
+        "name": "HN + arXiv Research Pack",
+        "description": "Warm editorial typography for Hacker News & arXiv plus a 1-click Markdown citation button.",
+        "mods": [
+          {
+            "id": "hn-warm-typography",
+            "name": "Hacker News Warm Editorial Reader",
+            "description": "Center #hnmain at 860px on warm #FAF8F5 paper with readable comment spacing.",
+            "engine": "css",
+            "matches": [
+              "https://news.ycombinator.com/*"
+            ],
+            "runAt": "document_start",
+            "body": "body {\n  background: #f5f2eb !important;\n  margin: 0 !important;\n  padding: 18px 12px 48px !important;\n}\n#hnmain {\n  width: min(860px, 100%) !important;\n  background: #faf8f5 !important;\n  border: 1px solid rgba(28, 25, 23, 0.12) !important;\n  border-radius: 10px !important;\n  overflow: hidden !important;\n}\n.titleline a,\n.commtext {\n  font-size: 15px !important;\n  line-height: 1.65 !important;\n}"
+          },
+          {
+            "id": "arxiv-abstract-polish",
+            "name": "arXiv Clean Abstract Column",
+            "description": "Keep abstracts within an 820px measure with clear heading contrast and line rhythm.",
+            "engine": "css",
+            "matches": [
+              "https://arxiv.org/*",
+              "https://*.arxiv.org/*"
+            ],
+            "runAt": "document_start",
+            "body": "#abs-outer,\n#content {\n  max-width: 820px !important;\n  margin: 0 auto !important;\n  padding: 20px !important;\n}\nh1.title {\n  font-size: 1.65rem !important;\n  line-height: 1.3 !important;\n  margin-bottom: 12px !important;\n}\nblockquote.abstract {\n  font-size: 16px !important;\n  line-height: 1.78 !important;\n  color: #1c1917 !important;\n}"
+          },
+          {
+            "id": "arxiv-copy-citation",
+            "name": "arXiv 1-Click Citation Button",
+            "description": "Insert a clean Copy Citation pill above abstract titles for instant [Title](URL) copy.",
+            "engine": "js",
+            "matches": [
+              "https://arxiv.org/abs/*",
+              "https://*.arxiv.org/abs/*"
+            ],
+            "runAt": "document_idle",
+            "body": "(() => {\n  const titleEl = document.querySelector('h1.title');\n  if (!titleEl || document.getElementById('pc-arxiv-cite-btn')) return;\n  const btn = document.createElement('button');\n  btn.id = 'pc-arxiv-cite-btn';\n  btn.type = 'button';\n  btn.textContent = 'Copy Citation';\n  btn.style.cssText = 'display:inline-flex;align-items:center;gap:6px;margin:0 0 10px;padding:5px 11px;border-radius:7px;border:1px solid #C95533;background:#FAF8F5;color:#9A3412;font:600 12px/1.3 system-ui,sans-serif;cursor:pointer';\n  btn.addEventListener('click', () => {\n    const cleanTitle = titleEl.textContent.replace(/^Title:\\s*/i, '').replace(/\\s+/g, ' ').trim();\n    const md = `[${cleanTitle}](${location.href})`;\n    navigator.clipboard.writeText(md).then(() => {\n      const prev = btn.textContent;\n      btn.textContent = 'Copied ✓';\n      setTimeout(() => { btn.textContent = prev; }, 1400);\n    }).catch(() => {});\n  });\n  titleEl.parentNode.insertBefore(btn, titleEl);\n})();"
+          }
+        ]
+      },
+      "safetyLevel": "clean_local_js",
+      "shortcodeZh": "PCP1:eyJ2IjoxLCJpZCI6ImhuLWFyeGl2LXJlc2VhcmNoIiwibiI6IkhOICsgYXJYaXYg6K665paH57K-6K-75aWX6KOFIiwibXMiOlt7ImkiOiJobi13YXJtLXR5cG9ncmFwaHkiLCJuIjoiSGFja2VyIE5ld3Mg5pqW57q457K-6K-75o6S54mIIiwiZSI6ImNzcyIsIm0iOlsiaHR0cHM6Ly9uZXdzLnljb21iaW5hdG9yLmNvbS8qIl0sImIiOiJib2R5IHtcbiAgYmFja2dyb3VuZDogI2Y1ZjJlYiAhaW1wb3J0YW50O1xuICBtYXJnaW46IDAgIWltcG9ydGFudDtcbiAgcGFkZGluZzogMThweCAxMnB4IDQ4cHggIWltcG9ydGFudDtcbn1cbiNobm1haW4ge1xuICB3aWR0aDogbWluKDg2MHB4LCAxMDAlKSAhaW1wb3J0YW50O1xuICBiYWNrZ3JvdW5kOiAjZmFmOGY1ICFpbXBvcnRhbnQ7XG4gIGJvcmRlcjogMXB4IHNvbGlkIHJnYmEoMjgsIDI1LCAyMywgMC4xMikgIWltcG9ydGFudDtcbiAgYm9yZGVyLXJhZGl1czogMTBweCAhaW1wb3J0YW50O1xuICBvdmVyZmxvdzogaGlkZGVuICFpbXBvcnRhbnQ7XG59XG4udGl0bGVsaW5lIGEsXG4uY29tbXRleHQge1xuICBmb250LXNpemU6IDE1cHggIWltcG9ydGFudDtcbiAgbGluZS1oZWlnaHQ6IDEuNjUgIWltcG9ydGFudDtcbn0iLCJkIjoiODYwcHgg5bGF5Lit5rWB5byP5biD5bGA44CBI0ZBRjhGNSDmiqTnnLznurjoibLlupXkuI7mm7TmuIXmmbDnmoTor4TorrrlsYLnuqfpl7Tot53jgIIiLCJyIjoiZG9jdW1lbnRfc3RhcnQifSx7ImkiOiJhcnhpdi1hYnN0cmFjdC1wb2xpc2giLCJuIjoiYXJYaXYg6K665paH5pGY6KaB5bGF5Lit5a695qCP5LyY5YyWIiwiZSI6ImNzcyIsIm0iOlsiaHR0cHM6Ly9hcnhpdi5vcmcvKiIsImh0dHBzOi8vKi5hcnhpdi5vcmcvKiJdLCJiIjoiI2Ficy1vdXRlcixcbiNjb250ZW50IHtcbiAgbWF4LXdpZHRoOiA4MjBweCAhaW1wb3J0YW50O1xuICBtYXJnaW46IDAgYXV0byAhaW1wb3J0YW50O1xuICBwYWRkaW5nOiAyMHB4ICFpbXBvcnRhbnQ7XG59XG5oMS50aXRsZSB7XG4gIGZvbnQtc2l6ZTogMS42NXJlbSAhaW1wb3J0YW50O1xuICBsaW5lLWhlaWdodDogMS4zICFpbXBvcnRhbnQ7XG4gIG1hcmdpbi1ib3R0b206IDEycHggIWltcG9ydGFudDtcbn1cbmJsb2NrcXVvdGUuYWJzdHJhY3Qge1xuICBmb250LXNpemU6IDE2cHggIWltcG9ydGFudDtcbiAgbGluZS1oZWlnaHQ6IDEuNzggIWltcG9ydGFudDtcbiAgY29sb3I6ICMxYzE5MTcgIWltcG9ydGFudDtcbn0iLCJkIjoi6ZmQ5Yi25pGY6KaB5q2j5paH5pyA5aSn5qCP5a695Li6IDgyMHB477yM5pS-5aSn5qCH6aKY5a-55q-U5bqm5LiO6KGM6Led44CCIiwiciI6ImRvY3VtZW50X3N0YXJ0In0seyJpIjoiYXJ4aXYtY29weS1jaXRhdGlvbiIsIm4iOiJhclhpdiDmoIfpopjml4Hms6jlhaXjgIzlpI3liLYgTWFya2Rvd24g5byV55So44CN5oyJ6ZKuIiwiZSI6ImpzIiwibSI6WyJodHRwczovL2FyeGl2Lm9yZy9hYnMvKiIsImh0dHBzOi8vKi5hcnhpdi5vcmcvYWJzLyoiXSwiYiI6IigoKSA9PiB7XG4gIGNvbnN0IHRpdGxlRWwgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKCdoMS50aXRsZScpO1xuICBpZiAoIXRpdGxlRWwgfHwgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ3BjLWFyeGl2LWNpdGUtYnRuJykpIHJldHVybjtcbiAgY29uc3QgYnRuID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgnYnV0dG9uJyk7XG4gIGJ0bi5pZCA9ICdwYy1hcnhpdi1jaXRlLWJ0bic7XG4gIGJ0bi50eXBlID0gJ2J1dHRvbic7XG4gIGJ0bi50ZXh0Q29udGVudCA9ICdDb3B5IENpdGF0aW9uJztcbiAgYnRuLnN0eWxlLmNzc1RleHQgPSAnZGlzcGxheTppbmxpbmUtZmxleDthbGlnbi1pdGVtczpjZW50ZXI7Z2FwOjZweDttYXJnaW46MCAwIDEwcHg7cGFkZGluZzo1cHggMTFweDtib3JkZXItcmFkaXVzOjdweDtib3JkZXI6MXB4IHNvbGlkICNDOTU1MzM7YmFja2dyb3VuZDojRkFGOEY1O2NvbG9yOiM5QTM0MTI7Zm9udDo2MDAgMTJweC8xLjMgc3lzdGVtLXVpLHNhbnMtc2VyaWY7Y3Vyc29yOnBvaW50ZXInO1xuICBidG4uYWRkRXZlbnRMaXN0ZW5lcignY2xpY2snLCAoKSA9PiB7XG4gICAgY29uc3QgY2xlYW5UaXRsZSA9IHRpdGxlRWwudGV4dENvbnRlbnQucmVwbGFjZSgvXlRpdGxlOlxccyovaSwgJycpLnJlcGxhY2UoL1xccysvZywgJyAnKS50cmltKCk7XG4gICAgY29uc3QgbWQgPSBgWyR7Y2xlYW5UaXRsZX1dKCR7bG9jYXRpb24uaHJlZn0pYDtcbiAgICBuYXZpZ2F0b3IuY2xpcGJvYXJkLndyaXRlVGV4dChtZCkudGhlbigoKSA9PiB7XG4gICAgICBjb25zdCBwcmV2ID0gYnRuLnRleHRDb250ZW50O1xuICAgICAgYnRuLnRleHRDb250ZW50ID0gJ0NvcGllZCDinJMnO1xuICAgICAgc2V0VGltZW91dCgoKSA9PiB7IGJ0bi50ZXh0Q29udGVudCA9IHByZXY7IH0sIDE0MDApO1xuICAgIH0pLmNhdGNoKCgpID0-IHt9KTtcbiAgfSk7XG4gIHRpdGxlRWwucGFyZW50Tm9kZS5pbnNlcnRCZWZvcmUoYnRuLCB0aXRsZUVsKTtcbn0pKCk7IiwiZCI6IuWcqOiuuuaWh-aRmOimgeagh-mimOS4iuaWuea3u-WKoOW_q-aNt-WkjeWItuaMiemSru-8jOS4gOmUrueUn-aIkCBb5qCH6aKYXShhclhpdiBVUkwpIOeslOiusOWNoeeJh-OAgiIsInIiOiJkb2N1bWVudF9pZGxlIn1dLCJkIjoi5Li6IEhhY2tlciBOZXdzIOS4jiBhclhpdiDmjaLkuIrmmpbnurjlsYXkuK3plb_mlofmjpLniYjvvIzlubblnKggYXJYaXYg5pGY6KaB6aG15rOo5YWl5LiA6ZSu5aSN5Yi26K665paH5byV55So5oyJ6ZKu44CCIiwiYSI6IkBwYWdlY3JhZnQiLCJjIjoicmVhZGluZyIsInRnIjpbImhhY2tlci1uZXdzIiwiYXJ4aXYiLCJyZXNlYXJjaCIsInR5cG9ncmFwaHkiXSwic2giOlsibmV3cy55Y29tYmluYXRvci5jb20iLCJhcnhpdi5vcmciXSwidSI6IjIwMjYtMTEtMTUifQ",
+      "shortcodeEn": "PCP1:eyJ2IjoxLCJpZCI6ImhuLWFyeGl2LXJlc2VhcmNoIiwibiI6IkhOICsgYXJYaXYgUmVzZWFyY2ggUGFjayIsIm1zIjpbeyJpIjoiaG4td2FybS10eXBvZ3JhcGh5IiwibiI6IkhhY2tlciBOZXdzIFdhcm0gRWRpdG9yaWFsIFJlYWRlciIsImUiOiJjc3MiLCJtIjpbImh0dHBzOi8vbmV3cy55Y29tYmluYXRvci5jb20vKiJdLCJiIjoiYm9keSB7XG4gIGJhY2tncm91bmQ6ICNmNWYyZWIgIWltcG9ydGFudDtcbiAgbWFyZ2luOiAwICFpbXBvcnRhbnQ7XG4gIHBhZGRpbmc6IDE4cHggMTJweCA0OHB4ICFpbXBvcnRhbnQ7XG59XG4jaG5tYWluIHtcbiAgd2lkdGg6IG1pbig4NjBweCwgMTAwJSkgIWltcG9ydGFudDtcbiAgYmFja2dyb3VuZDogI2ZhZjhmNSAhaW1wb3J0YW50O1xuICBib3JkZXI6IDFweCBzb2xpZCByZ2JhKDI4LCAyNSwgMjMsIDAuMTIpICFpbXBvcnRhbnQ7XG4gIGJvcmRlci1yYWRpdXM6IDEwcHggIWltcG9ydGFudDtcbiAgb3ZlcmZsb3c6IGhpZGRlbiAhaW1wb3J0YW50O1xufVxuLnRpdGxlbGluZSBhLFxuLmNvbW10ZXh0IHtcbiAgZm9udC1zaXplOiAxNXB4ICFpbXBvcnRhbnQ7XG4gIGxpbmUtaGVpZ2h0OiAxLjY1ICFpbXBvcnRhbnQ7XG59IiwiZCI6IkNlbnRlciAjaG5tYWluIGF0IDg2MHB4IG9uIHdhcm0gI0ZBRjhGNSBwYXBlciB3aXRoIHJlYWRhYmxlIGNvbW1lbnQgc3BhY2luZy4iLCJyIjoiZG9jdW1lbnRfc3RhcnQifSx7ImkiOiJhcnhpdi1hYnN0cmFjdC1wb2xpc2giLCJuIjoiYXJYaXYgQ2xlYW4gQWJzdHJhY3QgQ29sdW1uIiwiZSI6ImNzcyIsIm0iOlsiaHR0cHM6Ly9hcnhpdi5vcmcvKiIsImh0dHBzOi8vKi5hcnhpdi5vcmcvKiJdLCJiIjoiI2Ficy1vdXRlcixcbiNjb250ZW50IHtcbiAgbWF4LXdpZHRoOiA4MjBweCAhaW1wb3J0YW50O1xuICBtYXJnaW46IDAgYXV0byAhaW1wb3J0YW50O1xuICBwYWRkaW5nOiAyMHB4ICFpbXBvcnRhbnQ7XG59XG5oMS50aXRsZSB7XG4gIGZvbnQtc2l6ZTogMS42NXJlbSAhaW1wb3J0YW50O1xuICBsaW5lLWhlaWdodDogMS4zICFpbXBvcnRhbnQ7XG4gIG1hcmdpbi1ib3R0b206IDEycHggIWltcG9ydGFudDtcbn1cbmJsb2NrcXVvdGUuYWJzdHJhY3Qge1xuICBmb250LXNpemU6IDE2cHggIWltcG9ydGFudDtcbiAgbGluZS1oZWlnaHQ6IDEuNzggIWltcG9ydGFudDtcbiAgY29sb3I6ICMxYzE5MTcgIWltcG9ydGFudDtcbn0iLCJkIjoiS2VlcCBhYnN0cmFjdHMgd2l0aGluIGFuIDgyMHB4IG1lYXN1cmUgd2l0aCBjbGVhciBoZWFkaW5nIGNvbnRyYXN0IGFuZCBsaW5lIHJoeXRobS4iLCJyIjoiZG9jdW1lbnRfc3RhcnQifSx7ImkiOiJhcnhpdi1jb3B5LWNpdGF0aW9uIiwibiI6ImFyWGl2IDEtQ2xpY2sgQ2l0YXRpb24gQnV0dG9uIiwiZSI6ImpzIiwibSI6WyJodHRwczovL2FyeGl2Lm9yZy9hYnMvKiIsImh0dHBzOi8vKi5hcnhpdi5vcmcvYWJzLyoiXSwiYiI6IigoKSA9PiB7XG4gIGNvbnN0IHRpdGxlRWwgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yKCdoMS50aXRsZScpO1xuICBpZiAoIXRpdGxlRWwgfHwgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ3BjLWFyeGl2LWNpdGUtYnRuJykpIHJldHVybjtcbiAgY29uc3QgYnRuID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgnYnV0dG9uJyk7XG4gIGJ0bi5pZCA9ICdwYy1hcnhpdi1jaXRlLWJ0bic7XG4gIGJ0bi50eXBlID0gJ2J1dHRvbic7XG4gIGJ0bi50ZXh0Q29udGVudCA9ICdDb3B5IENpdGF0aW9uJztcbiAgYnRuLnN0eWxlLmNzc1RleHQgPSAnZGlzcGxheTppbmxpbmUtZmxleDthbGlnbi1pdGVtczpjZW50ZXI7Z2FwOjZweDttYXJnaW46MCAwIDEwcHg7cGFkZGluZzo1cHggMTFweDtib3JkZXItcmFkaXVzOjdweDtib3JkZXI6MXB4IHNvbGlkICNDOTU1MzM7YmFja2dyb3VuZDojRkFGOEY1O2NvbG9yOiM5QTM0MTI7Zm9udDo2MDAgMTJweC8xLjMgc3lzdGVtLXVpLHNhbnMtc2VyaWY7Y3Vyc29yOnBvaW50ZXInO1xuICBidG4uYWRkRXZlbnRMaXN0ZW5lcignY2xpY2snLCAoKSA9PiB7XG4gICAgY29uc3QgY2xlYW5UaXRsZSA9IHRpdGxlRWwudGV4dENvbnRlbnQucmVwbGFjZSgvXlRpdGxlOlxccyovaSwgJycpLnJlcGxhY2UoL1xccysvZywgJyAnKS50cmltKCk7XG4gICAgY29uc3QgbWQgPSBgWyR7Y2xlYW5UaXRsZX1dKCR7bG9jYXRpb24uaHJlZn0pYDtcbiAgICBuYXZpZ2F0b3IuY2xpcGJvYXJkLndyaXRlVGV4dChtZCkudGhlbigoKSA9PiB7XG4gICAgICBjb25zdCBwcmV2ID0gYnRuLnRleHRDb250ZW50O1xuICAgICAgYnRuLnRleHRDb250ZW50ID0gJ0NvcGllZCDinJMnO1xuICAgICAgc2V0VGltZW91dCgoKSA9PiB7IGJ0bi50ZXh0Q29udGVudCA9IHByZXY7IH0sIDE0MDApO1xuICAgIH0pLmNhdGNoKCgpID0-IHt9KTtcbiAgfSk7XG4gIHRpdGxlRWwucGFyZW50Tm9kZS5pbnNlcnRCZWZvcmUoYnRuLCB0aXRsZUVsKTtcbn0pKCk7IiwiZCI6Ikluc2VydCBhIGNsZWFuIENvcHkgQ2l0YXRpb24gcGlsbCBhYm92ZSBhYnN0cmFjdCB0aXRsZXMgZm9yIGluc3RhbnQgW1RpdGxlXShVUkwpIGNvcHkuIiwiciI6ImRvY3VtZW50X2lkbGUifV0sImQiOiJXYXJtIGVkaXRvcmlhbCB0eXBvZ3JhcGh5IGZvciBIYWNrZXIgTmV3cyAmIGFyWGl2IHBsdXMgYSAxLWNsaWNrIE1hcmtkb3duIGNpdGF0aW9uIGJ1dHRvbi4iLCJhIjoiQHBhZ2VjcmFmdCIsImMiOiJyZWFkaW5nIiwidGciOlsiaGFja2VyLW5ld3MiLCJhcnhpdiIsInJlc2VhcmNoIiwidHlwb2dyYXBoeSJdLCJzaCI6WyJuZXdzLnljb21iaW5hdG9yLmNvbSIsImFyeGl2Lm9yZyJdLCJ1IjoiMjAyNi0xMS0xNSJ9"
+    },
+    {
+      "id": "docs-calm-reader",
+      "author": "@pagecraft",
+      "category": "dev",
+      "tags": [
+        "mdn",
+        "wikipedia",
+        "docs",
+        "copy-code"
+      ],
+      "siteHints": [
+        "developer.mozilla.org",
+        "readthedocs.io",
+        "docs.github.com",
+        "wikipedia.org"
+      ],
+      "updatedAt": "2026-11-15",
+      "zh": {
+        "name": "技术文档 & 百科清爽精读包",
+        "description": "屏蔽 MDN / Wikipedia / ReadTheDocs 募捐与调查横幅，并给缺失复制按钮的 \u003cpre> 代码块补全一键复制。",
+        "mods": [
+          {
+            "id": "focus-doc-column",
+            "name": "隐藏文档反馈横幅与募捐条",
+            "description": "移除顶部推广条、Cookie/募捐横幅，保持技术文档正文干净可读。",
+            "engine": "css",
+            "matches": [
+              "https://developer.mozilla.org/*",
+              "https://*.readthedocs.io/*",
+              "https://docs.github.com/*",
+              "https://*.wikipedia.org/*"
+            ],
+            "runAt": "document_start",
+            "body": "#siteNotice,\n.cn-fundraising,\n.central-notice,\n.top-banner,\n.rst-versions {\n  display: none !important;\n}\n#mw-content-text p,\narticle p {\n  line-height: 1.75 !important;\n}"
+          },
+          {
+            "id": "codeblock-quick-copy",
+            "name": "文档代码块补全「Copy」按钮",
+            "description": "为没有内置复制按钮的 \u003cpre> 代码块右上角添加轻量化 Copy 按钮。",
+            "engine": "js",
+            "matches": [
+              "https://developer.mozilla.org/*",
+              "https://*.readthedocs.io/*",
+              "https://docs.github.com/*"
+            ],
+            "runAt": "document_idle",
+            "body": "(() => {\n  const blocks = document.querySelectorAll('pre');\n  for (const pre of blocks) {\n    if (pre.dataset.pcCopyDone || pre.querySelector('button')) continue;\n    if ((pre.textContent || '').trim().length \u003c 16) continue;\n    pre.dataset.pcCopyDone = '1';\n    if (getComputedStyle(pre).position === 'static') pre.style.position = 'relative';\n    const btn = document.createElement('button');\n    btn.type = 'button';\n    btn.textContent = 'Copy';\n    btn.style.cssText = 'position:absolute;top:6px;right:6px;z-index:5;padding:2px 8px;border-radius:5px;border:1px solid rgba(128,128,128,.35);background:rgba(28,25,23,.85);color:#FAF8F5;font:500 11px/1.4 ui-monospace,monospace;cursor:pointer';\n    btn.addEventListener('click', () => {\n      const codeEl = pre.querySelector('code') || pre;\n      navigator.clipboard.writeText((codeEl.innerText || '').trim()).then(() => {\n        btn.textContent = 'Copied';\n        setTimeout(() => { btn.textContent = 'Copy'; }, 1200);\n      }).catch(() => {});\n    });\n    pre.appendChild(btn);\n  }\n})();"
+          }
+        ]
+      },
+      "en": {
+        "name": "Technical Docs & Wiki Calm Pack",
+        "description": "Hide promo & fundraising banners across MDN, Wikipedia & docs sites and add a clean Copy button to \u003cpre> blocks.",
+        "mods": [
+          {
+            "id": "focus-doc-column",
+            "name": "Clean Docs & Wiki Banners",
+            "description": "Hide fundraising notices and floating version bars while improving paragraph line height.",
+            "engine": "css",
+            "matches": [
+              "https://developer.mozilla.org/*",
+              "https://*.readthedocs.io/*",
+              "https://docs.github.com/*",
+              "https://*.wikipedia.org/*"
+            ],
+            "runAt": "document_start",
+            "body": "#siteNotice,\n.cn-fundraising,\n.central-notice,\n.top-banner,\n.rst-versions {\n  display: none !important;\n}\n#mw-content-text p,\narticle p {\n  line-height: 1.75 !important;\n}"
+          },
+          {
+            "id": "codeblock-quick-copy",
+            "name": "Quick Copy for Pre Code Blocks",
+            "description": "Attach a minimal Copy button to \u003cpre> blocks missing native copy controls.",
+            "engine": "js",
+            "matches": [
+              "https://developer.mozilla.org/*",
+              "https://*.readthedocs.io/*",
+              "https://docs.github.com/*"
+            ],
+            "runAt": "document_idle",
+            "body": "(() => {\n  const blocks = document.querySelectorAll('pre');\n  for (const pre of blocks) {\n    if (pre.dataset.pcCopyDone || pre.querySelector('button')) continue;\n    if ((pre.textContent || '').trim().length \u003c 16) continue;\n    pre.dataset.pcCopyDone = '1';\n    if (getComputedStyle(pre).position === 'static') pre.style.position = 'relative';\n    const btn = document.createElement('button');\n    btn.type = 'button';\n    btn.textContent = 'Copy';\n    btn.style.cssText = 'position:absolute;top:6px;right:6px;z-index:5;padding:2px 8px;border-radius:5px;border:1px solid rgba(128,128,128,.35);background:rgba(28,25,23,.85);color:#FAF8F5;font:500 11px/1.4 ui-monospace,monospace;cursor:pointer';\n    btn.addEventListener('click', () => {\n      const codeEl = pre.querySelector('code') || pre;\n      navigator.clipboard.writeText((codeEl.innerText || '').trim()).then(() => {\n        btn.textContent = 'Copied';\n        setTimeout(() => { btn.textContent = 'Copy'; }, 1200);\n      }).catch(() => {});\n    });\n    pre.appendChild(btn);\n  }\n})();"
+          }
+        ]
+      },
+      "safetyLevel": "clean_local_js",
+      "shortcodeZh": "PCP1:eyJ2IjoxLCJpZCI6ImRvY3MtY2FsbS1yZWFkZXIiLCJuIjoi5oqA5pyv5paH5qGjICYg55m-56eR5riF54i957K-6K-75YyFIiwibXMiOlt7ImkiOiJmb2N1cy1kb2MtY29sdW1uIiwibiI6IumakOiXj-aWh-aho-WPjemmiOaoquW5heS4juWLn-aNkOadoSIsImUiOiJjc3MiLCJtIjpbImh0dHBzOi8vZGV2ZWxvcGVyLm1vemlsbGEub3JnLyoiLCJodHRwczovLyoucmVhZHRoZWRvY3MuaW8vKiIsImh0dHBzOi8vZG9jcy5naXRodWIuY29tLyoiLCJodHRwczovLyoud2lraXBlZGlhLm9yZy8qIl0sImIiOiIjc2l0ZU5vdGljZSxcbi5jbi1mdW5kcmFpc2luZyxcbi5jZW50cmFsLW5vdGljZSxcbi50b3AtYmFubmVyLFxuLnJzdC12ZXJzaW9ucyB7XG4gIGRpc3BsYXk6IG5vbmUgIWltcG9ydGFudDtcbn1cbiNtdy1jb250ZW50LXRleHQgcCxcbmFydGljbGUgcCB7XG4gIGxpbmUtaGVpZ2h0OiAxLjc1ICFpbXBvcnRhbnQ7XG59IiwiZCI6Iuenu-mZpOmhtumDqOaOqOW5v-adoeOAgUNvb2tpZS_li5_mjZDmqKrluYXvvIzkv53mjIHmioDmnK_mlofmoaPmraPmloflubLlh4Dlj6_or7vjgIIiLCJyIjoiZG9jdW1lbnRfc3RhcnQifSx7ImkiOiJjb2RlYmxvY2stcXVpY2stY29weSIsIm4iOiLmlofmoaPku6PnoIHlnZfooaXlhajjgIxDb3B544CN5oyJ6ZKuIiwiZSI6ImpzIiwibSI6WyJodHRwczovL2RldmVsb3Blci5tb3ppbGxhLm9yZy8qIiwiaHR0cHM6Ly8qLnJlYWR0aGVkb2NzLmlvLyoiLCJodHRwczovL2RvY3MuZ2l0aHViLmNvbS8qIl0sImIiOiIoKCkgPT4ge1xuICBjb25zdCBibG9ja3MgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKCdwcmUnKTtcbiAgZm9yIChjb25zdCBwcmUgb2YgYmxvY2tzKSB7XG4gICAgaWYgKHByZS5kYXRhc2V0LnBjQ29weURvbmUgfHwgcHJlLnF1ZXJ5U2VsZWN0b3IoJ2J1dHRvbicpKSBjb250aW51ZTtcbiAgICBpZiAoKHByZS50ZXh0Q29udGVudCB8fCAnJykudHJpbSgpLmxlbmd0aCA8IDE2KSBjb250aW51ZTtcbiAgICBwcmUuZGF0YXNldC5wY0NvcHlEb25lID0gJzEnO1xuICAgIGlmIChnZXRDb21wdXRlZFN0eWxlKHByZSkucG9zaXRpb24gPT09ICdzdGF0aWMnKSBwcmUuc3R5bGUucG9zaXRpb24gPSAncmVsYXRpdmUnO1xuICAgIGNvbnN0IGJ0biA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoJ2J1dHRvbicpO1xuICAgIGJ0bi50eXBlID0gJ2J1dHRvbic7XG4gICAgYnRuLnRleHRDb250ZW50ID0gJ0NvcHknO1xuICAgIGJ0bi5zdHlsZS5jc3NUZXh0ID0gJ3Bvc2l0aW9uOmFic29sdXRlO3RvcDo2cHg7cmlnaHQ6NnB4O3otaW5kZXg6NTtwYWRkaW5nOjJweCA4cHg7Ym9yZGVyLXJhZGl1czo1cHg7Ym9yZGVyOjFweCBzb2xpZCByZ2JhKDEyOCwxMjgsMTI4LC4zNSk7YmFja2dyb3VuZDpyZ2JhKDI4LDI1LDIzLC44NSk7Y29sb3I6I0ZBRjhGNTtmb250OjUwMCAxMXB4LzEuNCB1aS1tb25vc3BhY2UsbW9ub3NwYWNlO2N1cnNvcjpwb2ludGVyJztcbiAgICBidG4uYWRkRXZlbnRMaXN0ZW5lcignY2xpY2snLCAoKSA9PiB7XG4gICAgICBjb25zdCBjb2RlRWwgPSBwcmUucXVlcnlTZWxlY3RvcignY29kZScpIHx8IHByZTtcbiAgICAgIG5hdmlnYXRvci5jbGlwYm9hcmQud3JpdGVUZXh0KChjb2RlRWwuaW5uZXJUZXh0IHx8ICcnKS50cmltKCkpLnRoZW4oKCkgPT4ge1xuICAgICAgICBidG4udGV4dENvbnRlbnQgPSAnQ29waWVkJztcbiAgICAgICAgc2V0VGltZW91dCgoKSA9PiB7IGJ0bi50ZXh0Q29udGVudCA9ICdDb3B5JzsgfSwgMTIwMCk7XG4gICAgICB9KS5jYXRjaCgoKSA9PiB7fSk7XG4gICAgfSk7XG4gICAgcHJlLmFwcGVuZENoaWxkKGJ0bik7XG4gIH1cbn0pKCk7IiwiZCI6IuS4uuayoeacieWGhee9ruWkjeWItuaMiemSrueahCA8cHJlPiDku6PnoIHlnZflj7PkuIrop5Lmt7vliqDovbvph4_ljJYgQ29weSDmjInpkq7jgIIiLCJyIjoiZG9jdW1lbnRfaWRsZSJ9XSwiZCI6IuWxj-iUvSBNRE4gLyBXaWtpcGVkaWEgLyBSZWFkVGhlRG9jcyDli5_mjZDkuI7osIPmn6XmqKrluYXvvIzlubbnu5nnvLrlpLHlpI3liLbmjInpkq7nmoQgPHByZT4g5Luj56CB5Z2X6KGl5YWo5LiA6ZSu5aSN5Yi244CCIiwiYSI6IkBwYWdlY3JhZnQiLCJjIjoiZGV2IiwidGciOlsibWRuIiwid2lraXBlZGlhIiwiZG9jcyIsImNvcHktY29kZSJdLCJzaCI6WyJkZXZlbG9wZXIubW96aWxsYS5vcmciLCJyZWFkdGhlZG9jcy5pbyIsImRvY3MuZ2l0aHViLmNvbSIsIndpa2lwZWRpYS5vcmciXSwidSI6IjIwMjYtMTEtMTUifQ",
+      "shortcodeEn": "PCP1:eyJ2IjoxLCJpZCI6ImRvY3MtY2FsbS1yZWFkZXIiLCJuIjoiVGVjaG5pY2FsIERvY3MgJiBXaWtpIENhbG0gUGFjayIsIm1zIjpbeyJpIjoiZm9jdXMtZG9jLWNvbHVtbiIsIm4iOiJDbGVhbiBEb2NzICYgV2lraSBCYW5uZXJzIiwiZSI6ImNzcyIsIm0iOlsiaHR0cHM6Ly9kZXZlbG9wZXIubW96aWxsYS5vcmcvKiIsImh0dHBzOi8vKi5yZWFkdGhlZG9jcy5pby8qIiwiaHR0cHM6Ly9kb2NzLmdpdGh1Yi5jb20vKiIsImh0dHBzOi8vKi53aWtpcGVkaWEub3JnLyoiXSwiYiI6IiNzaXRlTm90aWNlLFxuLmNuLWZ1bmRyYWlzaW5nLFxuLmNlbnRyYWwtbm90aWNlLFxuLnRvcC1iYW5uZXIsXG4ucnN0LXZlcnNpb25zIHtcbiAgZGlzcGxheTogbm9uZSAhaW1wb3J0YW50O1xufVxuI213LWNvbnRlbnQtdGV4dCBwLFxuYXJ0aWNsZSBwIHtcbiAgbGluZS1oZWlnaHQ6IDEuNzUgIWltcG9ydGFudDtcbn0iLCJkIjoiSGlkZSBmdW5kcmFpc2luZyBub3RpY2VzIGFuZCBmbG9hdGluZyB2ZXJzaW9uIGJhcnMgd2hpbGUgaW1wcm92aW5nIHBhcmFncmFwaCBsaW5lIGhlaWdodC4iLCJyIjoiZG9jdW1lbnRfc3RhcnQifSx7ImkiOiJjb2RlYmxvY2stcXVpY2stY29weSIsIm4iOiJRdWljayBDb3B5IGZvciBQcmUgQ29kZSBCbG9ja3MiLCJlIjoianMiLCJtIjpbImh0dHBzOi8vZGV2ZWxvcGVyLm1vemlsbGEub3JnLyoiLCJodHRwczovLyoucmVhZHRoZWRvY3MuaW8vKiIsImh0dHBzOi8vZG9jcy5naXRodWIuY29tLyoiXSwiYiI6IigoKSA9PiB7XG4gIGNvbnN0IGJsb2NrcyA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3JBbGwoJ3ByZScpO1xuICBmb3IgKGNvbnN0IHByZSBvZiBibG9ja3MpIHtcbiAgICBpZiAocHJlLmRhdGFzZXQucGNDb3B5RG9uZSB8fCBwcmUucXVlcnlTZWxlY3RvcignYnV0dG9uJykpIGNvbnRpbnVlO1xuICAgIGlmICgocHJlLnRleHRDb250ZW50IHx8ICcnKS50cmltKCkubGVuZ3RoIDwgMTYpIGNvbnRpbnVlO1xuICAgIHByZS5kYXRhc2V0LnBjQ29weURvbmUgPSAnMSc7XG4gICAgaWYgKGdldENvbXB1dGVkU3R5bGUocHJlKS5wb3NpdGlvbiA9PT0gJ3N0YXRpYycpIHByZS5zdHlsZS5wb3NpdGlvbiA9ICdyZWxhdGl2ZSc7XG4gICAgY29uc3QgYnRuID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgnYnV0dG9uJyk7XG4gICAgYnRuLnR5cGUgPSAnYnV0dG9uJztcbiAgICBidG4udGV4dENvbnRlbnQgPSAnQ29weSc7XG4gICAgYnRuLnN0eWxlLmNzc1RleHQgPSAncG9zaXRpb246YWJzb2x1dGU7dG9wOjZweDtyaWdodDo2cHg7ei1pbmRleDo1O3BhZGRpbmc6MnB4IDhweDtib3JkZXItcmFkaXVzOjVweDtib3JkZXI6MXB4IHNvbGlkIHJnYmEoMTI4LDEyOCwxMjgsLjM1KTtiYWNrZ3JvdW5kOnJnYmEoMjgsMjUsMjMsLjg1KTtjb2xvcjojRkFGOEY1O2ZvbnQ6NTAwIDExcHgvMS40IHVpLW1vbm9zcGFjZSxtb25vc3BhY2U7Y3Vyc29yOnBvaW50ZXInO1xuICAgIGJ0bi5hZGRFdmVudExpc3RlbmVyKCdjbGljaycsICgpID0-IHtcbiAgICAgIGNvbnN0IGNvZGVFbCA9IHByZS5xdWVyeVNlbGVjdG9yKCdjb2RlJykgfHwgcHJlO1xuICAgICAgbmF2aWdhdG9yLmNsaXBib2FyZC53cml0ZVRleHQoKGNvZGVFbC5pbm5lclRleHQgfHwgJycpLnRyaW0oKSkudGhlbigoKSA9PiB7XG4gICAgICAgIGJ0bi50ZXh0Q29udGVudCA9ICdDb3BpZWQnO1xuICAgICAgICBzZXRUaW1lb3V0KCgpID0-IHsgYnRuLnRleHRDb250ZW50ID0gJ0NvcHknOyB9LCAxMjAwKTtcbiAgICAgIH0pLmNhdGNoKCgpID0-IHt9KTtcbiAgICB9KTtcbiAgICBwcmUuYXBwZW5kQ2hpbGQoYnRuKTtcbiAgfVxufSkoKTsiLCJkIjoiQXR0YWNoIGEgbWluaW1hbCBDb3B5IGJ1dHRvbiB0byA8cHJlPiBibG9ja3MgbWlzc2luZyBuYXRpdmUgY29weSBjb250cm9scy4iLCJyIjoiZG9jdW1lbnRfaWRsZSJ9XSwiZCI6IkhpZGUgcHJvbW8gJiBmdW5kcmFpc2luZyBiYW5uZXJzIGFjcm9zcyBNRE4sIFdpa2lwZWRpYSAmIGRvY3Mgc2l0ZXMgYW5kIGFkZCBhIGNsZWFuIENvcHkgYnV0dG9uIHRvIDxwcmU-IGJsb2Nrcy4iLCJhIjoiQHBhZ2VjcmFmdCIsImMiOiJkZXYiLCJ0ZyI6WyJtZG4iLCJ3aWtpcGVkaWEiLCJkb2NzIiwiY29weS1jb2RlIl0sInNoIjpbImRldmVsb3Blci5tb3ppbGxhLm9yZyIsInJlYWR0aGVkb2NzLmlvIiwiZG9jcy5naXRodWIuY29tIiwid2lraXBlZGlhLm9yZyJdLCJ1IjoiMjAyNi0xMS0xNSJ9"
+    },
+    {
+      "id": "table-data-ops",
+      "author": "@pagecraft",
+      "category": "productivity",
+      "tags": [
+        "table",
+        "csv",
+        "wikipedia",
+        "export"
+      ],
+      "siteHints": [
+        "pagecraft.shenxin.space",
+        "wikipedia.org",
+        "github.com"
+      ],
+      "updatedAt": "2026-11-15",
+      "zh": {
+        "name": "网页表格高可读与 CSV 导出套装",
+        "description": "增强维基百科、GitHub 文档与靶场网页表格的等宽数字对齐、斑马纹高亮，并注入本地 CSV 一键导出。",
+        "mods": [
+          {
+            "id": "sticky-zebra-tables",
+            "name": "表格等宽数字与悬停高亮",
+            "description": "启用 tabular-nums 等宽数字对齐、表头吸顶及行悬停轻高亮。",
+            "engine": "css",
+            "matches": [
+              "https://pagecraft.shenxin.space/*",
+              "https://*.wikipedia.org/*",
+              "https://github.com/*"
+            ],
+            "runAt": "document_start",
+            "body": "table {\n  font-variant-numeric: tabular-nums;\n}\ntable tbody tr:hover {\n  background: rgba(201, 85, 51, 0.06) !important;\n}\ntable thead th {\n  position: sticky;\n  top: 0;\n}"
+          },
+          {
+            "id": "export-table-csv",
+            "name": "多行表格本地导出 CSV",
+            "description": "在超过 3 行的网页表格右上角添加「导出 CSV」按钮，100% 本地生成 UTF-8 文件下载。",
+            "engine": "js",
+            "matches": [
+              "https://pagecraft.shenxin.space/*",
+              "https://*.wikipedia.org/*",
+              "https://github.com/*"
+            ],
+            "runAt": "document_idle",
+            "body": "(() => {\n  const tables = document.querySelectorAll('table');\n  for (const tbl of tables) {\n    if (tbl.dataset.pcCsvReady || tbl.rows.length \u003c 3) continue;\n    tbl.dataset.pcCsvReady = '1';\n    const btn = document.createElement('button');\n    btn.type = 'button';\n    btn.textContent = 'Export CSV';\n    btn.style.cssText = 'display:inline-flex;align-items:center;margin:0 0 6px;padding:3px 9px;border-radius:6px;border:1px solid #C95533;background:#FAF8F5;color:#9A3412;font:600 11.5px/1.3 system-ui,sans-serif;cursor:pointer';\n    btn.addEventListener('click', () => {\n      const rows = Array.from(tbl.querySelectorAll('tr')).map((tr) =>\n        Array.from(tr.children).map((td) => {\n          const txt = (td.textContent || '').replace(/\\s+/g, ' ').trim().replace(/\"/g, '\"\"');\n          return `\"${txt}\"`;\n        }).join(','),\n      );\n      const csv = '\\uFEFF' + rows.join('\\n');\n      const link = document.createElement('a');\n      link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);\n      link.download = (document.title.slice(0, 32) || 'table').replace(/[^\\w-]+/g, '-') + '.csv';\n      document.body.appendChild(link);\n      link.click();\n      link.remove();\n    });\n    tbl.parentNode.insertBefore(btn, tbl);\n  }\n})();"
+          }
+        ]
+      },
+      "en": {
+        "name": "Table Clarity & CSV Export Pack",
+        "description": "Add tabular numerals and hover highlights to HTML tables plus a local 1-click Export CSV button.",
+        "mods": [
+          {
+            "id": "sticky-zebra-tables",
+            "name": "Tabular Numbers & Row Hover",
+            "description": "Enable tabular-nums alignment, sticky headers, and subtle row hover highlighting.",
+            "engine": "css",
+            "matches": [
+              "https://pagecraft.shenxin.space/*",
+              "https://*.wikipedia.org/*",
+              "https://github.com/*"
+            ],
+            "runAt": "document_start",
+            "body": "table {\n  font-variant-numeric: tabular-nums;\n}\ntable tbody tr:hover {\n  background: rgba(201, 85, 51, 0.06) !important;\n}\ntable thead th {\n  position: sticky;\n  top: 0;\n}"
+          },
+          {
+            "id": "export-table-csv",
+            "name": "1-Click Local CSV Table Export",
+            "description": "Add an Export CSV button above multi-row tables using 100% local UTF-8 CSV encoding.",
+            "engine": "js",
+            "matches": [
+              "https://pagecraft.shenxin.space/*",
+              "https://*.wikipedia.org/*",
+              "https://github.com/*"
+            ],
+            "runAt": "document_idle",
+            "body": "(() => {\n  const tables = document.querySelectorAll('table');\n  for (const tbl of tables) {\n    if (tbl.dataset.pcCsvReady || tbl.rows.length \u003c 3) continue;\n    tbl.dataset.pcCsvReady = '1';\n    const btn = document.createElement('button');\n    btn.type = 'button';\n    btn.textContent = 'Export CSV';\n    btn.style.cssText = 'display:inline-flex;align-items:center;margin:0 0 6px;padding:3px 9px;border-radius:6px;border:1px solid #C95533;background:#FAF8F5;color:#9A3412;font:600 11.5px/1.3 system-ui,sans-serif;cursor:pointer';\n    btn.addEventListener('click', () => {\n      const rows = Array.from(tbl.querySelectorAll('tr')).map((tr) =>\n        Array.from(tr.children).map((td) => {\n          const txt = (td.textContent || '').replace(/\\s+/g, ' ').trim().replace(/\"/g, '\"\"');\n          return `\"${txt}\"`;\n        }).join(','),\n      );\n      const csv = '\\uFEFF' + rows.join('\\n');\n      const link = document.createElement('a');\n      link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);\n      link.download = (document.title.slice(0, 32) || 'table').replace(/[^\\w-]+/g, '-') + '.csv';\n      document.body.appendChild(link);\n      link.click();\n      link.remove();\n    });\n    tbl.parentNode.insertBefore(btn, tbl);\n  }\n})();"
+          }
+        ]
+      },
+      "safetyLevel": "clean_local_js",
+      "shortcodeZh": "PCP1:eyJ2IjoxLCJpZCI6InRhYmxlLWRhdGEtb3BzIiwibiI6Iue9kemhteihqOagvOmrmOWPr-ivu-S4jiBDU1Yg5a-85Ye65aWX6KOFIiwibXMiOlt7ImkiOiJzdGlja3ktemVicmEtdGFibGVzIiwibiI6IuihqOagvOetieWuveaVsOWtl-S4juaCrOWBnOmrmOS6riIsImUiOiJjc3MiLCJtIjpbImh0dHBzOi8vcGFnZWNyYWZ0LnNoZW54aW4uc3BhY2UvKiIsImh0dHBzOi8vKi53aWtpcGVkaWEub3JnLyoiLCJodHRwczovL2dpdGh1Yi5jb20vKiJdLCJiIjoidGFibGUge1xuICBmb250LXZhcmlhbnQtbnVtZXJpYzogdGFidWxhci1udW1zO1xufVxudGFibGUgdGJvZHkgdHI6aG92ZXIge1xuICBiYWNrZ3JvdW5kOiByZ2JhKDIwMSwgODUsIDUxLCAwLjA2KSAhaW1wb3J0YW50O1xufVxudGFibGUgdGhlYWQgdGgge1xuICBwb3NpdGlvbjogc3RpY2t5O1xuICB0b3A6IDA7XG59IiwiZCI6IuWQr-eUqCB0YWJ1bGFyLW51bXMg562J5a695pWw5a2X5a-56b2Q44CB6KGo5aS05ZC46aG25Y-K6KGM5oKs5YGc6L276auY5Lqu44CCIiwiciI6ImRvY3VtZW50X3N0YXJ0In0seyJpIjoiZXhwb3J0LXRhYmxlLWNzdiIsIm4iOiLlpJrooYzooajmoLzmnKzlnLDlr7zlh7ogQ1NWIiwiZSI6ImpzIiwibSI6WyJodHRwczovL3BhZ2VjcmFmdC5zaGVueGluLnNwYWNlLyoiLCJodHRwczovLyoud2lraXBlZGlhLm9yZy8qIiwiaHR0cHM6Ly9naXRodWIuY29tLyoiXSwiYiI6IigoKSA9PiB7XG4gIGNvbnN0IHRhYmxlcyA9IGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3JBbGwoJ3RhYmxlJyk7XG4gIGZvciAoY29uc3QgdGJsIG9mIHRhYmxlcykge1xuICAgIGlmICh0YmwuZGF0YXNldC5wY0NzdlJlYWR5IHx8IHRibC5yb3dzLmxlbmd0aCA8IDMpIGNvbnRpbnVlO1xuICAgIHRibC5kYXRhc2V0LnBjQ3N2UmVhZHkgPSAnMSc7XG4gICAgY29uc3QgYnRuID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgnYnV0dG9uJyk7XG4gICAgYnRuLnR5cGUgPSAnYnV0dG9uJztcbiAgICBidG4udGV4dENvbnRlbnQgPSAnRXhwb3J0IENTVic7XG4gICAgYnRuLnN0eWxlLmNzc1RleHQgPSAnZGlzcGxheTppbmxpbmUtZmxleDthbGlnbi1pdGVtczpjZW50ZXI7bWFyZ2luOjAgMCA2cHg7cGFkZGluZzozcHggOXB4O2JvcmRlci1yYWRpdXM6NnB4O2JvcmRlcjoxcHggc29saWQgI0M5NTUzMztiYWNrZ3JvdW5kOiNGQUY4RjU7Y29sb3I6IzlBMzQxMjtmb250OjYwMCAxMS41cHgvMS4zIHN5c3RlbS11aSxzYW5zLXNlcmlmO2N1cnNvcjpwb2ludGVyJztcbiAgICBidG4uYWRkRXZlbnRMaXN0ZW5lcignY2xpY2snLCAoKSA9PiB7XG4gICAgICBjb25zdCByb3dzID0gQXJyYXkuZnJvbSh0YmwucXVlcnlTZWxlY3RvckFsbCgndHInKSkubWFwKCh0cikgPT5cbiAgICAgICAgQXJyYXkuZnJvbSh0ci5jaGlsZHJlbikubWFwKCh0ZCkgPT4ge1xuICAgICAgICAgIGNvbnN0IHR4dCA9ICh0ZC50ZXh0Q29udGVudCB8fCAnJykucmVwbGFjZSgvXFxzKy9nLCAnICcpLnRyaW0oKS5yZXBsYWNlKC9cIi9nLCAnXCJcIicpO1xuICAgICAgICAgIHJldHVybiBgXCIke3R4dH1cImA7XG4gICAgICAgIH0pLmpvaW4oJywnKSxcbiAgICAgICk7XG4gICAgICBjb25zdCBjc3YgPSAnXFx1RkVGRicgKyByb3dzLmpvaW4oJ1xcbicpO1xuICAgICAgY29uc3QgbGluayA9IGRvY3VtZW50LmNyZWF0ZUVsZW1lbnQoJ2EnKTtcbiAgICAgIGxpbmsuaHJlZiA9ICdkYXRhOnRleHQvY3N2O2NoYXJzZXQ9dXRmLTgsJyArIGVuY29kZVVSSUNvbXBvbmVudChjc3YpO1xuICAgICAgbGluay5kb3dubG9hZCA9IChkb2N1bWVudC50aXRsZS5zbGljZSgwLCAzMikgfHwgJ3RhYmxlJykucmVwbGFjZSgvW15cXHctXSsvZywgJy0nKSArICcuY3N2JztcbiAgICAgIGRvY3VtZW50LmJvZHkuYXBwZW5kQ2hpbGQobGluayk7XG4gICAgICBsaW5rLmNsaWNrKCk7XG4gICAgICBsaW5rLnJlbW92ZSgpO1xuICAgIH0pO1xuICAgIHRibC5wYXJlbnROb2RlLmluc2VydEJlZm9yZShidG4sIHRibCk7XG4gIH1cbn0pKCk7IiwiZCI6IuWcqOi2hei_hyAzIOihjOeahOe9kemhteihqOagvOWPs-S4iuinkua3u-WKoOOAjOWvvOWHuiBDU1bjgI3mjInpkq7vvIwxMDAlIOacrOWcsOeUn-aIkCBVVEYtOCDmlofku7bkuIvovb3jgIIiLCJyIjoiZG9jdW1lbnRfaWRsZSJ9XSwiZCI6IuWinuW8uue7tOWfuueZvuenkeOAgUdpdEh1YiDmlofmoaPkuI7pnbblnLrnvZHpobXooajmoLznmoTnrYnlrr3mlbDlrZflr7npvZDjgIHmlpHpqaznurnpq5jkuq7vvIzlubbms6jlhaXmnKzlnLAgQ1NWIOS4gOmUruWvvOWHuuOAgiIsImEiOiJAcGFnZWNyYWZ0IiwiYyI6InByb2R1Y3Rpdml0eSIsInRnIjpbInRhYmxlIiwiY3N2Iiwid2lraXBlZGlhIiwiZXhwb3J0Il0sInNoIjpbInBhZ2VjcmFmdC5zaGVueGluLnNwYWNlIiwid2lraXBlZGlhLm9yZyIsImdpdGh1Yi5jb20iXSwidSI6IjIwMjYtMTEtMTUifQ",
+      "shortcodeEn": "PCP1:eyJ2IjoxLCJpZCI6InRhYmxlLWRhdGEtb3BzIiwibiI6IlRhYmxlIENsYXJpdHkgJiBDU1YgRXhwb3J0IFBhY2siLCJtcyI6W3siaSI6InN0aWNreS16ZWJyYS10YWJsZXMiLCJuIjoiVGFidWxhciBOdW1iZXJzICYgUm93IEhvdmVyIiwiZSI6ImNzcyIsIm0iOlsiaHR0cHM6Ly9wYWdlY3JhZnQuc2hlbnhpbi5zcGFjZS8qIiwiaHR0cHM6Ly8qLndpa2lwZWRpYS5vcmcvKiIsImh0dHBzOi8vZ2l0aHViLmNvbS8qIl0sImIiOiJ0YWJsZSB7XG4gIGZvbnQtdmFyaWFudC1udW1lcmljOiB0YWJ1bGFyLW51bXM7XG59XG50YWJsZSB0Ym9keSB0cjpob3ZlciB7XG4gIGJhY2tncm91bmQ6IHJnYmEoMjAxLCA4NSwgNTEsIDAuMDYpICFpbXBvcnRhbnQ7XG59XG50YWJsZSB0aGVhZCB0aCB7XG4gIHBvc2l0aW9uOiBzdGlja3k7XG4gIHRvcDogMDtcbn0iLCJkIjoiRW5hYmxlIHRhYnVsYXItbnVtcyBhbGlnbm1lbnQsIHN0aWNreSBoZWFkZXJzLCBhbmQgc3VidGxlIHJvdyBob3ZlciBoaWdobGlnaHRpbmcuIiwiciI6ImRvY3VtZW50X3N0YXJ0In0seyJpIjoiZXhwb3J0LXRhYmxlLWNzdiIsIm4iOiIxLUNsaWNrIExvY2FsIENTViBUYWJsZSBFeHBvcnQiLCJlIjoianMiLCJtIjpbImh0dHBzOi8vcGFnZWNyYWZ0LnNoZW54aW4uc3BhY2UvKiIsImh0dHBzOi8vKi53aWtpcGVkaWEub3JnLyoiLCJodHRwczovL2dpdGh1Yi5jb20vKiJdLCJiIjoiKCgpID0-IHtcbiAgY29uc3QgdGFibGVzID0gZG9jdW1lbnQucXVlcnlTZWxlY3RvckFsbCgndGFibGUnKTtcbiAgZm9yIChjb25zdCB0Ymwgb2YgdGFibGVzKSB7XG4gICAgaWYgKHRibC5kYXRhc2V0LnBjQ3N2UmVhZHkgfHwgdGJsLnJvd3MubGVuZ3RoIDwgMykgY29udGludWU7XG4gICAgdGJsLmRhdGFzZXQucGNDc3ZSZWFkeSA9ICcxJztcbiAgICBjb25zdCBidG4gPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCdidXR0b24nKTtcbiAgICBidG4udHlwZSA9ICdidXR0b24nO1xuICAgIGJ0bi50ZXh0Q29udGVudCA9ICdFeHBvcnQgQ1NWJztcbiAgICBidG4uc3R5bGUuY3NzVGV4dCA9ICdkaXNwbGF5OmlubGluZS1mbGV4O2FsaWduLWl0ZW1zOmNlbnRlcjttYXJnaW46MCAwIDZweDtwYWRkaW5nOjNweCA5cHg7Ym9yZGVyLXJhZGl1czo2cHg7Ym9yZGVyOjFweCBzb2xpZCAjQzk1NTMzO2JhY2tncm91bmQ6I0ZBRjhGNTtjb2xvcjojOUEzNDEyO2ZvbnQ6NjAwIDExLjVweC8xLjMgc3lzdGVtLXVpLHNhbnMtc2VyaWY7Y3Vyc29yOnBvaW50ZXInO1xuICAgIGJ0bi5hZGRFdmVudExpc3RlbmVyKCdjbGljaycsICgpID0-IHtcbiAgICAgIGNvbnN0IHJvd3MgPSBBcnJheS5mcm9tKHRibC5xdWVyeVNlbGVjdG9yQWxsKCd0cicpKS5tYXAoKHRyKSA9PlxuICAgICAgICBBcnJheS5mcm9tKHRyLmNoaWxkcmVuKS5tYXAoKHRkKSA9PiB7XG4gICAgICAgICAgY29uc3QgdHh0ID0gKHRkLnRleHRDb250ZW50IHx8ICcnKS5yZXBsYWNlKC9cXHMrL2csICcgJykudHJpbSgpLnJlcGxhY2UoL1wiL2csICdcIlwiJyk7XG4gICAgICAgICAgcmV0dXJuIGBcIiR7dHh0fVwiYDtcbiAgICAgICAgfSkuam9pbignLCcpLFxuICAgICAgKTtcbiAgICAgIGNvbnN0IGNzdiA9ICdcXHVGRUZGJyArIHJvd3Muam9pbignXFxuJyk7XG4gICAgICBjb25zdCBsaW5rID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgnYScpO1xuICAgICAgbGluay5ocmVmID0gJ2RhdGE6dGV4dC9jc3Y7Y2hhcnNldD11dGYtOCwnICsgZW5jb2RlVVJJQ29tcG9uZW50KGNzdik7XG4gICAgICBsaW5rLmRvd25sb2FkID0gKGRvY3VtZW50LnRpdGxlLnNsaWNlKDAsIDMyKSB8fCAndGFibGUnKS5yZXBsYWNlKC9bXlxcdy1dKy9nLCAnLScpICsgJy5jc3YnO1xuICAgICAgZG9jdW1lbnQuYm9keS5hcHBlbmRDaGlsZChsaW5rKTtcbiAgICAgIGxpbmsuY2xpY2soKTtcbiAgICAgIGxpbmsucmVtb3ZlKCk7XG4gICAgfSk7XG4gICAgdGJsLnBhcmVudE5vZGUuaW5zZXJ0QmVmb3JlKGJ0biwgdGJsKTtcbiAgfVxufSkoKTsiLCJkIjoiQWRkIGFuIEV4cG9ydCBDU1YgYnV0dG9uIGFib3ZlIG11bHRpLXJvdyB0YWJsZXMgdXNpbmcgMTAwJSBsb2NhbCBVVEYtOCBDU1YgZW5jb2RpbmcuIiwiciI6ImRvY3VtZW50X2lkbGUifV0sImQiOiJBZGQgdGFidWxhciBudW1lcmFscyBhbmQgaG92ZXIgaGlnaGxpZ2h0cyB0byBIVE1MIHRhYmxlcyBwbHVzIGEgbG9jYWwgMS1jbGljayBFeHBvcnQgQ1NWIGJ1dHRvbi4iLCJhIjoiQHBhZ2VjcmFmdCIsImMiOiJwcm9kdWN0aXZpdHkiLCJ0ZyI6WyJ0YWJsZSIsImNzdiIsIndpa2lwZWRpYSIsImV4cG9ydCJdLCJzaCI6WyJwYWdlY3JhZnQuc2hlbnhpbi5zcGFjZSIsIndpa2lwZWRpYS5vcmciLCJnaXRodWIuY29tIl0sInUiOiIyMDI2LTExLTE1In0"
+    }
+  ]
+}</script>
+<script>
+(function () {
+  var rawEl = document.getElementById('pc-catalog-data');
+  var catalog = JSON.parse(rawEl ? rawEl.textContent : '{"packs":[]}');
+  var packs = catalog.packs || [];
+  var grid = document.getElementById('pack-grid');
+  var searchEl = document.getElementById('pack-search');
+  var pillsWrap = document.getElementById('category-pills');
+  var noticeEl = document.getElementById('install-notice');
+  var noticeText = document.getElementById('install-notice-text');
+
+  var currentCat = 'all';
+  var highlightedId = '';
+  try {
+    var initPack = new URLSearchParams(window.location.search).get('pack');
+    if (initPack && !initPack.startsWith('PCP1:')) highlightedId = initPack.toLowerCase();
+  } catch (e) {}
+
+  function getLang() {
+    return document.documentElement.getAttribute('data-lang') === 'en' ? 'en' : 'zh';
+  }
+
+  function escHtml(s) {
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function renderPacks() {
+    var lang = getLang();
+    var q = (searchEl.value || '').trim().toLowerCase();
+    if (searchEl) {
+      searchEl.placeholder = lang === 'zh'
+        ? '搜索站点域名或关键词 (bilibili, github, arxiv…)'
+        : 'Search site or keyword (youtube, github, arxiv…)';
+    }
+
+    var filtered = packs.filter(function (p) {
+      if (currentCat !== 'all' && p.category !== currentCat) return false;
+      if (!q) return true;
+      var v = p[lang];
+      var hay = [p.id, v.name, v.description, p.tags.join(' '), p.siteHints.join(' ')]
+        .concat(v.mods.map(function (m) { return m.name + ' ' + m.matches.join(' '); }))
+        .join('\n')
+        .toLowerCase();
+      return hay.indexOf(q) !== -1;
+    });
+
+    if (filtered.length === 0) {
+      grid.innerHTML = '<div class="empty-box">' +
+        (lang === 'zh' ? '没有找到匹配的社区配方包，换个关键词或投稿一个新配方吧。' : 'No matching packs found. Try another keyword or submit one!') +
+        '</div>';
+      return;
+    }
+
+    grid.innerHTML = filtered.map(function (pack) {
+      var v = pack[lang];
+      var shortcode = lang === 'zh' ? pack.shortcodeZh : pack.shortcodeEn;
+      var isPureCss = pack.safetyLevel === 'safe_css';
+      var safetyTxt = lang === 'zh'
+        ? (isPureCss ? '✓ 纯 CSS · 零脚本权限' : '✓ 本地 DOM · 安全审计通过')
+        : (isPureCss ? '✓ Pure CSS · Zero JS' : '✓ Clean Local DOM');
+
+      var manifestObj = {
+        kind: 'pagecraft-pack',
+        version: 1,
+        id: pack.id,
+        name: v.name,
+        description: v.description,
+        author: pack.author,
+        category: pack.category,
+        tags: pack.tags,
+        siteHints: pack.siteHints,
+        updatedAt: pack.updatedAt,
+        mods: v.mods
+      };
+      var downloadHref = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifestObj, null, 2) + '\n');
+
+      var modsHtml = v.mods.map(function (m) {
+        return '<div class="mod-row">' +
+          '<div><div class="mod-row__name">' + escHtml(m.name) + '</div>' +
+          '<div class="mod-row__desc">' + escHtml(m.description) + '</div></div>' +
+          '<span class="engine-pill">' + escHtml(m.engine) + '</span>' +
+          '</div>';
+      }).join('');
+
+      var sourceBlocks = v.mods.map(function (m) {
+        return '<div style="margin-top:8px;">' +
+          '<div style="font:600 11.5px/1.3 var(--mono);color:var(--muted);">' +
+          escHtml(m.name) + ' (' + escHtml(m.engine.toUpperCase()) + ') · ' + escHtml(m.matches.join(', ')) +
+          '</div><pre class="code-block">' + escHtml(m.body) + '</pre></div>';
+      }).join('');
+
+      return '<article class="pack-card' + (highlightedId === pack.id ? ' is-highlighted' : '') + '" id="pack-' + escHtml(pack.id) + '">' +
+        '<div class="pack-card__head">' +
+          '<div>' +
+            '<h2 class="pack-card__title">' + escHtml(v.name) + '</h2>' +
+            '<div class="pack-card__meta">' +
+              '<span>' + escHtml(pack.author) + '</span>' +
+              '<span>·</span>' +
+              '<span>' + v.mods.length + (lang === 'zh' ? ' 条规则' : ' rules') + '</span>' +
+              '<span>·</span>' +
+              '<span>' + escHtml(pack.updatedAt) + '</span>' +
+            '</div>' +
+          '</div>' +
+          '<span class="safety-badge">' + escHtml(safetyTxt) + '</span>' +
+        '</div>' +
+        '<p class="pack-card__desc">' + escHtml(v.description) + '</p>' +
+        '<div class="site-chips">' +
+          pack.siteHints.map(function (s) { return '<span class="site-chip">' + escHtml(s) + '</span>'; }).join('') +
+        '</div>' +
+        '<div class="mods-list">' + modsHtml + '</div>' +
+        '<details class="source-drawer"><summary>' +
+          (lang === 'zh' ? '审查完整源码 (' + v.mods.length + ' 项规则)' : 'Inspect Full Source (' + v.mods.length + ' rules)') +
+        '</summary>' + sourceBlocks + '</details>' +
+        '<div class="pack-card__actions">' +
+          '<button type="button" class="btn-install" data-install="' + escHtml(pack.id) + '">' +
+            (lang === 'zh' ? '在侧栏安装 & 复制口令' : 'Install in SidePanel & Copy Code') +
+          '</button>' +
+          '<a class="btn-secondary" href="' + downloadHref + '" download="' + escHtml(pack.id) + '.pagecraft-pack.json">' +
+            (lang === 'zh' ? '下载 JSON 包' : 'Download .json') +
+          '</a>' +
+          '<button type="button" class="btn-secondary" data-copy-token="' + escHtml(pack.id) + '">' +
+            (lang === 'zh' ? '仅复制 #PCP1# 口令' : 'Copy #PCP1#') +
+          '</button>' +
+        '</div>' +
+      '</article>';
+    }).join('');
+  }
+
+  function showNotice(msg) {
+    noticeText.textContent = msg;
+    noticeEl.classList.add('is-visible');
+  }
+
+  grid.addEventListener('click', function (ev) {
+    var target = ev.target;
+    if (!(target instanceof Element)) return;
+    var installBtn = target.closest('[data-install]');
+    var copyBtn = target.closest('[data-copy-token]');
+    var lang = getLang();
+
+    if (installBtn) {
+      var id = installBtn.getAttribute('data-install');
+      var pack = packs.find(function (p) { return p.id === id; });
+      if (!pack) return;
+      highlightedId = id;
+      var code = '#' + (lang === 'zh' ? pack.shortcodeZh : pack.shortcodeEn) + '#';
+      try {
+        history.replaceState(null, '', '?pack=' + encodeURIComponent(id) + '&lang=' + lang + '#pack-' + id);
+      } catch (e) {}
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(code).catch(function () {});
+      }
+      renderPacks();
+      showNotice(
+        lang === 'zh'
+          ? '已触发侧栏识别并复制《' + pack.zh.name + '》口令！打开 Chrome 右侧 PageCraft 侧边栏即可一键审查导入，或直接在「规则库 → 导入」粘贴。'
+          : 'SidePanel handoff ready & copied #' + id + ' shortcode! Check your open PageCraft SidePanel to review & import, or paste into My mods → Import.'
+      );
+      return;
+    }
+
+    if (copyBtn) {
+      var cid = copyBtn.getAttribute('data-copy-token');
+      var cpack = packs.find(function (p) { return p.id === cid; });
+      if (!cpack) return;
+      var ccode = '#' + (lang === 'zh' ? cpack.shortcodeZh : cpack.shortcodeEn) + '#';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(ccode).then(function () {
+          showNotice(
+            lang === 'zh'
+              ? '已复制《' + cpack.zh.name + '》的 #PCP1# 安装口令，请在 PageCraft「规则库 → 导入」中粘贴。'
+              : 'Copied #PCP1# pack shortcode for "' + cpack.en.name + '". Paste in PageCraft My mods → Import.'
+          );
+        }).catch(function () {});
+      }
+    }
+  });
+
+  pillsWrap.addEventListener('click', function (ev) {
+    var btn = ev.target instanceof Element ? ev.target.closest('[data-cat]') : null;
+    if (!btn) return;
+    currentCat = btn.getAttribute('data-cat') || 'all';
+    pillsWrap.querySelectorAll('.filter-pill').forEach(function (el) {
+      el.classList.toggle('is-active', el === btn);
+    });
+    renderPacks();
+  });
+
+  searchEl.addEventListener('input', renderPacks);
+
+  function setLang(next) {
+    document.documentElement.setAttribute('data-lang', next);
+    document.documentElement.lang = next === 'zh' ? 'zh-CN' : 'en';
+    document.getElementById('lang-zh').classList.toggle('is-on', next === 'zh');
+    document.getElementById('lang-en').classList.toggle('is-on', next === 'en');
+    try { localStorage.setItem('pc_site_lang', next); } catch (e) {}
+    renderPacks();
+  }
+
+  document.getElementById('lang-zh').addEventListener('click', function () { setLang('zh'); });
+  document.getElementById('lang-en').addEventListener('click', function () { setLang('en'); });
+  document.getElementById('theme-toggle').addEventListener('click', function () {
+    var cur = document.documentElement.getAttribute('data-theme');
+    var sysDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var next = (cur ? cur === 'dark' : sysDark) ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('pc_site_theme', next); } catch (e) {}
+  });
+
+  setLang(getLang());
+  if (highlightedId) {
+    var targetCard = document.getElementById('pack-' + highlightedId);
+    if (targetCard && targetCard.scrollIntoView) {
+      setTimeout(function () { targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 80);
+    }
+  }
+})();
+</script>
+</body>
+</html>

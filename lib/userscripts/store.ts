@@ -57,9 +57,17 @@ export function normalizeMod(raw: Record<string, unknown>): UserScript | null {
         : 'document_idle';
 
   const source =
-    raw.source === 'ai' || raw.source === 'template' || raw.source === 'manual'
+    raw.source === 'ai' ||
+    raw.source === 'template' ||
+    raw.source === 'manual' ||
+    raw.source === 'community'
       ? raw.source
       : 'manual';
+
+  const packId =
+    typeof raw.packId === 'string' && raw.packId.trim() ? raw.packId.trim() : undefined;
+  const packName =
+    typeof raw.packName === 'string' && raw.packName.trim() ? raw.packName.trim() : undefined;
 
   return {
     id,
@@ -75,6 +83,8 @@ export function normalizeMod(raw: Record<string, unknown>): UserScript | null {
     enabled: Boolean(raw.enabled),
     source,
     templateId: typeof raw.templateId === 'string' ? raw.templateId : undefined,
+    ...(packId ? { packId } : {}),
+    ...(packName ? { packName } : {}),
     runAt,
     allowAllUrls: Boolean(raw.allowAllUrls),
     createdAt: typeof raw.createdAt === 'number' ? raw.createdAt : Date.now(),

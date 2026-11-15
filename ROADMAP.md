@@ -28,6 +28,6 @@
 ## v0.4 — Streaming Previews & Community Recipe Hub (Next)
 - [ ] **Streaming Mod Preview**: Stream CSS/JS diffs and live ephemeral page previews token-by-token during generation
 - [ ] **Per-Site Keyboard Shortcuts & Command Palette**: Trigger saved JS actions (e.g., export table, toggle focus mode) via customizable hotkeys directly on the page
-- [ ] **Open Community Recipe Hub**: Git-backed, static-verified catalog of community-contributed `#PC1:...#` & `.user.js` site recipes with 1-click install and zero remote code execution
+- [x] **Open Community Recipe Hub (`/recipes/` & `#PCP1` Packs)**: GitOps-validated, statically audited multi-rule community packs (`recipes/packs/*.json`) compiled into the offline extension catalog and static hub (`pagecraft.shenxin.space/recipes/`) with 1-click user-confirmed review & import and zero remote code execution
 - [ ] **Firefox MV3 / Gecko Port**: Cross-browser adapter for Firefox Sidebar & `userScripts` APIs
 - [ ] **Encrypted Local/Git Gist Sync (Opt-In)**: Bring-your-own end-to-end encrypted backup sync across devices without central accounts

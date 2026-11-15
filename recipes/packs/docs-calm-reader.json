@@ -1,0 +1,74 @@
+{
+  "id": "docs-calm-reader",
+  "author": "@pagecraft",
+  "category": "dev",
+  "tags": ["mdn", "wikipedia", "docs", "copy-code"],
+  "siteHints": ["developer.mozilla.org", "readthedocs.io", "docs.github.com", "wikipedia.org"],
+  "updatedAt": "2026-11-15",
+  "zh": {
+    "name": "技术文档 & 百科清爽精读包",
+    "description": "屏蔽 MDN / Wikipedia / ReadTheDocs 募捐与调查横幅，并给缺失复制按钮的 <pre> 代码块补全一键复制。",
+    "mods": [
+      {
+        "id": "focus-doc-column",
+        "name": "隐藏文档反馈横幅与募捐条",
+        "description": "移除顶部推广条、Cookie/募捐横幅，保持技术文档正文干净可读。",
+        "engine": "css",
+        "matches": [
+          "https://developer.mozilla.org/*",
+          "https://*.readthedocs.io/*",
+          "https://docs.github.com/*",
+          "https://*.wikipedia.org/*"
+        ],
+        "runAt": "document_start",
+        "body": "#siteNotice,\n.cn-fundraising,\n.central-notice,\n.top-banner,\n.rst-versions {\n  display: none !important;\n}\n#mw-content-text p,\narticle p {\n  line-height: 1.75 !important;\n}"
+      },
+      {
+        "id": "codeblock-quick-copy",
+        "name": "文档代码块补全「Copy」按钮",
+        "description": "为没有内置复制按钮的 <pre> 代码块右上角添加轻量化 Copy 按钮。",
+        "engine": "js",
+        "matches": [
+          "https://developer.mozilla.org/*",
+          "https://*.readthedocs.io/*",
+          "https://docs.github.com/*"
+        ],
+        "runAt": "document_idle",
+        "body": "(() => {\n  const blocks = document.querySelectorAll('pre');\n  for (const pre of blocks) {\n    if (pre.dataset.pcCopyDone || pre.querySelector('button')) continue;\n    if ((pre.textContent || '').trim().length < 16) continue;\n    pre.dataset.pcCopyDone = '1';\n    if (getComputedStyle(pre).position === 'static') pre.style.position = 'relative';\n    const btn = document.createElement('button');\n    btn.type = 'button';\n    btn.textContent = 'Copy';\n    btn.style.cssText = 'position:absolute;top:6px;right:6px;z-index:5;padding:2px 8px;border-radius:5px;border:1px solid rgba(128,128,128,.35);background:rgba(28,25,23,.85);color:#FAF8F5;font:500 11px/1.4 ui-monospace,monospace;cursor:pointer';\n    btn.addEventListener('click', () => {\n      const codeEl = pre.querySelector('code') || pre;\n      navigator.clipboard.writeText((codeEl.innerText || '').trim()).then(() => {\n        btn.textContent = 'Copied';\n        setTimeout(() => { btn.textContent = 'Copy'; }, 1200);\n      }).catch(() => {});\n    });\n    pre.appendChild(btn);\n  }\n})();"
+      }
+    ]
+  },
+  "en": {
+    "name": "Technical Docs & Wiki Calm Pack",
+    "description": "Hide promo & fundraising banners across MDN, Wikipedia & docs sites and add a clean Copy button to <pre> blocks.",
+    "mods": [
+      {
+        "id": "focus-doc-column",
+        "name": "Clean Docs & Wiki Banners",
+        "description": "Hide fundraising notices and floating version bars while improving paragraph line height.",
+        "engine": "css",
+        "matches": [
+          "https://developer.mozilla.org/*",
+          "https://*.readthedocs.io/*",
+          "https://docs.github.com/*",
+          "https://*.wikipedia.org/*"
+        ],
+        "runAt": "document_start",
+        "body": "#siteNotice,\n.cn-fundraising,\n.central-notice,\n.top-banner,\n.rst-versions {\n  display: none !important;\n}\n#mw-content-text p,\narticle p {\n  line-height: 1.75 !important;\n}"
+      },
+      {
+        "id": "codeblock-quick-copy",
+        "name": "Quick Copy for Pre Code Blocks",
+        "description": "Attach a minimal Copy button to <pre> blocks missing native copy controls.",
+        "engine": "js",
+        "matches": [
+          "https://developer.mozilla.org/*",
+          "https://*.readthedocs.io/*",
+          "https://docs.github.com/*"
+        ],
+        "runAt": "document_idle",
+        "body": "(() => {\n  const blocks = document.querySelectorAll('pre');\n  for (const pre of blocks) {\n    if (pre.dataset.pcCopyDone || pre.querySelector('button')) continue;\n    if ((pre.textContent || '').trim().length < 16) continue;\n    pre.dataset.pcCopyDone = '1';\n    if (getComputedStyle(pre).position === 'static') pre.style.position = 'relative';\n    const btn = document.createElement('button');\n    btn.type = 'button';\n    btn.textContent = 'Copy';\n    btn.style.cssText = 'position:absolute;top:6px;right:6px;z-index:5;padding:2px 8px;border-radius:5px;border:1px solid rgba(128,128,128,.35);background:rgba(28,25,23,.85);color:#FAF8F5;font:500 11px/1.4 ui-monospace,monospace;cursor:pointer';\n    btn.addEventListener('click', () => {\n      const codeEl = pre.querySelector('code') || pre;\n      navigator.clipboard.writeText((codeEl.innerText || '').trim()).then(() => {\n        btn.textContent = 'Copied';\n        setTimeout(() => { btn.textContent = 'Copy'; }, 1200);\n      }).catch(() => {});\n    });\n    pre.appendChild(btn);\n  }\n})();"
+      }
+    ]
+  }
+}
