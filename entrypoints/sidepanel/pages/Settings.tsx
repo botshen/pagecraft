@@ -18,6 +18,7 @@ import {
 } from '~/lib/shared/ai-endpoints';
 import { probeBuiltinAi, type BuiltinAiStatus } from '~/lib/shared/builtin-ai';
 import { Button } from '../components/ui/button';
+import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Switch } from '../components/ui/switch';
 import { SegmentedControl } from '../components/ui/segmented';
@@ -31,11 +32,7 @@ import {
   ChevronDown,
   Eye,
   EyeOff,
-  HelpCircle,
   Terminal,
-  Cpu,
-  PlugZap,
-  Sparkles,
 } from 'lucide-react';
 import { cn } from '~/lib/utils';
 import { recheckOrRecoverJsPermission } from '../utils';
@@ -131,6 +128,86 @@ function matchesPreset(currentBaseUrl: string, preset: AiProviderPreset): boolea
   }
 }
 
+function ProviderMark({ id }: { id: string }) {
+  switch (id) {
+    case 'ollama':
+      return (
+        <span className="inline-flex size-4 items-center justify-center rounded-[3px] bg-[#161514] text-[#FAF8F5] shrink-0">
+          <svg viewBox="0 0 16 16" className="size-3" fill="none" aria-hidden="true">
+            <rect x="4" y="3" width="8" height="9" rx="3" stroke="currentColor" strokeWidth="1.5" />
+            <circle cx="6.5" cy="7" r="0.9" fill="currentColor" />
+            <circle cx="9.5" cy="7" r="0.9" fill="currentColor" />
+          </svg>
+        </span>
+      );
+    case 'lmstudio':
+      return (
+        <span className="inline-flex size-4 items-center justify-center rounded-[3px] bg-[#059669] text-[#FAF8F5] shrink-0">
+          <svg viewBox="0 0 16 16" className="size-3" fill="none" aria-hidden="true">
+            <path d="M3.5 11.5V4.5L8 8.5L12.5 4.5V11.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+      );
+    case 'deepseek':
+      return (
+        <span className="inline-flex size-4 items-center justify-center rounded-[3px] bg-[#2563EB] text-[#FAF8F5] shrink-0">
+          <svg viewBox="0 0 16 16" className="size-3" fill="none" aria-hidden="true">
+            <path d="M3 9.5C4.5 6 8.5 5 12.5 6.8C11.2 10.5 7.2 12 3 9.5Z" fill="currentColor" />
+          </svg>
+        </span>
+      );
+    case 'openai':
+      return (
+        <span className="inline-flex size-4 items-center justify-center rounded-[3px] bg-[#10A37F] text-[#FAF8F5] shrink-0">
+          <svg viewBox="0 0 16 16" className="size-3" fill="none" aria-hidden="true">
+            <circle cx="8" cy="8" r="4.3" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M8 3.7V12.3M4.2 5.8L11.8 10.2M11.8 5.8L4.2 10.2" stroke="currentColor" strokeWidth="1.1" />
+          </svg>
+        </span>
+      );
+    case 'anthropic':
+      return (
+        <span className="inline-flex size-4 items-center justify-center rounded-[3px] bg-[#D97757] text-[#FAF8F5] shrink-0">
+          <svg viewBox="0 0 16 16" className="size-3" fill="none" aria-hidden="true">
+            <path d="M6.2 3.8L3.2 12.2H5L6.9 6.6L8.8 12.2H10.5L7.5 3.8H6.2ZM10.4 3.8L12.8 12.2H11.2L8.9 3.8H10.4Z" fill="currentColor" />
+          </svg>
+        </span>
+      );
+    case 'openrouter':
+      return (
+        <span className="inline-flex size-4 items-center justify-center rounded-[3px] bg-[#475569] text-[#FAF8F5] shrink-0">
+          <svg viewBox="0 0 16 16" className="size-3" fill="none" aria-hidden="true">
+            <path d="M3 8H7.5L11 5M7.5 8L11 11M12.5 5H11M12.5 11H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+      );
+    case 'siliconflow':
+      return (
+        <span className="inline-flex size-4 items-center justify-center rounded-[3px] bg-[#0284C7] text-[#FAF8F5] shrink-0">
+          <svg viewBox="0 0 16 16" className="size-3" fill="none" aria-hidden="true">
+            <path d="M3.5 6C5.5 4 10.5 4 12.5 6M3.5 10C5.5 8 10.5 8 12.5 10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        </span>
+      );
+    default:
+      return (
+        <span className="inline-flex size-4 items-center justify-center rounded-[3px] bg-secondary text-foreground font-mono text-[9px] font-bold shrink-0">
+          /v1
+        </span>
+      );
+  }
+}
+
+const ORDERED_PRESET_IDS = [
+  'ollama',
+  'lmstudio',
+  'deepseek',
+  'openai',
+  'anthropic',
+  'openrouter',
+  'siliconflow',
+];
+
 export default function SettingsPage({
   settings,
   availability,
@@ -171,6 +248,10 @@ export default function SettingsPage({
   const mcpUrlValid = isValidLoopbackWsUrl(s.mcpBridgeUrl);
   const mcpConfigJson = buildMcpConfigJson(s.mcpBridgeUrl, s.mcpBridgeToken);
   const mcpCliCmd = buildClaudeCodeCliCommand(s.mcpBridgeUrl, s.mcpBridgeToken);
+
+  const orderedPresets = ORDERED_PRESET_IDS.map((id) =>
+    AI_PROVIDER_PRESETS.find((p) => p.id === id),
+  ).filter((p): p is AiProviderPreset => Boolean(p));
 
   const checkBuiltinStatus = useCallback(async () => {
     setBuiltinStatus('checking');
@@ -277,7 +358,7 @@ export default function SettingsPage({
         setTestElapsed(res.elapsedMs ?? 0);
         onToast(
           lang === 'zh'
-            ? `连接可用（响应耗时 ${res.elapsedMs ?? 0} ms）`
+            ? `连接正常（耗时 ${res.elapsedMs ?? 0} ms）`
             : `Connected (${res.elapsedMs ?? 0} ms)`,
         );
       } else {
@@ -335,161 +416,138 @@ export default function SettingsPage({
   }
 
   return (
-    <div className="pb-6">
-      <div className="divide-y divide-border/70 rounded-xl border border-border bg-card overflow-hidden">
-        {/* 1. AI Generation Engine (BYOK / Local API vs Chrome Built-in Gemini Nano) */}
-        <section className="p-4 space-y-3.5">
-          <div className="flex items-center gap-1.5">
-            <Cpu className="h-4 w-4 text-primary shrink-0" />
-            <h2 className="text-[14px] font-semibold text-foreground">
-              {t('settingsEngineTitle')}
-            </h2>
+    <div className="space-y-4 pb-6 pc-enter">
+      {/* 1. AI Engine Sheet (flat divide-y, max 2 boxes deep) */}
+      <section className="space-y-2">
+        <h2 className="text-[13.5px] font-semibold text-foreground">
+          {t('settingsEngineTitle')}
+        </h2>
+
+        <div className="rounded-[10px] border border-border bg-card divide-y divide-border overflow-hidden">
+          <div className="p-3.5 space-y-2.5">
+            <SegmentedControl
+              className="w-full"
+              value={s.aiMode}
+              onChange={(v: string) => commitPatch({ ...s, aiMode: v as AIMode })}
+              items={[
+                { id: 'byok', label: t('modeByok') },
+                { id: 'builtin', label: t('modeBuiltin') },
+              ]}
+            />
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {s.aiMode === 'builtin' ? t('builtinDesc') : t('byokDesc')}
+            </p>
           </div>
 
-          <SegmentedControl
-            className="w-full [&>.cds-seg-item]:flex-1 [&>.cds-seg-item]:justify-center"
-            value={s.aiMode}
-            onChange={(v: string) => commitPatch({ ...s, aiMode: v as AIMode })}
-            items={[
-              { id: 'byok', label: t('modeByok') },
-              { id: 'builtin', label: t('modeBuiltin') },
-            ]}
-          />
-
           {s.aiMode === 'builtin' ? (
-            <div className="space-y-3 pt-1">
-              <p className="text-[13px] text-muted-foreground leading-relaxed">
-                {t('builtinDesc')}
-              </p>
-
-              <div className="rounded-lg border border-border/80 bg-secondary/45 p-3 space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span
-                      className={cn(
-                        'h-2 w-2 rounded-full shrink-0',
-                        builtinStatus === 'available'
-                          ? 'bg-emerald-500'
-                          : builtinStatus === 'downloadable'
-                            ? 'bg-amber-500'
-                            : 'bg-muted-foreground/60',
-                      )}
-                    />
-                    <span className="text-[13px] font-medium text-foreground">
-                      {builtinStatus === 'checking'
-                        ? lang === 'zh'
-                          ? '正在检测内置模型状态…'
-                          : 'Checking on-device model…'
-                        : builtinStatus === 'available'
-                          ? t('builtinStatusAvailable')
-                          : builtinStatus === 'downloadable'
-                            ? t('builtinStatusDownloadable')
-                            : t('builtinStatusUnavailable')}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => void checkBuiltinStatus()}
-                    className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
-                  >
-                    <RefreshCw
-                      className={cn('h-3.5 w-3.5', builtinStatus === 'checking' && 'animate-spin')}
-                    />
-                    <span>{lang === 'zh' ? '重新检测' : 'Re-check'}</span>
-                  </button>
-                </div>
-
-                {builtinStatus !== 'available' && builtinStatus !== 'checking' && (
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {t('builtinSetupHint')}
-                    {builtinReason ? ` (${builtinReason})` : ''}
-                  </p>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-3 pt-1">
-              <div className="space-y-1.5">
-                <p className="text-[13px] text-muted-foreground leading-relaxed">
-                  {t('byokDesc')}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setKeyGuideOpen((o) => !o)}
-                  className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline cursor-pointer"
-                >
-                  <HelpCircle className="h-3.5 w-3.5" />
-                  <span>{t('keyGuideToggle')}</span>
-                  <ChevronDown
+            <div className="px-3.5 py-3 bg-secondary/35 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span
                     className={cn(
-                      'h-3.5 w-3.5 transition-transform',
-                      keyGuideOpen && 'rotate-180',
+                      'h-2 w-2 rounded-full shrink-0',
+                      builtinStatus === 'available'
+                        ? 'bg-emerald-500'
+                        : builtinStatus === 'downloadable'
+                          ? 'bg-amber-500'
+                          : 'bg-muted-foreground/60',
                     )}
                   />
-                </button>
-                {keyGuideOpen && (
-                  <ol className="list-decimal list-inside rounded-lg bg-secondary/50 border border-border/70 px-3 py-2.5 space-y-1.5 text-xs text-muted-foreground leading-relaxed">
-                    <li>{t('keyGuideStep1')}</li>
-                    <li>{t('keyGuideStep2')}</li>
-                    <li>{t('keyGuideStep3')}</li>
-                  </ol>
-                )}
-              </div>
-
-              {/* Quick Presets (Cloud BYOK + Local Ollama & LM Studio) */}
-              <div className="flex flex-wrap gap-1.5">
-                {AI_PROVIDER_PRESETS.map((p) => {
-                  const active = activePreset?.id === p.id;
-                  const presetLabel = p.labelKey ? t(p.labelKey) : p.label;
-                  return (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => {
-                        setTestStatus('idle');
-                        setTestError('');
-                        commitPatch({
-                          ...s,
-                          ai: { ...s.ai, baseUrl: p.baseUrl, model: p.model },
-                        });
-                      }}
-                      className={cn(
-                        'pc-press px-2.5 py-1 rounded-md text-[13px] font-medium border cursor-pointer',
-                        active
-                          ? 'bg-primary/12 text-primary border-primary/35'
-                          : 'bg-secondary/60 text-foreground border-border/70 hover:bg-secondary',
-                      )}
-                    >
-                      {presetLabel}
-                    </button>
-                  );
-                })}
+                  <span className="text-[13px] font-medium text-foreground truncate">
+                    {builtinStatus === 'checking'
+                      ? lang === 'zh'
+                        ? '正在检测内置模型…'
+                        : 'Checking on-device model…'
+                      : builtinStatus === 'available'
+                        ? t('builtinStatusAvailable')
+                        : builtinStatus === 'downloadable'
+                          ? t('builtinStatusDownloadable')
+                          : t('builtinStatusUnavailable')}
+                  </span>
+                </div>
                 <button
                   type="button"
-                  onClick={() => {
-                    baseUrlInputRef.current?.focus();
-                    baseUrlInputRef.current?.select();
-                  }}
-                  className={cn(
-                    'pc-press px-2.5 py-1 rounded-md text-[13px] font-medium border cursor-pointer',
-                    !activePreset
-                      ? 'bg-primary/12 text-primary border-primary/35'
-                      : 'bg-secondary/60 text-foreground border-border/70 hover:bg-secondary',
-                  )}
+                  onClick={() => void checkBuiltinStatus()}
+                  className="pc-btn inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
                 >
-                  {t('presetCustom')}
+                  <RefreshCw
+                    className={cn('h-3 w-3', builtinStatus === 'checking' && 'animate-spin')}
+                  />
+                  <span>{lang === 'zh' ? '重检' : 'Re-check'}</span>
                 </button>
               </div>
 
+              {builtinStatus !== 'available' && builtinStatus !== 'checking' && (
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {t('builtinSetupHint')}
+                  {builtinReason ? ` (${builtinReason})` : ''}
+                </p>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Authentic Provider Marks & Monospace Chips */}
+              <div className="px-3.5 py-3 space-y-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {orderedPresets.map((p) => {
+                    const active = activePreset?.id === p.id;
+                    const presetLabel =
+                      p.id === 'siliconflow'
+                        ? 'SiliconFlow'
+                        : p.labelKey
+                          ? t(p.labelKey)
+                          : p.label;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => {
+                          setTestStatus('idle');
+                          setTestError('');
+                          commitPatch({
+                            ...s,
+                            ai: { ...s.ai, baseUrl: p.baseUrl, model: p.model },
+                          });
+                        }}
+                        className={cn(
+                          'pc-btn inline-flex items-center gap-1.5 h-7 px-2 rounded-[6px] text-xs font-medium border cursor-pointer',
+                          active
+                            ? 'bg-[var(--pc-accent-subtle)] text-[var(--pc-accent-ink)] border-primary/40'
+                            : 'bg-background hover:bg-secondary text-foreground border-border',
+                        )}
+                      >
+                        <ProviderMark id={p.id} />
+                        <span>{presetLabel}</span>
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      baseUrlInputRef.current?.focus();
+                      baseUrlInputRef.current?.select();
+                    }}
+                    className={cn(
+                      'pc-btn inline-flex items-center gap-1.5 h-7 px-2 rounded-[6px] text-xs font-medium border cursor-pointer',
+                      !activePreset
+                        ? 'bg-[var(--pc-accent-subtle)] text-[var(--pc-accent-ink)] border-primary/40'
+                        : 'bg-background hover:bg-secondary text-foreground border-border',
+                    )}
+                  >
+                    <ProviderMark id="custom" />
+                    <span>{t('presetCustom')}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Local Loopback Ollama CORS Command Bar (flat row, zero triple boxes) */}
               {isLocalAi && (
-                <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/[0.06] p-2.5 space-y-1.5 text-xs">
-                  <div className="flex items-center gap-1.5 font-medium text-emerald-700 dark:text-emerald-300">
-                    <Terminal className="h-3.5 w-3.5 shrink-0" />
-                    <span>{t('ollamaCorsTitle')}</span>
-                  </div>
-                  <p className="text-muted-foreground leading-relaxed">{t('ollamaCorsDesc')}</p>
-                  <div className="flex items-center justify-between gap-2 rounded-md bg-background/90 border border-border/70 px-2 py-1.5 font-mono text-[11px] text-foreground">
-                    <code className="truncate select-all">{OLLAMA_SERVE_CMD}</code>
+                <div className="px-3.5 py-2.5 bg-emerald-500/[0.06] space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium text-emerald-800 dark:text-emerald-300">
+                      {t('ollamaCorsTitle')}
+                    </span>
                     <button
                       type="button"
                       onClick={() => {
@@ -498,7 +556,7 @@ export default function SettingsPage({
                         onToast(t('ollamaCorsCopied'));
                         setTimeout(() => setCopiedOllamaCmd(false), 1800);
                       }}
-                      className="inline-flex items-center gap-1 shrink-0 text-primary hover:underline cursor-pointer font-sans font-medium"
+                      className="pc-btn inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline cursor-pointer shrink-0"
                     >
                       {copiedOllamaCmd ? (
                         <Check className="h-3 w-3 text-emerald-600" />
@@ -508,12 +566,17 @@ export default function SettingsPage({
                       <span>{t('ollamaCorsCopy')}</span>
                     </button>
                   </div>
+                  <p className="text-muted-foreground leading-snug">{t('ollamaCorsDesc')}</p>
+                  <code className="block rounded-[6px] bg-[var(--pc-terminal-bg)] text-[var(--pc-terminal-ink)] px-2.5 py-1.5 font-mono text-[11px] overflow-x-auto select-all">
+                    {OLLAMA_SERVE_CMD}
+                  </code>
                 </div>
               )}
 
-              <div className="space-y-2.5">
+              {/* Endpoint, Key, Model & Test Row */}
+              <div className="p-3.5 space-y-2.5">
                 <div className="space-y-1">
-                  <label htmlFor="pc-base-url" className="text-[13px] font-medium text-muted-foreground">
+                  <label htmlFor="pc-base-url" className="text-xs font-medium text-muted-foreground">
                     Base URL
                   </label>
                   <Input
@@ -526,7 +589,7 @@ export default function SettingsPage({
                       commitPatch({ ...s, ai: { ...s.ai, baseUrl: e.target.value } });
                     }}
                     placeholder="https://api.deepseek.com/v1"
-                    className="font-mono text-xs max-w-none"
+                    className="font-mono text-xs tabular-nums"
                   />
                   {resolvedEndpoint.error === 'insecure' && (
                     <p className="text-xs text-destructive leading-snug">
@@ -537,15 +600,36 @@ export default function SettingsPage({
 
                 <div className="space-y-1">
                   <div className="flex items-center justify-between gap-2">
-                    <label htmlFor="pc-api-key" className="text-[13px] font-medium text-muted-foreground">
+                    <label htmlFor="pc-api-key" className="text-xs font-medium text-muted-foreground shrink-0 whitespace-nowrap">
                       API Key
                     </label>
-                    {isLocalAi && (
-                      <span className="text-[11px] font-medium px-1.5 py-0.5 rounded bg-emerald-500/12 text-emerald-700 dark:text-emerald-300">
-                        {t('apiKeyOptionalBadge')}
-                      </span>
+                    {isLocalAi ? (
+                      <Badge variant="success">{t('apiKeyOptionalBadge')}</Badge>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setKeyGuideOpen((o) => !o)}
+                        className="pc-focus inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline cursor-pointer"
+                      >
+                        <span>{t('keyGuideToggle')}</span>
+                        <ChevronDown
+                          className={cn(
+                            'h-3 w-3 transition-transform duration-150',
+                            keyGuideOpen && 'rotate-180',
+                          )}
+                        />
+                      </button>
                     )}
                   </div>
+
+                  {keyGuideOpen && !isLocalAi && (
+                    <ol className="list-decimal list-inside py-1.5 space-y-1 text-xs text-muted-foreground leading-relaxed">
+                      <li>{t('keyGuideStep1')}</li>
+                      <li>{t('keyGuideStep2')}</li>
+                      <li>{t('keyGuideStep3')}</li>
+                    </ol>
+                  )}
+
                   <div className="relative">
                     <Input
                       id="pc-api-key"
@@ -555,7 +639,7 @@ export default function SettingsPage({
                         commitPatch({ ...s, ai: { ...s.ai, apiKey: e.target.value } })
                       }
                       placeholder={isLocalAi ? t('apiKeyLocalPlaceholder') : 'sk-...'}
-                      className="font-mono text-xs max-w-none pr-8"
+                      className="font-mono text-xs pr-8"
                     />
                     <button
                       type="button"
@@ -569,7 +653,7 @@ export default function SettingsPage({
                             ? '显示 API Key'
                             : 'Show API key'
                       }
-                      className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded text-muted-foreground hover:text-foreground cursor-pointer"
+                      className="pc-focus absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded-[4px] text-muted-foreground hover:text-foreground cursor-pointer"
                     >
                       {showKey ? (
                         <EyeOff className="h-3.5 w-3.5" />
@@ -581,21 +665,21 @@ export default function SettingsPage({
                 </div>
 
                 <div className="space-y-1 relative">
-                  <div className="flex items-center justify-between">
-                    <label htmlFor="pc-model" className="text-[13px] font-medium text-muted-foreground">
-                      {lang === 'zh' ? '模型名称' : 'Model'}
+                  <div className="flex items-center justify-between gap-2">
+                    <label htmlFor="pc-model" className="text-xs font-medium text-muted-foreground">
+                      {lang === 'zh' ? '模型 ID' : 'Model'}
                     </label>
                     <button
                       type="button"
                       onClick={() => void handleFetchModels()}
-                      className="text-[13px] text-primary hover:underline cursor-pointer"
+                      className="pc-focus text-xs font-medium text-primary hover:underline cursor-pointer"
                     >
                       {modelsStatus === 'loading'
                         ? lang === 'zh'
-                          ? '正在拉取…'
+                          ? '正在读取…'
                           : 'Loading…'
                         : lang === 'zh'
-                          ? '拉取可用模型列表'
+                          ? '拉取模型列表'
                           : 'Fetch models'}
                     </button>
                   </div>
@@ -607,24 +691,24 @@ export default function SettingsPage({
                         commitPatch({ ...s, ai: { ...s.ai, model: e.target.value } })
                       }
                       placeholder="deepseek-chat"
-                      className="font-mono text-xs max-w-none"
+                      className="font-mono text-xs"
                     />
                     {s.ai.availableModels && s.ai.availableModels.length > 0 && (
                       <Button
                         size="icon"
-                        variant="outline"
+                        variant="secondary"
                         type="button"
                         onClick={() => setModelsOpen((o) => !o)}
                         aria-label="Toggle model list"
-                        className="shrink-0 h-8 w-8 cursor-pointer"
+                        className="shrink-0 h-8 w-8"
                       >
-                        <ChevronDown className="h-4 w-4" />
+                        <ChevronDown className="h-3.5 w-3.5" />
                       </Button>
                     )}
                   </div>
 
                   {modelsOpen && s.ai.availableModels && s.ai.availableModels.length > 0 && (
-                    <div className="max-h-44 overflow-y-auto rounded-lg border border-border bg-popover p-1 shadow-md space-y-0.5">
+                    <div className="max-h-40 overflow-y-auto rounded-[6px] border border-border bg-card p-1 shadow-sm space-y-0.5">
                       {s.ai.availableModels.slice(0, 80).map((m) => (
                         <button
                           key={m}
@@ -633,7 +717,7 @@ export default function SettingsPage({
                             commitPatch({ ...s, ai: { ...s.ai, model: m } });
                             setModelsOpen(false);
                           }}
-                          className="w-full text-left px-2.5 py-1.5 rounded text-xs font-mono hover:bg-accent truncate cursor-pointer"
+                          className="w-full text-left px-2 py-1 rounded-[4px] text-xs font-mono hover:bg-secondary truncate cursor-pointer"
                         >
                           {m}
                         </button>
@@ -641,109 +725,103 @@ export default function SettingsPage({
                     </div>
                   )}
                 </div>
-              </div>
 
-              <div className="flex items-center gap-2 pt-1">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  disabled={testStatus === 'testing'}
-                  onClick={() => void handleTestConn()}
-                  className="pc-press text-[13px] gap-1.5 cursor-pointer"
-                >
-                  {testStatus === 'testing' ? (
-                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                  ) : testStatus === 'ok' ? (
-                    <Check className="h-3.5 w-3.5 text-emerald-600" />
-                  ) : null}
-                  <span>
-                    {lang === 'zh' ? '测试接口连通性' : 'Test Connection'}
-                    {testStatus === 'ok' && testElapsed > 0 ? ` (${testElapsed}ms)` : ''}
-                  </span>
-                </Button>
-              </div>
+                <div className="pt-0.5 flex items-center gap-2 flex-wrap">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={testStatus === 'testing'}
+                    onClick={() => void handleTestConn()}
+                    className="tabular-nums"
+                  >
+                    {testStatus === 'testing' ? (
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                    ) : testStatus === 'ok' ? (
+                      <Check className="h-3.5 w-3.5 text-emerald-600" />
+                    ) : null}
+                    <span>
+                      {lang === 'zh' ? '测试连通性' : 'Test connection'}
+                      {testStatus === 'ok' && testElapsed > 0 ? ` (${testElapsed} ms)` : ''}
+                    </span>
+                  </Button>
+                </div>
 
-              {testStatus === 'error' && testError && (
-                <div className="rounded-lg border border-destructive/35 bg-destructive/8 p-2.5 text-[13px] space-y-1">
-                  <div className="flex items-start gap-1.5 text-destructive font-medium">
-                    <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                    <span className="break-words">{testError}</span>
+                {testStatus === 'error' && testError && (
+                  <div className="pt-1 text-xs space-y-1">
+                    <div className="flex items-start gap-1.5 text-destructive font-medium">
+                      <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                      <span className="break-words">{testError}</span>
+                    </div>
+                    {testHint && (
+                      <p className="text-muted-foreground pl-5 leading-relaxed">
+                        {isLocalAi && testHint === 'forbidden'
+                          ? t('hintLocalForbidden')
+                          : t(HINT_KEYS[testHint])}
+                      </p>
+                    )}
                   </div>
-                  {testHint && (
-                    <p className="text-muted-foreground pl-5 leading-relaxed">
-                      {isLocalAi && testHint === 'forbidden'
-                        ? t('hintLocalForbidden')
-                        : t(HINT_KEYS[testHint])}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            </>
           )}
-        </section>
+        </div>
+      </section>
 
-        {/* 2. Agent Capabilities Toggles (Multimodal Vision + Closed-Loop Auto-Heal) */}
-        <section className="p-4 space-y-3">
-          <div className="flex items-center gap-1.5">
-            <Sparkles className="h-4 w-4 text-primary shrink-0" />
-            <h2 className="text-[14px] font-semibold text-foreground">
-              {t('capabilitiesTitle')}
-            </h2>
-          </div>
+      {/* 2. Agent Capabilities Sheet (Vision & Auto-Heal) */}
+      <section className="space-y-2">
+        <h2 className="text-[13.5px] font-semibold text-foreground">
+          {t('capabilitiesTitle')}
+        </h2>
 
-          <div className="space-y-3">
-            <label className="flex items-start justify-between gap-3 cursor-pointer">
-              <div className="space-y-0.5 min-w-0">
-                <div className="text-[13px] font-medium text-foreground">
-                  {t('visionToggleLabel')}
-                </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  {t('visionToggleDesc')}
-                </p>
+        <div className="rounded-[10px] border border-border bg-card divide-y divide-border overflow-hidden">
+          <label className="pc-row px-3.5 py-3 flex items-start justify-between gap-3 cursor-pointer">
+            <div className="space-y-0.5 min-w-0">
+              <div className="text-[13px] font-medium text-foreground">
+                {t('visionToggleLabel')}
               </div>
-              <Switch
-                checked={s.enableVisionCapture}
-                onCheckedChange={(checked) =>
-                  commitPatch({ ...s, enableVisionCapture: checked })
-                }
-              />
-            </label>
-
-            <label className="flex items-start justify-between gap-3 cursor-pointer pt-1">
-              <div className="space-y-0.5 min-w-0">
-                <div className="text-[13px] font-medium text-foreground">
-                  {t('autoHealToggleLabel')}
-                </div>
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  {t('autoHealToggleDesc')}
-                </p>
-              </div>
-              <Switch
-                checked={s.enableAutoHeal}
-                onCheckedChange={(checked) => commitPatch({ ...s, enableAutoHeal: checked })}
-              />
-            </label>
-          </div>
-        </section>
-
-        {/* 3. Local Coding Agent Bridge (`pagecraft-mcp`) */}
-        <section className="p-4 space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <PlugZap className="h-4 w-4 text-primary shrink-0" />
-              <h2 className="text-[14px] font-semibold text-foreground truncate">
-                {t('mcpTitle')}
-              </h2>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {t('visionToggleDesc')}
+              </p>
             </div>
             <Switch
-              checked={s.mcpBridgeEnabled}
-              onCheckedChange={(checked) => commitPatch({ ...s, mcpBridgeEnabled: checked })}
+              checked={s.enableVisionCapture}
+              onCheckedChange={(checked) =>
+                commitPatch({ ...s, enableVisionCapture: checked })
+              }
             />
-          </div>
+          </label>
 
-          <p className="text-xs text-muted-foreground leading-relaxed">{t('mcpDesc')}</p>
+          <label className="pc-row px-3.5 py-3 flex items-start justify-between gap-3 cursor-pointer">
+            <div className="space-y-0.5 min-w-0">
+              <div className="text-[13px] font-medium text-foreground">
+                {t('autoHealToggleLabel')}
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {t('autoHealToggleDesc')}
+              </p>
+            </div>
+            <Switch
+              checked={s.enableAutoHeal}
+              onCheckedChange={(checked) => commitPatch({ ...s, enableAutoHeal: checked })}
+            />
+          </label>
+        </div>
+      </section>
 
-          <div className="rounded-lg border border-border/80 bg-secondary/45 p-2.5 space-y-1.5">
+      {/* 3. Terminal-Grade `pagecraft-mcp` Configuration Card */}
+      <section className="space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-[13.5px] font-semibold text-foreground truncate">
+            {t('mcpTitle')}
+          </h2>
+          <Badge variant="outline" className="font-mono shrink-0">
+            127.0.0.1
+          </Badge>
+        </div>
+
+        <div className="rounded-[10px] border border-border bg-card divide-y divide-border overflow-hidden">
+          {/* Status & Switch Header */}
+          <div className="px-3.5 py-3 space-y-2">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 min-w-0">
                 <span
@@ -756,7 +834,7 @@ export default function SettingsPage({
                         : 'bg-amber-500',
                   )}
                 />
-                <span className="text-xs font-medium text-foreground truncate">
+                <span className="text-[13px] font-medium text-foreground truncate">
                   {!s.mcpBridgeEnabled
                     ? t('mcpStatusOff')
                     : mcpStatus?.connected
@@ -764,27 +842,41 @@ export default function SettingsPage({
                       : t('mcpStatusWaiting')}
                 </span>
               </div>
-              {s.mcpBridgeEnabled && (
-                <button
-                  type="button"
-                  onClick={() => void handleReconnectMcp()}
-                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
-                >
-                  <RefreshCw className={cn('h-3.5 w-3.5', reconnectingMcp && 'animate-spin')} />
-                  <span>{t('mcpReconnectBtn')}</span>
-                </button>
-              )}
+
+              <div className="flex items-center gap-2 shrink-0">
+                {s.mcpBridgeEnabled && (
+                  <button
+                    type="button"
+                    onClick={() => void handleReconnectMcp()}
+                    className="pc-btn inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    <RefreshCw
+                      className={cn('h-3 w-3', reconnectingMcp && 'animate-spin')}
+                    />
+                    <span>{t('mcpReconnectBtn')}</span>
+                  </button>
+                )}
+                <Switch
+                  checked={s.mcpBridgeEnabled}
+                  onCheckedChange={(checked) => commitPatch({ ...s, mcpBridgeEnabled: checked })}
+                  aria-label={t('mcpEnableLabel')}
+                />
+              </div>
             </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed">{t('mcpDesc')}</p>
+
             {s.mcpBridgeEnabled && !mcpStatus?.connected && mcpStatus?.lastError && (
-              <p className="text-[11px] text-muted-foreground leading-snug break-words pl-4">
+              <p className="text-[11px] font-mono text-muted-foreground leading-snug break-words">
                 {mcpStatus.lastError}
               </p>
             )}
           </div>
 
-          <div className="space-y-2.5">
+          {/* Loopback Endpoint & Auth Token */}
+          <div className="p-3.5 space-y-2.5">
             <div className="space-y-1">
-              <label htmlFor="pc-mcp-url" className="text-[13px] font-medium text-muted-foreground">
+              <label htmlFor="pc-mcp-url" className="text-xs font-medium text-muted-foreground">
                 {t('mcpWsUrlLabel')}
               </label>
               <Input
@@ -792,7 +884,7 @@ export default function SettingsPage({
                 value={s.mcpBridgeUrl}
                 onChange={(e) => commitPatch({ ...s, mcpBridgeUrl: e.target.value })}
                 placeholder="ws://127.0.0.1:17321"
-                className="font-mono text-xs max-w-none"
+                className="font-mono text-xs tabular-nums"
               />
               {!mcpUrlValid && (
                 <p className="text-xs text-destructive leading-snug">{t('mcpLoopbackWarn')}</p>
@@ -800,10 +892,7 @@ export default function SettingsPage({
             </div>
 
             <div className="space-y-1">
-              <label
-                htmlFor="pc-mcp-token"
-                className="text-[13px] font-medium text-muted-foreground"
-              >
+              <label htmlFor="pc-mcp-token" className="text-xs font-medium text-muted-foreground">
                 {t('mcpTokenLabel')}
               </label>
               <Input
@@ -812,18 +901,21 @@ export default function SettingsPage({
                 value={s.mcpBridgeToken}
                 onChange={(e) => commitPatch({ ...s, mcpBridgeToken: e.target.value })}
                 placeholder={t('mcpTokenPlaceholder')}
-                className="font-mono text-xs max-w-none"
+                className="font-mono text-xs"
               />
             </div>
+          </div>
 
-            <div className="rounded-lg border border-border/80 bg-secondary/45 p-2.5 space-y-2">
-              <pre className="font-mono text-[11px] leading-snug text-foreground overflow-x-auto select-all">
-                {mcpConfigJson}
-              </pre>
-              <div className="flex items-center gap-2 flex-wrap">
-                <Button
-                  size="sm"
-                  variant="secondary"
+          {/* Flush Terminal-Grade Config Pane */}
+          <div className="bg-[var(--pc-terminal-bg)] text-[var(--pc-terminal-ink)] min-w-0">
+            <div className="px-3.5 py-2 border-b border-[var(--pc-terminal-border)] flex items-center justify-between gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-[var(--pc-terminal-muted)]">
+                <Terminal className="h-3 w-3 text-[#E06643]" />
+                <span>pagecraft-mcp · mcp.json</span>
+              </span>
+
+              <div className="flex items-center gap-1.5">
+                <button
                   type="button"
                   onClick={() => {
                     navigator.clipboard?.writeText(mcpConfigJson).catch(() => {});
@@ -831,19 +923,17 @@ export default function SettingsPage({
                     onToast(t('mcpCopiedToast'));
                     setTimeout(() => setCopiedMcpJson(false), 1800);
                   }}
-                  className="pc-press text-xs gap-1.5 cursor-pointer"
+                  className="pc-btn inline-flex items-center gap-1 h-6 px-2 rounded-[5px] border border-[var(--pc-terminal-border)] bg-[#211F1D] hover:bg-[#2B2926] text-[11px] font-medium text-[#F2EFE9] cursor-pointer"
                 >
                   {copiedMcpJson ? (
-                    <Check className="h-3.5 w-3.5 text-emerald-600" />
+                    <Check className="h-3 w-3 text-emerald-400" />
                   ) : (
-                    <Copy className="h-3.5 w-3.5" />
+                    <Copy className="h-3 w-3" />
                   )}
                   <span>{t('mcpCopyConfigBtn')}</span>
-                </Button>
+                </button>
 
-                <Button
-                  size="sm"
-                  variant="outline"
+                <button
                   type="button"
                   onClick={() => {
                     navigator.clipboard?.writeText(mcpCliCmd).catch(() => {});
@@ -851,51 +941,57 @@ export default function SettingsPage({
                     onToast(t('mcpCopiedToast'));
                     setTimeout(() => setCopiedMcpCli(false), 1800);
                   }}
-                  className="pc-press text-xs gap-1.5 cursor-pointer"
+                  className="pc-btn inline-flex items-center gap-1 h-6 px-2 rounded-[5px] border border-[var(--pc-terminal-border)] bg-[#211F1D] hover:bg-[#2B2926] text-[11px] font-medium text-[#F2EFE9] cursor-pointer"
                 >
                   {copiedMcpCli ? (
-                    <Check className="h-3.5 w-3.5 text-emerald-600" />
+                    <Check className="h-3 w-3 text-emerald-400" />
                   ) : (
-                    <Terminal className="h-3.5 w-3.5" />
+                    <Terminal className="h-3 w-3" />
                   )}
                   <span>{t('mcpCopyCliBtn')}</span>
-                </Button>
+                </button>
               </div>
             </div>
-          </div>
-        </section>
 
-        {/* 4. Execution Engine Health */}
-        <section className="p-4 space-y-2.5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-[14px] font-semibold text-foreground">{t('runtimeTitle')}</h2>
-            <button
-              type="button"
-              onClick={() =>
-                void recheckOrRecoverJsPermission({
-                  recheck: onRecheckAvailability,
-                  beforeReload: () =>
-                    onToast(
-                      lang === 'zh'
-                        ? '检测到授权已开启，正在刷新引擎…'
-                        : 'Permission detected! Reloading engine…',
-                    ),
-                })
-              }
-              className="text-[13px] text-muted-foreground hover:text-foreground cursor-pointer"
-            >
-              {lang === 'zh' ? '刷新状态' : 'Re-check'}
-            </button>
+            <pre className="m-0 px-3.5 py-2.5 font-mono text-[11px] leading-relaxed text-[#F2EFE9] overflow-x-auto select-all">
+              {mcpConfigJson}
+            </pre>
           </div>
+        </div>
+      </section>
 
-          <div className="space-y-2 text-[13px]">
+      {/* 4. Execution Runtime & Appearance */}
+      <section className="space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-[13.5px] font-semibold text-foreground">{t('runtimeTitle')}</h2>
+          <button
+            type="button"
+            onClick={() =>
+              void recheckOrRecoverJsPermission({
+                recheck: onRecheckAvailability,
+                beforeReload: () =>
+                  onToast(
+                    lang === 'zh'
+                      ? '已检测到授权，正在刷新引擎…'
+                      : 'Permission detected. Reloading engine…',
+                  ),
+              })
+            }
+            className="pc-focus text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+          >
+            {lang === 'zh' ? '刷新状态' : 'Re-check'}
+          </button>
+        </div>
+
+        <div className="rounded-[10px] border border-border bg-card divide-y divide-border overflow-hidden">
+          <div className="p-3.5 space-y-2 text-[12.5px]">
             <div className="flex items-center gap-2 text-foreground">
               <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
               <span>{t('cssEngineReady')}</span>
             </div>
 
             <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 min-w-0">
                 <span
                   className={cn(
                     'h-2 w-2 rounded-full shrink-0',
@@ -914,23 +1010,21 @@ export default function SettingsPage({
                       chrome.runtime.sendMessage({ type: 'OPEN_EXTENSION_DETAILS' }).catch(() => {});
                     }
                   }}
-                  className="inline-flex items-center gap-1 text-[13px] font-medium text-primary hover:underline shrink-0 cursor-pointer"
+                  className="pc-focus inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline shrink-0 cursor-pointer"
                 >
-                  <span>{lang === 'zh' ? '去开启' : 'Enable'}</span>
-                  <ExternalLink className="h-3.5 w-3.5" />
+                  <span>{lang === 'zh' ? '开启' : 'Enable'}</span>
+                  <ExternalLink className="h-3 w-3" />
                 </button>
               )}
             </div>
           </div>
-        </section>
 
-        {/* 5. Appearance & Language */}
-        <section className="p-4 space-y-3">
-          <h2 className="text-[14px] font-semibold text-foreground">{t('appearanceTitle')}</h2>
-
-          <div className="space-y-2.5">
+          <div className="p-3.5 space-y-2.5">
+            <div className="text-xs font-medium text-muted-foreground">
+              {t('appearanceTitle')}
+            </div>
             <SegmentedControl
-              className="w-full [&>.cds-seg-item]:flex-1 [&>.cds-seg-item]:justify-center"
+              className="w-full"
               value={theme}
               onChange={(v: string) => onSetTheme(v as Theme)}
               items={[
@@ -940,7 +1034,7 @@ export default function SettingsPage({
               ]}
             />
             <SegmentedControl
-              className="w-full [&>.cds-seg-item]:flex-1 [&>.cds-seg-item]:justify-center"
+              className="w-full"
               value={lang}
               onChange={(v: string) => onSetLang(v as Lang)}
               items={[
@@ -949,34 +1043,34 @@ export default function SettingsPage({
               ]}
             />
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
 
-      {/* Zero-Backend Privacy Guarantee & Support Contact */}
-      <div className="space-y-1.5 px-1 pt-4 text-[13px] text-muted-foreground leading-relaxed">
+      {/* Zero-Backend Privacy Guarantee & Support */}
+      <footer className="space-y-1.5 pt-1 text-xs text-muted-foreground leading-relaxed">
         <div className="flex items-start gap-2">
           <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
           <p>{t('privacyNote')}</p>
         </div>
-        <p className="pl-6 text-xs">
+        <p className="pl-6">
           {t('supportContactLabel')}
           <a
             href="https://github.com/botshen/plugin-radar/issues"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-foreground/85 hover:text-primary hover:underline"
+            className="pc-focus text-foreground hover:text-primary hover:underline"
           >
             GitHub Issues
           </a>
           <span className="mx-1.5 opacity-50">·</span>
           <a
             href="mailto:botzgbj@gmail.com"
-            className="text-foreground/85 hover:text-primary hover:underline"
+            className="pc-focus text-foreground hover:text-primary hover:underline"
           >
             botzgbj@gmail.com
           </a>
         </p>
-      </div>
+      </footer>
     </div>
   );
 }

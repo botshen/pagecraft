@@ -113,6 +113,9 @@ export default function ModsPage({
   }, []);
 
   const hasEnabledJsMods = mods.some((m) => m.enabled && m.engine === 'js');
+  const enabledCount = useMemo(() => mods.filter((m) => m.enabled).length, [mods]);
+  const cssCount = useMemo(() => mods.filter((m) => m.engine === 'css').length, [mods]);
+  const jsCount = useMemo(() => mods.filter((m) => m.engine === 'js').length, [mods]);
 
   const filteredMods = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -185,8 +188,8 @@ export default function ModsPage({
       if (!avail.available) {
         onToast(
           lang === 'zh'
-            ? '请先在上方提示卡中开启一次「允许用户脚本」授权'
-            : 'Enable "Allow User Scripts" first to run JS userscripts',
+            ? '请先在提示栏开启「允许用户脚本」开关'
+            : 'Enable "Allow User Scripts" first to run JS scripts',
         );
         return;
       }
@@ -199,10 +202,10 @@ export default function ModsPage({
       onToast(
         res.reloaded
           ? lang === 'zh'
-            ? `已刷新页面并运行：${mod.name}`
-            : `Reloaded tab & executed: ${mod.name}`
+            ? `已重新加载并执行：${mod.name}`
+            : `Reloaded tab and executed: ${mod.name}`
           : lang === 'zh'
-            ? `样式已在当前页面实时生效：${mod.name}`
+            ? `样式已在当前页面生效：${mod.name}`
             : `CSS applied live: ${mod.name}`,
       );
     }
@@ -246,17 +249,15 @@ export default function ModsPage({
     );
     onToast(
       lang === 'zh'
-        ? `已导出 ${mods.length} 条改造规则备份`
-        : `Exported ${mods.length} mod(s) to JSON`,
+        ? `已导出 ${mods.length} 条规则备份`
+        : `Exported ${mods.length} rule(s) to JSON`,
     );
   }
 
   async function handleRestoreBackupFile(file: File | undefined) {
     if (!file) return;
     if (file.size > 5_000_000) {
-      onToast(
-        lang === 'zh' ? '备份文件超过 5MB 安全上限' : 'Backup file exceeds 5MB limit',
-      );
+      onToast(lang === 'zh' ? '备份文件超过 5MB 上限' : 'Backup file exceeds 5MB limit');
       return;
     }
     try {
@@ -265,7 +266,7 @@ export default function ModsPage({
       const rawItems: unknown[] = Array.isArray(parsed)
         ? parsed
         : parsed && typeof parsed === 'object' && Array.isArray((parsed as { mods?: unknown }).mods)
-          ? ((parsed as { mods: unknown[] }).mods)
+          ? (parsed as { mods: unknown[] }).mods
           : [];
 
       const validMods: UserScript[] = [];
@@ -285,7 +286,7 @@ export default function ModsPage({
         onToast(
           lang === 'zh'
             ? '未在备份文件中找到有效规则'
-            : 'No valid mods found in backup JSON',
+            : 'No valid rules found in backup JSON',
         );
         return;
       }
@@ -297,8 +298,8 @@ export default function ModsPage({
       await onModsChanged();
       onToast(
         lang === 'zh'
-          ? `已恢复 ${validMods.length} 条改造规则`
-          : `Restored ${validMods.length} mod(s)`,
+          ? `已恢复 ${validMods.length} 条规则`
+          : `Restored ${validMods.length} rule(s)`,
       );
     } catch {
       onToast(
@@ -319,8 +320,8 @@ export default function ModsPage({
       description: '',
       engine: 'css',
       matches: [defaultMatch],
-      code: '(() => {\n  // Your code here\n})();',
-      css: '/* Example: .ad-banner { display: none !important; } */\n',
+      code: '(() => {\n  // DOM script\n})();',
+      css: '/* .promo-banner { display: none !important; } */\n',
       enabled: true,
       source: 'manual',
       runAt: 'document_start',
@@ -392,7 +393,7 @@ export default function ModsPage({
       const name =
         parsed.name ||
         fallbackFileTitle ||
-        (lang === 'zh' ? '导入的油猴脚本' : 'Imported Userscript');
+        (lang === 'zh' ? '导入的油猴脚本' : 'Imported userscript');
 
       const usePureCss = Boolean(parsed.extractedCss);
       const now = Date.now();
@@ -423,20 +424,18 @@ export default function ModsPage({
     setImportWarn(
       sawRemoteWarn
         ? lang === 'zh'
-          ? '提示：刚导入的脚本包含远程依赖（@require）或跨站请求（GM_xmlhttpRequest）。受 Chrome MV3 安全规范限制，远程外部库不会自动拉取，轻量 DOM / GM_addStyle / GM_setValue 功能可正常运行。'
-          : 'Note: This script uses @require or GM_xmlhttpRequest, which Chrome MV3 restricts for security. Standard DOM, GM_addStyle, and GM_getValue/setValue APIs work normally.'
+          ? '提示：导入的脚本包含 @require 或 GM_xmlhttpRequest。受 Chrome MV3 安全规范限制，远程库不会拉取，标准 DOM / GM_addStyle / GM_setValue 可正常运行。'
+          : 'Note: This script references @require or GM_xmlhttpRequest, which Chrome MV3 blocks. Standard DOM, GM_addStyle, and GM_getValue/setValue APIs run normally.'
         : null,
     );
 
     if (importedNames.length === 1) {
-      onToast(
-        lang === 'zh' ? `已导入脚本：${importedNames[0]}` : `Imported: ${importedNames[0]}`,
-      );
+      onToast(lang === 'zh' ? `已导入：${importedNames[0]}` : `Imported: ${importedNames[0]}`);
     } else {
       onToast(
         lang === 'zh'
-          ? `已批量导入 ${importedNames.length} 个脚本`
-          : `Imported ${importedNames.length} userscripts`,
+          ? `已导入 ${importedNames.length} 个脚本`
+          : `Imported ${importedNames.length} scripts`,
       );
     }
     return true;
@@ -458,7 +457,7 @@ export default function ModsPage({
       if (file.size > 1_000_000) {
         setFormError(
           lang === 'zh'
-            ? `文件「${file.name}」超过 1MB 安全上限。`
+            ? `文件「${file.name}」超过 1MB 上限。`
             : `File "${file.name}" exceeds the 1MB limit.`,
         );
         return;
@@ -475,7 +474,7 @@ export default function ModsPage({
     if (!editing) return;
     const name = editing.name.trim();
     if (!name) {
-      setFormError(lang === 'zh' ? '请填写规则名称。' : 'Name is required.');
+      setFormError(lang === 'zh' ? '请填写规则名称。' : 'Rule name is required.');
       return;
     }
     const matches = editing.matches.map((m) => m.trim()).filter(Boolean);
@@ -485,11 +484,11 @@ export default function ModsPage({
       return;
     }
     if (editing.engine === 'css' && !(editing.css ?? '').trim()) {
-      setFormError(lang === 'zh' ? '请填写 CSS 样式内容。' : 'CSS content cannot be empty.');
+      setFormError(lang === 'zh' ? '请填写 CSS 内容。' : 'CSS content cannot be empty.');
       return;
     }
     if (editing.engine === 'js' && !editing.code.trim()) {
-      setFormError(lang === 'zh' ? '请填写 JS 脚本内容。' : 'JS code cannot be empty.');
+      setFormError(lang === 'zh' ? '请填写 JS 脚本内容。' : 'JavaScript code cannot be empty.');
       return;
     }
 
@@ -505,18 +504,19 @@ export default function ModsPage({
     await onModsChanged();
     setEditing(null);
     setFormError(null);
-    onToast(lang === 'zh' ? `已保存修改：${next.name}` : `Saved: ${next.name}`);
+    onToast(lang === 'zh' ? `已保存：${next.name}` : `Saved: ${next.name}`);
   }
 
   if (editing) {
     return (
-      <div className="animate-page-enter rounded-xl bg-card border border-border p-4 space-y-3.5">
-        <div className="flex items-center justify-between">
-          <h2 className="text-[14px] font-semibold">
-            {lang === 'zh' ? '编辑改造规则' : 'Edit Mod'}
+      <div className="pc-enter rounded-[10px] bg-card border border-border divide-y divide-border overflow-hidden mb-6">
+        <div className="px-3.5 py-2.5 bg-secondary/35 flex items-center justify-between gap-2">
+          <h2 className="text-[13.5px] font-semibold text-foreground">
+            {lang === 'zh' ? '编辑改造规则' : 'Edit rule'}
           </h2>
           <SegmentedControl
             size="sm"
+            className="w-28"
             value={editing.engine}
             onChange={(v: string) => setEditing({ ...editing, engine: v as ModEngine })}
             items={[
@@ -526,66 +526,68 @@ export default function ModsPage({
           />
         </div>
 
-        <div className="space-y-1">
-          <label htmlFor="pc-mod-name" className="text-[13px] font-medium text-muted-foreground">
-            {lang === 'zh' ? '名称' : 'Name'}
-          </label>
-          <Input
-            id="pc-mod-name"
-            value={editing.name}
-            onChange={(e) => setEditing({ ...editing, name: e.target.value })}
-            placeholder={lang === 'zh' ? '例如：隐藏知乎登录框' : 'e.g. Clean Article View'}
-            className="text-[13px] max-w-none"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label htmlFor="pc-mod-matches" className="text-[13px] font-medium text-muted-foreground">
-            {lang === 'zh' ? '匹配网址（@match，每行一条）' : '@match patterns (one per line)'}
-          </label>
-          <Textarea
-            id="pc-mod-matches"
-            rows={2}
-            value={editing.matches.join('\n')}
-            onChange={(e) =>
-              setEditing({ ...editing, matches: e.target.value.split('\n') })
-            }
-            className="font-mono text-xs"
-          />
-          <label className="inline-flex items-center gap-2 pt-1 text-[13px] text-muted-foreground cursor-pointer">
-            <input
-              type="checkbox"
-              checked={Boolean(editing.allowAllUrls)}
-              onChange={(e) => setEditing({ ...editing, allowAllUrls: e.target.checked })}
+        <div className="p-3.5 space-y-3">
+          <div className="space-y-1">
+            <label htmlFor="pc-mod-name" className="text-xs font-medium text-muted-foreground">
+              {lang === 'zh' ? '规则名称' : 'Name'}
+            </label>
+            <Input
+              id="pc-mod-name"
+              value={editing.name}
+              onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+              placeholder={lang === 'zh' ? '例如：隐藏知乎右侧栏' : 'e.g. Clean article view'}
             />
-            <span>
-              {lang === 'zh' ? '允许在所有网站生效（<all_urls>）' : 'Allow running on all sites'}
-            </span>
-          </label>
+          </div>
+
+          <div className="space-y-1">
+            <label htmlFor="pc-mod-matches" className="text-xs font-medium text-muted-foreground">
+              {lang === 'zh' ? '@match 网址规则（每行一条）' : '@match patterns (one per line)'}
+            </label>
+            <Textarea
+              id="pc-mod-matches"
+              rows={2}
+              value={editing.matches.join('\n')}
+              onChange={(e) =>
+                setEditing({ ...editing, matches: e.target.value.split('\n') })
+              }
+              className="font-mono text-xs"
+            />
+            <label className="inline-flex items-center gap-2 pt-1 text-xs text-muted-foreground cursor-pointer">
+              <input
+                type="checkbox"
+                checked={Boolean(editing.allowAllUrls)}
+                onChange={(e) => setEditing({ ...editing, allowAllUrls: e.target.checked })}
+                className="accent-[var(--pc-accent)]"
+              />
+              <span>
+                {lang === 'zh' ? '允许匹配所有站点（<all_urls>）' : 'Allow running on all sites'}
+              </span>
+            </label>
+          </div>
+
+          <div className="space-y-1">
+            <label htmlFor="pc-mod-body" className="text-xs font-medium text-muted-foreground">
+              {editing.engine === 'css' ? 'CSS' : 'JavaScript'}
+            </label>
+            <Textarea
+              id="pc-mod-body"
+              rows={10}
+              value={editing.engine === 'css' ? editing.css ?? '' : editing.code}
+              onChange={(e) =>
+                editing.engine === 'css'
+                  ? setEditing({ ...editing, css: e.target.value })
+                  : setEditing({ ...editing, code: e.target.value })
+              }
+              className="font-mono text-xs leading-relaxed"
+            />
+          </div>
+
+          {formError && (
+            <p className="text-xs text-destructive leading-snug">{formError}</p>
+          )}
         </div>
 
-        <div className="space-y-1">
-          <label htmlFor="pc-mod-body" className="text-[13px] font-medium text-muted-foreground">
-            {editing.engine === 'css' ? 'CSS' : 'JavaScript'}
-          </label>
-          <Textarea
-            id="pc-mod-body"
-            rows={10}
-            value={editing.engine === 'css' ? editing.css ?? '' : editing.code}
-            onChange={(e) =>
-              editing.engine === 'css'
-                ? setEditing({ ...editing, css: e.target.value })
-                : setEditing({ ...editing, code: e.target.value })
-            }
-            className="font-mono text-xs leading-relaxed"
-          />
-        </div>
-
-        {formError && (
-          <p className="text-[13px] text-destructive leading-snug">{formError}</p>
-        )}
-
-        <div className="flex items-center justify-end gap-2 pt-1">
+        <div className="px-3.5 py-2.5 bg-secondary/25 flex items-center justify-end gap-2">
           <Button
             size="sm"
             variant="ghost"
@@ -593,7 +595,6 @@ export default function ModsPage({
               setEditing(null);
               setFormError(null);
             }}
-            className="cursor-pointer"
           >
             {t('cancel')}
           </Button>
@@ -601,7 +602,6 @@ export default function ModsPage({
             variant="primary"
             size="sm"
             onClick={() => void handleSaveEditing()}
-            className="pc-press cursor-pointer"
           >
             {t('saveMod')}
           </Button>
@@ -612,7 +612,7 @@ export default function ModsPage({
 
   return (
     <div
-      className="space-y-4 pb-6"
+      className="space-y-3.5 pb-6 pc-enter"
       onDragOver={(e) => {
         if (e.dataTransfer?.types?.includes('Files')) {
           e.preventDefault();
@@ -652,25 +652,25 @@ export default function ModsPage({
         }}
       />
 
-      {/* Top Action Bar */}
+      {/* Top Toolbar */}
       <div className="flex items-center gap-1.5 flex-wrap">
         <Button
           size="sm"
-          variant={mods.length === 0 ? 'ghost' : 'outline'}
+          variant={importOpen ? 'primary' : 'secondary'}
           onClick={() => {
             setImportOpen((v) => !v);
             setFormError(null);
           }}
-          className="pc-press gap-1.5 text-[13px] cursor-pointer"
+          className="text-xs px-2.5"
         >
           <Download className="h-3.5 w-3.5" />
           <span>{t('importScript')}</span>
         </Button>
         <Button
           size="sm"
-          variant="ghost"
+          variant="secondary"
           onClick={startNewCustomMod}
-          className="pc-press gap-1.5 text-[13px] cursor-pointer"
+          className="text-xs px-2.5"
         >
           <Plus className="h-3.5 w-3.5" />
           <span>{t('newManualMod')}</span>
@@ -678,28 +678,106 @@ export default function ModsPage({
 
         <div className="ml-auto flex items-center gap-1">
           {mods.length > 0 && (
-            <button
+            <Button
               type="button"
+              size="xs"
+              variant="ghost"
               onClick={handleExportBackupJson}
-              className="pc-press inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/70 transition-colors cursor-pointer"
+              className="px-2"
             >
               <FileDown className="h-3.5 w-3.5" />
               <span>{t('backupJson')}</span>
-            </button>
+            </Button>
           )}
-          <button
+          <Button
             type="button"
+            size="xs"
+            variant="ghost"
             onClick={() => backupInputRef.current?.click()}
-            className="pc-press inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary/70 transition-colors cursor-pointer"
+            className="px-2"
           >
             <FileUp className="h-3.5 w-3.5" />
             <span>{t('restoreJson')}</span>
-          </button>
+          </Button>
         </div>
       </div>
 
-      {/* Compact Search + Engine/Status Filter Bar (shown when library has >= 4 mods) */}
-      {mods.length >= 4 && (
+      {/* Flat-Divided Drag-and-Drop / #PC1:...# Import Sheet (strict max 2 boxes deep) */}
+      {(importOpen || draggingFile) && (
+        <section className="pc-enter rounded-[10px] border border-border bg-card divide-y divide-border overflow-hidden">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className={cn(
+              'pc-focus w-full px-3.5 py-3 text-left transition-colors cursor-pointer flex items-center justify-between gap-2',
+              draggingFile
+                ? 'bg-[var(--pc-accent-subtle)] text-foreground'
+                : 'bg-secondary/45 hover:bg-secondary/75 text-foreground',
+            )}
+          >
+            <div className="min-w-0 space-y-0.5">
+              <div className="inline-flex items-center gap-1.5 text-[13px] font-medium">
+                <Upload className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span>
+                  {lang === 'zh'
+                    ? '选择或拖拽本地 .user.js / .json 文件'
+                    : 'Choose or drop .user.js / .json files'}
+                </span>
+              </div>
+              <p className="text-[11.5px] text-muted-foreground">
+                {lang === 'zh'
+                  ? '支持 Tampermonkey 脚本头及 GM_addStyle / GM_setValue'
+                  : 'Supports Tampermonkey headers and GM_addStyle / GM_getValue'}
+              </p>
+            </div>
+            <Badge variant="outline" className="font-mono shrink-0">
+              .user.js
+            </Badge>
+          </button>
+
+          <div>
+            <Textarea
+              rows={5}
+              value={importSource}
+              onChange={(e) => setImportSource(e.target.value)}
+              placeholder={t('importPlaceholder')}
+              className="border-0 rounded-none bg-transparent focus-visible:ring-0 focus-visible:border-transparent font-mono text-xs"
+            />
+            {formError && (
+              <p className="px-3.5 pb-2 text-xs text-destructive">{formError}</p>
+            )}
+          </div>
+
+          <div className="px-3.5 py-2 bg-secondary/25 flex items-center justify-between gap-2">
+            <span className="font-mono text-[11px] text-muted-foreground truncate">
+              ==UserScript== · #PC1:...#
+            </span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <Button
+                size="xs"
+                variant="ghost"
+                onClick={() => {
+                  setImportOpen(false);
+                  setDraggingFile(false);
+                }}
+              >
+                {t('cancel')}
+              </Button>
+              <Button
+                variant="primary"
+                size="xs"
+                disabled={!importSource.trim()}
+                onClick={() => void handleImportPaste()}
+              >
+                {t('importScript')}
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Search + Segmented Filter Bar */}
+      {mods.length > 0 && (
         <div className="space-y-2">
           <div className="relative">
             <Search className="h-3.5 w-3.5 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -708,144 +786,61 @@ export default function ModsPage({
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('modsSearchPlaceholder')}
               aria-label={t('modsSearchPlaceholder')}
-              className="pl-8 pr-7 h-8 text-xs max-w-none"
+              className="pl-8 pr-7 h-8 text-xs"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
                 aria-label="Clear search"
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
+                className="pc-focus absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer"
               >
                 <X className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
 
-          <div className="flex items-center gap-1 flex-wrap">
-            {(
-              [
-                { id: 'all', label: t('modsFilterAll') },
-                { id: 'enabled', label: t('modsFilterEnabled') },
-                { id: 'css', label: 'CSS' },
-                { id: 'js', label: 'JS' },
-              ] as Array<{ id: ModFilterKey; label: string }>
-            ).map((chip) => {
-              const active = modFilter === chip.id;
-              return (
-                <button
-                  key={chip.id}
-                  type="button"
-                  onClick={() => setModFilter(chip.id)}
-                  className={cn(
-                    'pc-press px-2.5 py-0.5 rounded-full text-xs font-medium border transition-colors cursor-pointer',
-                    active
-                      ? 'bg-primary text-white border-primary'
-                      : 'bg-card hover:bg-secondary/75 text-muted-foreground hover:text-foreground border-border/80',
-                  )}
-                >
-                  {chip.label}
-                </button>
-              );
-            })}
-          </div>
+          <SegmentedControl
+            size="sm"
+            className="w-full"
+            value={modFilter}
+            onChange={(v: string) => setModFilter(v as ModFilterKey)}
+            items={[
+              { id: 'all', label: t('modsFilterAll'), badge: mods.length },
+              { id: 'enabled', label: t('modsFilterEnabled'), badge: enabledCount || undefined },
+              { id: 'css', label: 'CSS', badge: cssCount || undefined },
+              { id: 'js', label: 'JS', badge: jsCount || undefined },
+            ]}
+          />
         </div>
       )}
 
-      {/* File + Paste Import .user.js Drawer */}
-      {(importOpen || draggingFile) && (
-        <div className="animate-page-enter rounded-xl border border-border bg-card p-3.5 space-y-3">
-          {/* 1-Click Local .user.js File Picker / Dropzone */}
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className={cn(
-              'w-full rounded-lg border border-dashed px-3 py-3 text-center transition-colors cursor-pointer flex flex-col items-center gap-1',
-              draggingFile
-                ? 'border-primary bg-primary/8 text-foreground'
-                : 'border-border hover:border-primary/50 bg-secondary/35 hover:bg-secondary/60 text-foreground',
-            )}
-          >
-            <span className="inline-flex items-center gap-1.5 text-[13px] font-medium">
-              <Upload className="h-3.5 w-3.5 text-primary" />
-              <span>
-                {lang === 'zh'
-                  ? '点击选择本地 .user.js 文件（支持拖拽或多选）'
-                  : 'Choose or drop .user.js files here'}
-              </span>
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {lang === 'zh'
-                ? '兼容 Tampermonkey / 脚本猫头部及常用 GM_addStyle / GM_setValue 接口'
-                : 'Supports Tampermonkey headers & GM_addStyle / GM_getValue / GM_setClipboard'}
-            </span>
-          </button>
-
-          <div className="space-y-2">
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              {lang === 'zh'
-                ? '或者直接粘贴油猴脚本（==UserScript==）、小红书配方口令（#PC1:...#）或分享链接：'
-                : 'Or paste userscript code (==UserScript==), a #PC1:...# recipe shortcode, or a share link:'}
-            </p>
-            <Textarea
-              rows={5}
-              value={importSource}
-              onChange={(e) => setImportSource(e.target.value)}
-              placeholder={t('importPlaceholder')}
-              className="font-mono text-xs"
-            />
-          </div>
-          {formError && <p className="text-[13px] text-destructive">{formError}</p>}
-          <div className="flex justify-end gap-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                setImportOpen(false);
-                setDraggingFile(false);
-              }}
-              className="cursor-pointer"
-            >
-              {t('cancel')}
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              disabled={!importSource.trim()}
-              onClick={() => void handleImportPaste()}
-              className="pc-press cursor-pointer"
-            >
-              {t('importScript')}
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* Optional MV3 Compatibility Notice when an imported script used @require / GM_xmlhttpRequest */}
+      {/* MV3 Compatibility Notice */}
       {importWarn && (
-        <div className="rounded-xl border border-amber-500/35 bg-amber-500/8 px-3.5 py-2.5 flex items-start justify-between gap-2 text-xs text-foreground leading-relaxed">
+        <div className="rounded-[10px] border border-amber-600/30 bg-amber-500/[0.08] px-3.5 py-2.5 flex items-start justify-between gap-2 text-xs text-foreground leading-relaxed">
           <span>{importWarn}</span>
           <button
             type="button"
             onClick={() => setImportWarn(null)}
-            className="shrink-0 text-muted-foreground hover:text-foreground cursor-pointer"
+            aria-label={t('cancel')}
+            className="pc-focus shrink-0 text-muted-foreground hover:text-foreground cursor-pointer"
           >
-            ✕
+            <X className="h-3.5 w-3.5" />
           </button>
         </div>
       )}
 
-      {/* JS Engine Off Notice (only if user actually has JS scripts enabled) */}
+      {/* JS Engine Off Notice */}
       {hasEnabledJsMods && availability?.available === false && (
-        <div className="rounded-xl border border-amber-500/35 bg-amber-500/8 p-3 space-y-2">
+        <div className="rounded-[10px] border border-amber-600/30 bg-card p-3.5 space-y-2.5">
           <div className="flex items-start gap-2 text-[13px]">
             <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-            <p className="leading-relaxed text-foreground">{t('jsPermTitle')}</p>
+            <p className="leading-snug text-foreground">{t('jsPermTitle')}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Button
-              size="sm"
-              variant="outline"
+              size="xs"
+              variant="secondary"
               onClick={() => {
                 if (typeof chrome !== 'undefined' && chrome.runtime?.sendMessage) {
                   const firstJsMod = mods.find((m) => m.enabled && m.engine === 'js');
@@ -857,14 +852,13 @@ export default function ModsPage({
                     .catch(() => {});
                 }
               }}
-              className="text-[13px] gap-1 cursor-pointer"
             >
               <span>{t('openExtDetails')}</span>
-              <ExternalLink className="h-3.5 w-3.5" />
+              <ExternalLink className="h-3 w-3" />
             </Button>
             <Button
-              size="sm"
-              variant="secondary"
+              size="xs"
+              variant="primary"
               onClick={() => {
                 const firstJsMod = mods.find((m) => m.enabled && m.engine === 'js');
                 void recheckOrRecoverJsPermission({
@@ -874,36 +868,30 @@ export default function ModsPage({
                   beforeReload: () =>
                     onToast(
                       lang === 'zh'
-                        ? '检测到授权已开启，正在重启引擎并应用…'
-                        : 'Permission detected! Reloading engine to apply…',
+                        ? '已检测到授权，正在重启引擎并应用…'
+                        : 'Permission detected. Reloading engine…',
                     ),
                 });
               }}
-              className="text-[13px] cursor-pointer"
             >
-              {lang === 'zh' ? '重新检测' : 'Re-check'}
+              {lang === 'zh' ? '检查开关' : 'Re-check'}
             </Button>
           </div>
         </div>
       )}
 
-      {/* Empty State */}
+      {/* Empty State or Hairline-Divided Mod Cards */}
       {mods.length === 0 ? (
-        <div className="rounded-xl border border-border bg-card py-10 px-5 text-center space-y-3.5">
+        <div className="rounded-[10px] border border-border bg-card py-9 px-4 text-center space-y-3">
           <p className="text-[13px] text-muted-foreground leading-relaxed max-w-[260px] mx-auto">
             {t('noModsYet')}
           </p>
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={onNavigateStudio}
-            className="pc-press px-4 text-[13px] cursor-pointer"
-          >
-            {lang === 'zh' ? '前往工坊挑选现成同款' : 'Browse Recipes in Studio'}
+          <Button variant="primary" size="sm" onClick={onNavigateStudio}>
+            {lang === 'zh' ? '前往工坊选用配方' : 'Open Studio recipes'}
           </Button>
         </div>
       ) : filteredMods.length === 0 ? (
-        <div className="rounded-xl border border-border bg-card py-8 px-5 text-center space-y-2">
+        <div className="rounded-[10px] border border-border bg-card py-7 px-4 text-center space-y-2">
           <p className="text-[13px] text-muted-foreground">{t('modsNoSearchMatch')}</p>
           <button
             type="button"
@@ -911,19 +899,18 @@ export default function ModsPage({
               setSearchQuery('');
               setModFilter('all');
             }}
-            className="text-xs font-medium text-primary hover:underline cursor-pointer"
+            className="pc-focus text-xs font-medium text-primary hover:underline cursor-pointer"
           >
             {t('modsResetFilter')}
           </button>
         </div>
       ) : (
-        <div className="space-y-5">
+        <div className="space-y-4">
           {activeSiteList.length > 0 && (
             <ModGroup
               title={`${t('activeSiteMods')}${activeTab.host ? ` · ${activeTab.host}` : ''}`}
               items={activeSiteList}
               hideMatches
-              lang={lang}
               t={t}
               confirmDeleteId={confirmDeleteId}
               onToggle={handleToggle}
@@ -940,7 +927,6 @@ export default function ModsPage({
             <ModGroup
               title={activeSiteList.length > 0 ? t('otherSiteMods') : t('tabMods')}
               items={otherSiteList}
-              lang={lang}
               t={t}
               confirmDeleteId={confirmDeleteId}
               onToggle={handleToggle}
@@ -962,7 +948,6 @@ function ModGroup({
   title,
   items,
   hideMatches = false,
-  lang,
   t,
   confirmDeleteId,
   onToggle,
@@ -976,7 +961,6 @@ function ModGroup({
   title: string;
   items: UserScript[];
   hideMatches?: boolean;
-  lang: Lang;
   t: (k: string) => string;
   confirmDeleteId: string | null;
   onToggle: (m: UserScript) => void;
@@ -989,37 +973,42 @@ function ModGroup({
 }) {
   return (
     <section className="space-y-2">
-      <h3 className="text-[14px] font-semibold text-foreground px-0.5">{title}</h3>
-      <div className="divide-y divide-border/70 rounded-xl border border-border bg-card overflow-hidden">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-[13.5px] font-semibold text-foreground truncate">{title}</h3>
+        <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+          {items.length}
+        </span>
+      </div>
+      <div className="divide-y divide-border rounded-[10px] border border-border bg-card overflow-hidden">
         {items.map((mod) => {
           const confirmingDelete = confirmDeleteId === mod.id;
           return (
-            <div key={mod.id} className="p-3.5 space-y-2.5">
+            <div key={mod.id} className="pc-row p-3.5 space-y-2.5">
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 space-y-1">
+                <div className="min-w-0 space-y-1 flex-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span
                       className={cn(
-                        'text-[14px] font-medium leading-snug',
+                        'text-[13.5px] font-medium leading-snug text-foreground',
                         !mod.enabled && 'text-muted-foreground line-through',
                       )}
                     >
                       {mod.name}
                     </span>
                     <Badge
-                      variant="secondary"
-                      className="text-xs px-1.5 py-0 font-mono"
+                      variant={mod.engine === 'css' ? 'default' : 'secondary'}
+                      className="font-mono uppercase px-1.5 py-0"
                     >
-                      {mod.engine === 'css' ? 'CSS' : 'JS'}
+                      {mod.engine}
                     </Badge>
                   </div>
                   {mod.description && (
-                    <p className="text-[13px] text-muted-foreground leading-relaxed">
+                    <p className="text-[12.5px] text-muted-foreground leading-relaxed">
                       {mod.description}
                     </p>
                   )}
                   {!hideMatches && (
-                    <div className="font-mono text-xs text-muted-foreground truncate">
+                    <div className="font-mono text-[11.5px] text-muted-foreground truncate">
                       {mod.matches.join(', ')}
                     </div>
                   )}
@@ -1032,65 +1021,64 @@ function ModGroup({
                 />
               </div>
 
-              <div className="flex items-center gap-3 text-[13px] text-muted-foreground pt-0.5">
+              <div className="flex items-center gap-x-2.5 gap-y-1 flex-wrap text-xs text-muted-foreground">
                 {mod.engine === 'js' && (
                   <button
                     type="button"
                     onClick={() => onRun(mod)}
-                    className="inline-flex items-center gap-1 hover:text-foreground cursor-pointer"
+                    className="pc-btn inline-flex items-center gap-1 py-0.5 hover:text-foreground cursor-pointer"
                   >
-                    <Play className="h-3.5 w-3.5" />
+                    <Play className="h-3 w-3" />
                     <span>{t('runNow')}</span>
                   </button>
                 )}
                 <button
                   type="button"
                   onClick={() => onEdit(mod)}
-                  className="inline-flex items-center gap-1 hover:text-foreground cursor-pointer"
+                  className="pc-btn inline-flex items-center gap-1 py-0.5 hover:text-foreground cursor-pointer"
                 >
-                  <Pencil className="h-3.5 w-3.5" />
+                  <Pencil className="h-3 w-3" />
                   <span>{t('editMod')}</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => onShare(mod)}
                   title={t('shareRecipe')}
-                  className="inline-flex items-center gap-1 hover:text-foreground cursor-pointer"
+                  className="pc-btn inline-flex items-center gap-1 py-0.5 hover:text-foreground cursor-pointer"
                 >
-                  <Share2 className="h-3.5 w-3.5" />
+                  <Share2 className="h-3 w-3" />
                   <span>{t('shareRecipe')}</span>
                 </button>
-                <div className="inline-flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => onCopy(mod)}
-                    title={t('exportUserscript')}
-                    className="inline-flex items-center gap-1 hover:text-foreground cursor-pointer"
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                    <span>.user.js</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onDownload(mod)}
-                    title={t('downloadUserscript')}
-                    aria-label={`${t('downloadUserscript')}: ${mod.name}`}
-                    className="inline-flex items-center p-0.5 rounded hover:text-foreground hover:bg-secondary/70 cursor-pointer"
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => onCopy(mod)}
+                  title={t('exportUserscript')}
+                  className="pc-btn inline-flex items-center gap-1 py-0.5 font-mono hover:text-foreground cursor-pointer"
+                >
+                  <Copy className="h-3 w-3" />
+                  <span>.user.js</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onDownload(mod)}
+                  title={t('downloadUserscript')}
+                  aria-label={`${t('downloadUserscript')}: ${mod.name}`}
+                  className="pc-btn inline-flex items-center p-1 rounded-[4px] hover:text-foreground hover:bg-secondary cursor-pointer"
+                >
+                  <Download className="h-3 w-3" />
+                </button>
+
                 <button
                   type="button"
                   onClick={() => onDelete(mod)}
                   className={cn(
-                    'ml-auto inline-flex items-center gap-1 cursor-pointer transition-colors',
+                    'pc-btn ml-auto inline-flex items-center gap-1 cursor-pointer',
                     confirmingDelete
-                      ? 'pc-confirm-pop px-2 py-0.5 rounded-md bg-destructive/12 text-destructive font-medium'
-                      : 'hover:text-destructive',
+                      ? 'px-2 py-0.5 rounded-[5px] bg-destructive text-[#FAF8F5] font-medium'
+                      : 'py-0.5 hover:text-destructive',
                   )}
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-3 w-3" />
                   <span>{confirmingDelete ? t('confirmDelete') : t('deleteMod')}</span>
                 </button>
               </div>

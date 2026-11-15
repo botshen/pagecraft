@@ -191,11 +191,11 @@ export default function App() {
         showToast(
           info.applied
             ? zh
-              ? 'JS 引擎已激活并在当前页生效！'
-              : 'JS Userscript active on page!'
+              ? 'JS 引擎已激活并在当前页面生效'
+              : 'JS userscript active on page'
             : zh
-              ? 'JS 油猴引擎已激活！'
-              : 'JS Userscript engine enabled!',
+              ? 'JS 脚本引擎已激活'
+              : 'JS userscript engine enabled',
         );
       }
       return false;
@@ -271,137 +271,141 @@ export default function App() {
 
   return (
     <I18nContext.Provider value={i18n}>
-      <div className="min-h-screen w-full max-w-[560px] mx-auto flex flex-col bg-background text-foreground">
-        {/* Sticky Top Header */}
-        <header className="sticky top-0 z-20 bg-background/92 backdrop-blur-md border-b border-border/70 px-4 pt-3 pb-2.5 space-y-2.5">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 min-w-0">
-              <BrandLogo size={28} />
-              <span className="font-serif-editorial text-base font-semibold tracking-tight">
-                PageCraft
-              </span>
-            </div>
-
-            {/* Active Site Indicator Pill + 1-Click Language Toggle */}
-            <div className="flex items-center gap-1.5 min-w-0">
-              <div
-                className={cn(
-                  'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs max-w-[180px] truncate border',
-                  activeTab.supported
-                    ? 'bg-secondary/70 border-border/80 text-foreground'
-                    : 'bg-muted/50 border-border/50 text-muted-foreground',
-                )}
-                title={activeTab.url || t('unsupportedTab')}
-              >
-                <Globe
-                  className={cn(
-                    'h-3.5 w-3.5 shrink-0',
-                    activeTab.supported ? 'text-emerald-600' : 'text-muted-foreground',
-                  )}
-                />
-                <span className="truncate">
-                  {activeTab.supported
-                    ? activeTab.host
-                    : lang === 'zh'
-                      ? '未打开网页'
-                      : 'No webpage'}
+      <div className="min-h-screen w-full flex flex-col bg-background text-foreground">
+        {/* Opaque Sticky Header aligned to .pc-rail */}
+        <header className="sticky top-0 z-20 bg-background border-b border-border">
+          <div className="pc-rail pt-2.5 pb-2.5 space-y-2.5">
+            <div className="flex items-center justify-between gap-2 min-w-0">
+              <div className="flex items-center gap-2 shrink-0">
+                <BrandLogo size={24} />
+                <span className="font-serif-editorial text-[16px] font-semibold tracking-tight text-foreground">
+                  PageCraft
                 </span>
-                {activeSiteCount > 0 && (
-                  <span
-                    key={activeSiteCount}
-                    className="pc-counter-tick ml-0.5 px-1.5 rounded-full bg-primary/12 text-[#8f381e] dark:text-[#f29b80] text-xs font-semibold tabular-nums"
-                  >
-                    {activeSiteCount}
-                  </span>
-                )}
               </div>
 
-              <button
-                type="button"
-                onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')}
-                title={lang === 'zh' ? 'Switch to English' : '切换为简体中文'}
-                className="px-2 py-1 rounded-full text-xs font-medium border border-border/70 bg-secondary/45 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors shrink-0 cursor-pointer"
-              >
-                {lang === 'zh' ? 'EN' : '中文'}
-              </button>
-            </div>
-          </div>
+              {/* Live Target Host Pill + Language Switch */}
+              <div className="flex items-center gap-1.5 min-w-0">
+                <div
+                  className={cn(
+                    'inline-flex items-center gap-1.5 h-7 px-2 rounded-[6px] text-xs max-w-[138px] sm:max-w-[190px] min-w-0 border',
+                    activeTab.supported
+                      ? 'bg-card border-border text-foreground'
+                      : 'bg-secondary/60 border-border text-muted-foreground',
+                  )}
+                  title={activeTab.url || t('unsupportedTab')}
+                >
+                  <Globe
+                    className={cn(
+                      'h-3.5 w-3.5 shrink-0',
+                      activeTab.supported
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-muted-foreground',
+                    )}
+                  />
+                  <span className="truncate font-mono text-[11.5px]">
+                    {activeTab.supported
+                      ? activeTab.host
+                      : lang === 'zh'
+                        ? '未打开网页'
+                        : 'No webpage'}
+                  </span>
+                  {activeSiteCount > 0 && (
+                    <span className="px-1.5 py-0 rounded-[4px] bg-[var(--pc-accent-subtle)] text-[var(--pc-accent-ink)] text-[11px] font-semibold tabular-nums shrink-0">
+                      {activeSiteCount}
+                    </span>
+                  )}
+                </div>
 
-          <SegmentedControl
-            className="w-full [&>.cds-seg-item]:flex-1 [&>.cds-seg-item]:justify-center"
-            value={tab}
-            onChange={(v: string) => setTab(v as TabKey)}
-            items={[
-              { id: 'studio', label: t('tabStudio') },
-              {
-                id: 'mods',
-                label: t('tabMods'),
-                badge: mods.length > 0 ? mods.length : undefined,
-              },
-              { id: 'settings', label: t('tabSettings') },
-            ]}
-          />
+                <button
+                  type="button"
+                  onClick={() => setLang(lang === 'zh' ? 'en' : 'zh')}
+                  aria-label={lang === 'zh' ? 'Switch to English' : '切换为简体中文'}
+                  title={lang === 'zh' ? 'Switch to English' : '切换为简体中文'}
+                  className="pc-btn h-7 px-2 rounded-[6px] text-xs font-medium border border-border bg-card hover:bg-secondary text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
+                >
+                  {lang === 'zh' ? 'EN' : '中文'}
+                </button>
+              </div>
+            </div>
+
+            <SegmentedControl
+              className="w-full"
+              value={tab}
+              onChange={(v: string) => setTab(v as TabKey)}
+              items={[
+                { id: 'studio', label: t('tabStudio') },
+                {
+                  id: 'mods',
+                  label: t('tabMods'),
+                  badge: mods.length > 0 ? mods.length : undefined,
+                },
+                { id: 'settings', label: t('tabSettings') },
+              ]}
+            />
+          </div>
         </header>
 
-        {/* Main Scrollable Content */}
-        <main className="flex-1 px-4 pt-3.5">
-          {tab === 'studio' && (
-            <StudioPage
-              activeTab={activeTab}
-              settings={settings}
-              mods={mods}
-              availability={availability}
-              pickedElement={pickedElement}
-              picking={picking}
-              onStartPicker={handleStartPicker}
-              onCancelPicker={handleCancelPicker}
-              onClearPicked={() => setPickedElement(null)}
-              onModsChanged={loadMods}
-              onRecheckAvailability={recheckAvailability}
-              onCompleteTutorial={handleCompleteTutorial}
-              onNavigateSettings={() => setTab('settings')}
-              onToast={showToast}
-              lang={lang}
-              t={t}
-            />
-          )}
+        {/* Main Scrollable Content on identical .pc-rail */}
+        <main className="flex-1 w-full">
+          <div className="pc-rail pt-3.5">
+            {tab === 'studio' && (
+              <StudioPage
+                activeTab={activeTab}
+                settings={settings}
+                mods={mods}
+                availability={availability}
+                pickedElement={pickedElement}
+                picking={picking}
+                onStartPicker={handleStartPicker}
+                onCancelPicker={handleCancelPicker}
+                onClearPicked={() => setPickedElement(null)}
+                onModsChanged={loadMods}
+                onRecheckAvailability={recheckAvailability}
+                onCompleteTutorial={handleCompleteTutorial}
+                onNavigateSettings={() => setTab('settings')}
+                onToast={showToast}
+                lang={lang}
+                t={t}
+              />
+            )}
 
-          {tab === 'mods' && (
-            <ModsPage
-              activeTab={activeTab}
-              mods={mods}
-              availability={availability}
-              onModsChanged={loadMods}
-              onRecheckAvailability={recheckAvailability}
-              onNavigateStudio={() => setTab('studio')}
-              onToast={showToast}
-              lang={lang}
-              t={t}
-            />
-          )}
+            {tab === 'mods' && (
+              <ModsPage
+                activeTab={activeTab}
+                mods={mods}
+                availability={availability}
+                onModsChanged={loadMods}
+                onRecheckAvailability={recheckAvailability}
+                onNavigateStudio={() => setTab('studio')}
+                onToast={showToast}
+                lang={lang}
+                t={t}
+              />
+            )}
 
-          {tab === 'settings' && (
-            <SettingsPage
-              settings={settings}
-              availability={availability}
-              onSaveSettings={handleSaveSettings}
-              onRecheckAvailability={recheckAvailability}
-              theme={theme}
-              onSetTheme={setTheme}
-              lang={lang}
-              onSetLang={setLang}
-              onToast={showToast}
-              t={t}
-            />
-          )}
+            {tab === 'settings' && (
+              <SettingsPage
+                settings={settings}
+                availability={availability}
+                onSaveSettings={handleSaveSettings}
+                onRecheckAvailability={recheckAvailability}
+                theme={theme}
+                onSetTheme={setTheme}
+                lang={lang}
+                onSetLang={setLang}
+                onToast={showToast}
+                t={t}
+              />
+            )}
+          </div>
         </main>
 
-        {/* Explicit Action Feedback Toast */}
+        {/* Action Feedback Toast */}
         {toast && (
           <div
             role="status"
             aria-live="polite"
-            className="fixed bottom-3 left-4 right-4 z-50 mx-auto max-w-[360px] px-3.5 py-2.5 rounded-xl bg-foreground text-background text-[13px] leading-snug font-medium shadow-lg animate-page-enter text-center"
+            className="fixed bottom-3 left-3.5 right-3.5 z-50 mx-auto max-w-[360px] px-3 py-2 rounded-[8px] bg-foreground text-background text-[12.5px] leading-snug font-medium shadow-md pc-enter text-center"
           >
             {toast}
           </div>
