@@ -66,16 +66,18 @@ function createMockHandlers() {
     },
     async getPickedElement() {
       return {
-        selector: 'aside.ad-rail',
-        matchCount: 1,
-        similarSelector: 'aside[class*="rail"]',
-        similarCount: 2,
-        tag: 'aside',
-        rect: { width: 320, height: 640 },
-        computedStyles: { display: 'block', position: 'sticky' },
-        domSnippet: '<aside class="ad-rail">[REDACTED]</aside>',
-        pageUrl: 'https://app.example.com/dashboard',
-        screenshotDataUrl: sampleScreenshotUrl,
+        pickedElement: {
+          selector: 'aside.ad-rail',
+          matchCount: 1,
+          similarSelector: 'aside[class*="rail"]',
+          similarCount: 2,
+          tag: 'aside',
+          rect: { width: 320, height: 640 },
+          computedStyles: { display: 'block', position: 'sticky' },
+          domSnippet: '<aside class="ad-rail">[REDACTED]</aside>',
+          pageUrl: 'https://app.example.com/dashboard',
+          screenshotDataUrl: sampleScreenshotUrl,
+        },
       };
     },
     async triggerPicker() {
@@ -398,7 +400,7 @@ test('end-to-end MCP bridge over 127.0.0.1:0 + Node 24 WebSocket + stdio JSON-RP
     // Verify server->client RFC 6455 Ping frame keeps connection healthy
     assert.equal(wsServer.sendPingFrame(Buffer.from('healthcheck')), true);
 
-    // 4. Call pagecraft_get_picked_element (also exercises >100KB screenshot frame + image block)
+    // 4. Call pagecraft_get_picked_element (exercises nested pickedElement.screenshotDataUrl >100KB frame + base64 placeholder stripping + MCP image block)
     sendJsonRpc({
       jsonrpc: '2.0',
       id: 5,
@@ -412,14 +414,20 @@ test('end-to-end MCP bridge over 127.0.0.1:0 + Node 24 WebSocket + stdio JSON-RP
     };
     assert.equal(pickedResult.isError, undefined);
     assert.equal(pickedResult.content.length, 2);
+    assert.equal(pickedResult.content[0]!.text!.includes('data:image/png;base64,'), false);
     const pickedJson = JSON.parse(pickedResult.content[0]!.text!) as {
-      selector: string;
-      similarSelector: string;
+      pickedElement: {
+        selector: string;
+        similarSelector: string;
+        screenshotDataUrl: string;
+      };
     };
-    assert.equal(pickedJson.selector, 'aside.ad-rail');
-    assert.equal(pickedJson.similarSelector, 'aside[class*="rail"]');
+    assert.equal(pickedJson.pickedElement.selector, 'aside.ad-rail');
+    assert.equal(pickedJson.pickedElement.similarSelector, 'aside[class*="rail"]');
+    assert.equal(pickedJson.pickedElement.screenshotDataUrl, '[attached as MCP image]');
     assert.equal(pickedResult.content[1]!.type, 'image');
     assert.equal(pickedResult.content[1]!.mimeType, 'image/png');
+    assert.ok((pickedResult.content[1]!.data?.length ?? 0) > 100_000);
 
     // 5. Call pagecraft_verify_selectors
     sendJsonRpc({

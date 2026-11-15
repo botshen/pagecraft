@@ -194,27 +194,65 @@ export const PAGECRAFT_MCP_TOOLS: readonly McpToolDefinition[] = [
 ];
 
 const DATA_IMAGE_URL_RE = /^data:(image\/(?:png|jpeg|webp|gif));base64,([A-Za-z0-9+/=\s]+)$/i;
+const IMAGE_FIELD_KEYS = ['screenshotDataUrl', 'imageDataUrl', 'screenshot'] as const;
+const ATTACHED_IMAGE_PLACEHOLDER = '[attached as MCP image]';
 
-function extractOptionalImageBlock(result: unknown): McpToolContentBlock | null {
-  if (!result || typeof result !== 'object') return null;
+function extractAndStripOptionalImage(result: unknown): {
+  sanitizedResult: unknown;
+  imageBlock: McpToolContentBlock | null;
+} {
+  if (!result || typeof result !== 'object' || Array.isArray(result)) {
+    return { sanitizedResult: result, imageBlock: null };
+  }
+
   const record = result as Record<string, unknown>;
-  const candidates = [
-    record.screenshotDataUrl,
-    record.imageDataUrl,
-    record.screenshot,
-  ];
-  for (const cand of candidates) {
+
+  for (const key of IMAGE_FIELD_KEYS) {
+    const cand = record[key];
     if (typeof cand !== 'string') continue;
     const match = DATA_IMAGE_URL_RE.exec(cand.trim());
     if (match && match[1] && match[2]) {
       return {
-        type: 'image',
-        mimeType: match[1].toLowerCase(),
-        data: match[2].replace(/\s+/g, ''),
+        sanitizedResult: {
+          ...record,
+          [key]: ATTACHED_IMAGE_PLACEHOLDER,
+        },
+        imageBlock: {
+          type: 'image',
+          mimeType: match[1].toLowerCase(),
+          data: match[2].replace(/\s+/g, ''),
+        },
       };
     }
   }
-  return null;
+
+  const nestedPicked = record.pickedElement;
+  if (nestedPicked && typeof nestedPicked === 'object' && !Array.isArray(nestedPicked)) {
+    const pickedRecord = nestedPicked as Record<string, unknown>;
+    for (const key of IMAGE_FIELD_KEYS) {
+      const cand = pickedRecord[key];
+      if (typeof cand !== 'string') continue;
+      const match = DATA_IMAGE_URL_RE.exec(cand.trim());
+      if (match && match[1] && match[2]) {
+        return {
+          sanitizedResult: {
+            ...record,
+            pickedElement: {
+              ...pickedRecord,
+              [key]: ATTACHED_IMAGE_PLACEHOLDER,
+            },
+          },
+          imageBlock: {
+            type: 'image',
+            mimeType: match[1].toLowerCase(),
+            data: match[2].replace(/\s+/g, ''),
+          },
+        };
+      }
+    }
+  }
+
+  return { sanitizedResult: result, imageBlock: null };
 }
 
 function formatDisconnectedGuidance(wsUrl: string): string {
@@ -236,10 +274,12 @@ function makeToolError(text: string): McpCallToolResult {
 }
 
 function makeToolSuccess(result: unknown): McpCallToolResult {
+  const { sanitizedResult, imageBlock } = extractAndStripOptionalImage(result);
   const serialized =
-    typeof result === 'string' ? result : JSON.stringify(result ?? null, null, 2);
+    typeof sanitizedResult === 'string'
+      ? sanitizedResult
+      : JSON.stringify(sanitizedResult ?? null, null, 2);
   const content: McpToolContentBlock[] = [{ type: 'text', text: serialized }];
-  const imageBlock = extractOptionalImageBlock(result);
   if (imageBlock) {
     content.push(imageBlock);
   }
