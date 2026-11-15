@@ -154,22 +154,26 @@
     );
   }
 
-  const quotaUsed = ['hero', 'table', 'applied'].includes(SCENARIO) ? 1 : 2;
   const SETTINGS = {
-    aiMode: SCENARIO === 'settings-byok' ? 'byok' : 'cloud',
+    aiMode: SCENARIO === 'settings-cloud' ? 'builtin' : 'byok',
     ai: {
       baseUrl: 'https://api.deepseek.com/v1',
-      apiKey: SCENARIO === 'settings-byok' ? 'sk-7f3c9a1e5b2d48f0a6c1e9d7' : '',
+      apiKey: 'sk-7f3c9a1e5b2d48f0a6c1e9d7',
       model: 'deepseek-chat',
       availableModels: ['deepseek-chat', 'deepseek-reasoner'],
     },
-    cloud: {
-      installId: 'a1b2c3d4e5f60718293a4b5c6d7e8f90',
-      endpoint: '',
-      quota: { used: quotaUsed, limit: 10, remaining: 10 - quotaUsed },
-    },
+    enableVisionCapture: true,
+    enableAutoHeal: true,
+    mcpBridgeEnabled: SCENARIO === 'settings-cloud' || SCENARIO === 'hero',
+    mcpBridgeUrl: 'ws://127.0.0.1:17321',
+    mcpBridgeToken: '',
     onboardingDone: true,
     tutorialDone: true,
+  };
+
+  window.LanguageModel = {
+    availability: () => Promise.resolve('available'),
+    create: () => Promise.resolve({ prompt: () => Promise.resolve('{}'), destroy() {} }),
   };
 
   const store = {
@@ -353,23 +357,27 @@
         return { ok: true };
       case 'USERSCRIPTS_TEST':
         return { ok: true, reloaded: false };
-      case 'FETCH_CLOUD_QUOTA':
-        return { ok: true, quota: clone(store.pc_settings.cloud.quota) };
+      case 'MCP_BRIDGE_STATUS':
+      case 'MCP_BRIDGE_RECONNECT':
+        return {
+          enabled: Boolean(store.pc_settings.mcpBridgeEnabled),
+          connected: Boolean(store.pc_settings.mcpBridgeEnabled),
+          url: store.pc_settings.mcpBridgeUrl || 'ws://127.0.0.1:17321',
+        };
+      case 'BUILTIN_AI_PROBE':
+        return { status: 'available' };
       case 'TEST_CONNECTION':
         return { ok: true, elapsedMs: 412 };
       case 'LIST_MODELS':
         return { ok: true, models: ['deepseek-chat', 'deepseek-reasoner'] };
       case 'GENERATE_USERSCRIPT': {
         const key = DRAFTS[SCENARIO] ? SCENARIO : 'hero';
-        const q = store.pc_settings.cloud.quota;
-        const used = Math.min(q.limit, q.used + 1);
-        const quota = { used, limit: q.limit, remaining: q.limit - used };
-        store.pc_settings.cloud.quota = quota;
         return delay(120, {
           ok: true,
           script: clone(DRAFTS[key]),
-          provider: 'cloud',
-          quota,
+          provider: 'byok',
+          usedVision: key === 'hero',
+          autoHealed: false,
           selectorCheck: clone(CHECKS[key]),
         });
       }
@@ -472,11 +480,11 @@
     setNativeValue(ta, INTENTS[key]);
     await sleep(80);
     const gen = await waitFor(() => {
-      const b = findButton(L('生成改造', 'Generate Mod'));
+      const b = findButton(L('生成改造', 'Generate mod'));
       return b && !b.disabled ? b : null;
     });
     gen.click();
-    await waitFor(() => document.querySelector('main h2') && findButton(L('应用并保存', 'Apply & Save')));
+    await waitFor(() => document.querySelector('main h2') && findButton(L('应用并保存', 'Apply and save')));
   }
 
   async function run() {
@@ -492,15 +500,15 @@
         if (zh) {
           // EN copy wraps to more lines; the feedback row would overflow the 642px panel there.
           findButton('应用并保存').click();
-          await waitFor(() => findButton('生效了'));
+          await waitFor(() => findButton('已生效'));
           await sleep(2900); // let the "applied" toast fade so it doesn't cover the card
         }
         break;
       }
       case 'applied': {
         await pickAndGenerate('applied');
-        findButton(L('应用并保存', 'Apply & Save')).click();
-        await waitFor(() => findButton(L('生效了', 'It worked')));
+        findButton(L('应用并保存', 'Apply and save')).click();
+        await waitFor(() => findButton(L('已生效', 'Confirm working')));
         break; // keep the "已启用并保存" toast visible on purpose
       }
       case 'recipes':
@@ -514,9 +522,9 @@
         break;
       case 'settings-byok': {
         await waitFor(() => document.querySelector('input[type="password"]'));
-        const btn = findButton(L('测试接口连通性', 'Test Connection'));
+        const btn = findButton(L('测试连通性', 'Test connection'));
         if (btn) btn.click();
-        await waitFor(() => findButton('412ms'));
+        await waitFor(() => findButton('412 ms'));
         await sleep(2900); // wait out the toast
         break;
       }

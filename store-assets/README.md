@@ -27,8 +27,8 @@ node store-assets/harness/capture.mjs --serve --port 4173                       
 | `zh/screenshot-1.png` | 1280×800 | Hero: picked element + instruction + CSS draft, “已在当前页命中 2 个目标元素” |
 | `zh/screenshot-2.png` | 1280×800 | Table “导出 CSV” JS userscript, applied, with feedback row |
 | `zh/screenshot-3.png` | 1280×800 | One-click recipes list (site-specific recipe active) |
-| `zh/screenshot-4.png` | 1280×800 | Applied mod + “在页面上生效了吗？” row + toast, inset of the real 我的改造 page |
-| `zh/screenshot-5.png` | 1280×800 | Privacy / BYOK: settings in cloud-quota mode and own-key mode |
+| `zh/screenshot-4.png` | 1280×800 | Applied mod + live DOM check row + toast, inset of the real 规则库 page |
+| `zh/screenshot-5.png` | 1280×800 | 100% Serverless & 4 AI modes: Built-in Gemini Nano + local MCP and Direct BYOK / Ollama |
 | `en/screenshot-1..5.png` | 1280×800 | English versions of scenes 1–5 (panel in English via `?lang=en`) |
 | `promo-small-440x280.png` | 440×280 | Small promo tile |
 | `promo-marquee-1400x560.png` | 1400×560 | Marquee promo tile (with real panel) |

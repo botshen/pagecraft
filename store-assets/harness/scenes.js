@@ -280,11 +280,11 @@
     },
     4: {
       title: L('改完立刻见效，<em>不满意就继续微调</em>', 'See it work instantly. <em>Refine until it\u2019s right.</em>'),
-      sub: L('一键反馈「生效了吗？」· 规则随时开关 · 导出标准 .user.js', 'One-tap "Did it work?" · toggle rules anytime · export standard .user.js'),
+      sub: L('DOM 命中实时校验与自动校准 · 规则随时开关 · 导出标准 .user.js', 'Live DOM hit check & auto-heal · toggle rules anytime · export standard .user.js'),
     },
     5: {
-      title: L('<em>零后台监控</em>，额度和密钥都由你掌控', '<em>Zero tracking.</em> Your quota, your key.'),
-      sub: L('送 10 次免费云端生成；也可自带 DeepSeek / OpenAI 等 Key，浏览器直连、无限使用', '10 free cloud generations — or bring your own DeepSeek / OpenAI key, called directly from your browser'),
+      title: L('<em>100% 零服务端</em>，4 种本地与自有算力任选', '<em>100% Serverless.</em> 4 local & direct AI modes.'),
+      sub: L('零官方服务器、零账号、零遥测上报；支持 Chrome 内置 AI、Ollama、BYOK 与本地 MCP', 'Zero servers, zero accounts, zero telemetry — Built-in Gemini Nano, Ollama, Direct BYOK & local MCP'),
     },
   };
 
@@ -310,11 +310,11 @@
       chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12M15 5.9 14 10h5.8a2 2 0 0 1 1.9 2.6l-2.3 7A2 2 0 0 1 17.5 21H7V10l4.3-7.4A1.6 1.6 0 0 1 14.2 3c.6.4.9 1.2.8 2Z"/></svg>',
     };
     const items = [
-      ['green', ico.eye, L('不记录浏览历史', 'No browsing history'), L('不在后台读取网页；只有你点击「生成改造」时才读取所选元素的结构。', 'Nothing runs in the background. Only the element you pick is read — and only when you click Generate.')],
-      ['', ico.gift, L('10 次免费云端生成', '10 free cloud generations'), L('装好就能用，无需注册；敏感信息在本地先脱敏再发送。', 'Works out of the box, no sign-up. Sensitive patterns are redacted locally first.')],
-      ['', ico.key, L('自带 Key 直连服务商', 'Bring your own key'), L('DeepSeek、硅基流动、OpenAI、OpenRouter…密钥只存本机，请求不经过我们。', 'DeepSeek, SiliconFlow, OpenAI, OpenRouter… stored locally, called directly from your browser.')],
-      ['', ico.chat, L('反馈只是一个匿名计数', 'Feedback is just a counter'), L('只有你点「生效了 / 没生效」时才匿名上报一次，不含网址、内容或代码。', 'Only when you tap "It worked / Didn\u2019t work" — one anonymous count, no URL, content or code.')],
-      ['green', ico.shield, L('规则只存在你的浏览器', 'Your rules stay local'), L('所有 CSS / JS 规则保存在本地，可随时导出为标准 .user.js。', 'Every CSS / JS rule lives in local storage and exports to standard .user.js.')],
+      ['green', ico.eye, L('100% 纯本地零服务端', '100% client-side, zero servers'), L('不在后台读取网页，零遥测上报；发送前在本地自动完成敏感信息脱敏。', 'Zero servers or analytics. Nothing runs in the background; PII is scrubbed locally first.')],
+      ['', ico.gift, L('Chrome 内置 AI 离线可用', 'Chrome Built-in Gemini Nano'), L('零配置、免密钥调用端侧模型，网页结构数据完全不出浏览器。', 'Zero-config, keyless on-device inference — page data never leaves Chrome.')],
+      ['', ico.key, L('Ollama 与自带 Key 直连', 'Local Ollama & Direct BYOK'), L('支持本机 Ollama / LM Studio 免密钥离线，或直连 DeepSeek / OpenAI / Anthropic。', 'Run air-gapped with local Ollama / LM Studio, or connect your own API key directly.')],
+      ['', ico.chat, L('本地 MCP 编程智能体桥接', 'Local MCP Agent Bridge'), L('通过 127.0.0.1 连接 Claude Code / Cursor / Codex，直接操控页面与规则。', 'Connect Claude Code, Cursor, or Codex over 127.0.0.1 to inspect & apply mods live.')],
+      ['green', ico.shield, L('规则与密钥只存本机', 'Mods & keys stay local'), L('所有 CSS / JS 规则仅保存在浏览器本地，一键导出标准 .user.js 或 #PC1# 口令。', 'All CSS / JS rules stay in local storage and export to .user.js or #PC1# codes.')],
     ];
     html += `
       <div class="priv">
@@ -326,11 +326,11 @@
             .join('')}
         </div>
         <div class="priv-card" style="left:412px">
-          <div class="inset-label"><span class="dot" style="background:#3ecf8e"></span>${L('免费云端试用 · 剩余额度一目了然', 'Free cloud trial · quota at a glance')}</div>
+          <div class="inset-label"><span class="dot" style="background:#3ecf8e"></span>${L('端侧离线 · 内置 Gemini Nano + 本地 MCP', 'On-device · Built-in Nano + Local MCP')}</div>
           <iframe src="${panelSrc('settings-cloud', { state: 'settings' })}"></iframe>
         </div>
         <div class="priv-card" style="left:836px">
-          <div class="inset-label"><span class="dot"></span>${L('自带 Key · 浏览器直连，无限使用', 'Your own key · direct, unlimited')}</div>
+          <div class="inset-label"><span class="dot"></span>${L('自带 Key / 本地 Ollama · 浏览器直连无中转', 'Direct BYOK / Local Ollama · zero proxy')}</div>
           <iframe src="${panelSrc('settings-byok', { state: 'settings' })}"></iframe>
         </div>
       </div>`;
