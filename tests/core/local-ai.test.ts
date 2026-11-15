@@ -9,6 +9,8 @@ const {
   resolveEndpoints,
   OLLAMA_DEFAULT_BASE_URL,
   OLLAMA_DEFAULT_MODEL,
+  LM_STUDIO_DEFAULT_BASE_URL,
+  AI_PROVIDER_PRESETS,
 } = await import('../../lib/shared/ai-endpoints.ts');
 const { endpointBase } = await import('../../lib/shared/endpoint.ts');
 const { byokLlmChat, byokListModels, byokTestConnection } = await import(
@@ -283,23 +285,37 @@ test('generateUserScript executes keyless BYOK mod generation against local Olla
   assert.equal(calledInsecure, false);
 });
 
-test('normalizeSettings and bilingual i18n support local Ollama preset and CORS launch hint', () => {
+test('normalizeSettings, provider presets, and bilingual i18n support Ollama, LM Studio, Anthropic, OpenRouter, and cloud->byok migration', () => {
   const inferred = normalizeSettings({
     ai: { baseUrl: 'http://localhost:11434/v1', apiKey: '', model: 'qwen2.5-coder:7b' },
   });
   assert.equal(inferred.aiMode, 'byok');
   assert.equal(inferred.ai.baseUrl, 'http://localhost:11434/v1');
 
-  // Explicit cloud mode stays cloud even if baseUrl was previously local
-  const explicitCloud = normalizeSettings({
+  // Legacy stored cloud mode migrates seamlessly to byok in pure zero-backend client
+  const migratedLegacyCloud = normalizeSettings({
     aiMode: 'cloud',
     ai: { baseUrl: 'http://localhost:11434/v1', apiKey: '', model: 'qwen2.5-coder:7b' },
   });
-  assert.equal(explicitCloud.aiMode, 'cloud');
+  assert.equal(migratedLegacyCloud.aiMode, 'byok');
+
+  // Explicit builtin mode stays builtin
+  const explicitBuiltin = normalizeSettings({
+    aiMode: 'builtin',
+    ai: { baseUrl: LM_STUDIO_DEFAULT_BASE_URL, apiKey: '', model: 'qwen2.5-coder:7b' },
+  });
+  assert.equal(explicitBuiltin.aiMode, 'builtin');
+
+  const presetIds = AI_PROVIDER_PRESETS.map((p) => p.id);
+  for (const requiredId of ['deepseek', 'siliconflow', 'openai', 'anthropic', 'openrouter', 'ollama', 'lmstudio']) {
+    assert.ok(presetIds.includes(requiredId), `missing preset ${requiredId}`);
+  }
+  assert.equal(isLocalLoopbackEndpoint(LM_STUDIO_DEFAULT_BASE_URL), true);
 
   // Bilingual i18n keys for Ollama preset and CORS 403 instructions exist in both zh and en
   for (const lang of ['zh', 'en'] as const) {
     assert.ok(STRINGS[lang].presetOllama?.includes('Ollama'));
+    assert.ok(STRINGS[lang].presetLmStudio?.includes('LM Studio'));
     assert.ok((STRINGS[lang].ollamaCorsTitle ?? '').length > 0);
     assert.ok((STRINGS[lang].ollamaCorsDesc ?? '').length > 0);
     assert.match(STRINGS[lang].hintLocalForbidden ?? '', /OLLAMA_ORIGINS="chrome-extension:\/\/\*"\s+ollama serve/);

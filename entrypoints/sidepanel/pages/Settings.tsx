@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import type { AIMode, AppSettings, CloudQuota } from '~/lib/types';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import type { AIMode, AppSettings } from '~/lib/types';
 import type { UserScriptsAvailability } from '~/lib/userscripts/types';
 import type {
   ApiFailureHint,
@@ -7,14 +7,18 @@ import type {
   ModelsResult,
 } from '~/lib/shared/ai-error';
 import {
+  AI_PROVIDER_PRESETS,
   isLocalLoopbackEndpoint,
+  LM_STUDIO_DEFAULT_BASE_URL,
   normalizeBaseUrl,
   OLLAMA_DEFAULT_BASE_URL,
-  OLLAMA_DEFAULT_MODEL,
   resolveEndpoints,
+  type AiProviderPreset,
 } from '~/lib/shared/ai-endpoints';
+import { probeBuiltinAi, type BuiltinAiStatus } from '~/lib/shared/builtin-ai';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
+import { Switch } from '../components/ui/switch';
 import { SegmentedControl } from '../components/ui/segmented';
 import {
   Check,
@@ -28,6 +32,9 @@ import {
   EyeOff,
   HelpCircle,
   Terminal,
+  Cpu,
+  PlugZap,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '~/lib/utils';
 import { recheckOrRecoverJsPermission } from '../utils';
@@ -38,7 +45,6 @@ interface Props {
   settings: AppSettings;
   availability: UserScriptsAvailability | null;
   onSaveSettings: (next: AppSettings) => Promise<void>;
-  onRefreshQuota: () => Promise<CloudQuota | null>;
   onRecheckAvailability: () => Promise<UserScriptsAvailability>;
   theme: Theme;
   onSetTheme: (t: Theme) => void;
@@ -59,38 +65,48 @@ const HINT_KEYS: Record<ApiFailureHint, string> = {
 
 const OLLAMA_SERVE_CMD = 'OLLAMA_ORIGINS="chrome-extension://*" ollama serve';
 
-interface AiPreset {
-  id: string;
-  labelKey?: string;
-  label?: string;
-  baseUrl: string;
-  model: string;
+function isValidLoopbackWsUrl(rawUrl: string): boolean {
+  const trimmed = (rawUrl ?? '').trim();
+  if (!trimmed) return false;
+  try {
+    const parsed = new URL(trimmed);
+    if (parsed.protocol !== 'ws:') return false;
+    const h = parsed.hostname.toLowerCase();
+    return h === '127.0.0.1' || h === 'localhost' || h === '[::1]';
+  } catch {
+    return false;
+  }
 }
 
-const AI_PRESETS: AiPreset[] = [
-  { id: 'deepseek', label: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1', model: 'deepseek-chat' },
-  {
-    id: 'siliconflow',
-    label: 'SiliconFlow 硅基流动',
-    baseUrl: 'https://api.siliconflow.cn/v1',
-    model: 'deepseek-ai/DeepSeek-V3',
-  },
-  { id: 'openai', label: 'OpenAI', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini' },
-  {
-    id: 'openrouter',
-    label: 'OpenRouter',
-    baseUrl: 'https://openrouter.ai/api/v1',
-    model: 'deepseek/deepseek-chat',
-  },
-  {
-    id: 'ollama',
-    labelKey: 'presetOllama',
-    baseUrl: OLLAMA_DEFAULT_BASE_URL,
-    model: OLLAMA_DEFAULT_MODEL,
-  },
-];
+const MCP_CLI_SCRIPT_PATH = '/path/to/plugin-radar/packages/mcp/src/cli.ts';
 
-function matchesPreset(currentBaseUrl: string, preset: AiPreset): boolean {
+function buildMcpConfigJson(wsUrl: string, token: string): string {
+  const portMatch = /:(\d+)(?:\/|$)/.exec(wsUrl.trim());
+  const port = portMatch?.[1] && portMatch[1] !== '17321' ? portMatch[1] : undefined;
+  const env: Record<string, string> = {};
+  if (port) env.PAGECRAFT_MCP_PORT = port;
+  if (token.trim()) env.PAGECRAFT_MCP_TOKEN = token.trim();
+
+  const serverConfig: Record<string, unknown> = {
+    command: 'node',
+    args: ['--experimental-strip-types', MCP_CLI_SCRIPT_PATH],
+    ...(Object.keys(env).length > 0 ? { env } : {}),
+  };
+
+  return JSON.stringify({ mcpServers: { pagecraft: serverConfig } }, null, 2);
+}
+
+function buildClaudeCodeCliCommand(wsUrl: string, token: string): string {
+  const portMatch = /:(\d+)(?:\/|$)/.exec(wsUrl.trim());
+  const port = portMatch?.[1] && portMatch[1] !== '17321' ? portMatch[1] : undefined;
+  const envFlags: string[] = [];
+  if (port) envFlags.push(`-e PAGECRAFT_MCP_PORT=${port}`);
+  if (token.trim()) envFlags.push(`-e PAGECRAFT_MCP_TOKEN=${token.trim()}`);
+  const envPart = envFlags.length > 0 ? ` ${envFlags.join(' ')}` : '';
+  return `claude mcp add pagecraft${envPart} -- node --experimental-strip-types ${MCP_CLI_SCRIPT_PATH}`;
+}
+
+function matchesPreset(currentBaseUrl: string, preset: AiProviderPreset): boolean {
   const normalized = normalizeBaseUrl(currentBaseUrl).toLowerCase();
   if (!normalized) return false;
   if (preset.id === 'ollama') {
@@ -98,6 +114,13 @@ function matchesPreset(currentBaseUrl: string, preset: AiPreset): boolean {
       normalized === OLLAMA_DEFAULT_BASE_URL ||
       normalized === 'http://127.0.0.1:11434/v1' ||
       normalized === 'http://[::1]:11434/v1'
+    );
+  }
+  if (preset.id === 'lmstudio') {
+    return (
+      normalized === LM_STUDIO_DEFAULT_BASE_URL ||
+      normalized === 'http://127.0.0.1:1234/v1' ||
+      normalized === 'http://[::1]:1234/v1'
     );
   }
   try {
@@ -111,7 +134,6 @@ export default function SettingsPage({
   settings,
   availability,
   onSaveSettings,
-  onRefreshQuota,
   onRecheckAvailability,
   theme,
   onSetTheme,
@@ -121,9 +143,11 @@ export default function SettingsPage({
   t,
 }: Props) {
   const [s, setS] = useState<AppSettings>(settings);
-  const [refreshingQuota, setRefreshingQuota] = useState(false);
   const [showKey, setShowKey] = useState(false);
   const [keyGuideOpen, setKeyGuideOpen] = useState(false);
+
+  const [builtinStatus, setBuiltinStatus] = useState<BuiltinAiStatus | 'checking'>('checking');
+  const [builtinReason, setBuiltinReason] = useState<string | undefined>(undefined);
 
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'ok' | 'error'>('idle');
   const [testError, setTestError] = useState('');
@@ -133,16 +157,36 @@ export default function SettingsPage({
   const [modelsStatus, setModelsStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
   const [modelsOpen, setModelsOpen] = useState(false);
   const [copiedOllamaCmd, setCopiedOllamaCmd] = useState(false);
+  const [copiedMcpJson, setCopiedMcpJson] = useState(false);
+  const [copiedMcpCli, setCopiedMcpCli] = useState(false);
   const baseUrlInputRef = useRef<HTMLInputElement | null>(null);
   const autosaveRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const resolvedEndpoint = resolveEndpoints(s.ai.baseUrl);
   const isLocalAi = isLocalLoopbackEndpoint(s.ai.baseUrl);
-  const activePreset = AI_PRESETS.find((p) => matchesPreset(s.ai.baseUrl, p));
+  const activePreset = AI_PROVIDER_PRESETS.find((p) => matchesPreset(s.ai.baseUrl, p));
+  const mcpUrlValid = isValidLoopbackWsUrl(s.mcpBridgeUrl);
+  const mcpConfigJson = buildMcpConfigJson(s.mcpBridgeUrl, s.mcpBridgeToken);
+  const mcpCliCmd = buildClaudeCodeCliCommand(s.mcpBridgeUrl, s.mcpBridgeToken);
+
+  const checkBuiltinStatus = useCallback(async () => {
+    setBuiltinStatus('checking');
+    try {
+      const res = await probeBuiltinAi();
+      setBuiltinStatus(res.status);
+      setBuiltinReason(res.reason);
+    } catch {
+      setBuiltinStatus('unavailable');
+    }
+  }, []);
 
   useEffect(() => {
     setS(settings);
   }, [settings]);
+
+  useEffect(() => {
+    void checkBuiltinStatus();
+  }, [checkBuiltinStatus]);
 
   function commitPatch(next: AppSettings) {
     setS(next);
@@ -237,97 +281,78 @@ export default function SettingsPage({
     }
   }
 
-  const quota = s.cloud.quota ?? { used: 0, limit: 10, remaining: 10 };
-  const totalTicks = Math.max(1, Math.min(20, quota.limit || 10));
-  const filledTicks = Math.max(0, Math.min(totalTicks, quota.remaining));
-
   return (
     <div className="pb-6">
       <div className="divide-y divide-border/70 rounded-xl border border-border bg-card overflow-hidden">
-        {/* 1. AI Generation Engine */}
+        {/* 1. AI Generation Engine (BYOK / Local API vs Chrome Built-in Gemini Nano) */}
         <section className="p-4 space-y-3.5">
-          <h2 className="text-[14px] font-semibold text-foreground">
-            {t('settingsEngineTitle')}
-          </h2>
+          <div className="flex items-center gap-1.5">
+            <Cpu className="h-4 w-4 text-primary shrink-0" />
+            <h2 className="text-[14px] font-semibold text-foreground">
+              {t('settingsEngineTitle')}
+            </h2>
+          </div>
 
           <SegmentedControl
             className="w-full [&>.cds-seg-item]:flex-1 [&>.cds-seg-item]:justify-center"
             value={s.aiMode}
             onChange={(v: string) => commitPatch({ ...s, aiMode: v as AIMode })}
             items={[
-              { id: 'cloud', label: t('modeCloud') },
               { id: 'byok', label: t('modeByok') },
+              { id: 'builtin', label: t('modeBuiltin') },
             ]}
           />
 
-          {s.aiMode === 'cloud' ? (
-            <div className="space-y-2.5 pt-1">
-              <div className="flex items-center justify-between text-[13px]">
-                <span className="text-foreground font-medium tabular-nums">
-                  {lang === 'zh'
-                    ? `剩余免费云端生成：${quota.remaining} / ${quota.limit} 次`
-                    : `Remaining free generations: ${quota.remaining} / ${quota.limit}`}
-                </span>
-                <button
-                  type="button"
-                  disabled={refreshingQuota}
-                  onClick={async () => {
-                    setRefreshingQuota(true);
-                    await onRefreshQuota();
-                    setRefreshingQuota(false);
-                  }}
-                  className="inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground cursor-pointer"
-                >
-                  <RefreshCw className={cn('h-3.5 w-3.5', refreshingQuota && 'animate-spin')} />
-                  <span>{lang === 'zh' ? '同步额度' : 'Refresh'}</span>
-                </button>
-              </div>
-              <div
-                className="grid gap-1"
-                style={{ gridTemplateColumns: `repeat(${totalTicks}, minmax(0, 1fr))` }}
-                aria-hidden="true"
-              >
-                {Array.from({ length: totalTicks }).map((_, i) => {
-                  const active = i < filledTicks;
-                  return (
+          {s.aiMode === 'builtin' ? (
+            <div className="space-y-3 pt-1">
+              <p className="text-[13px] text-muted-foreground leading-relaxed">
+                {t('builtinDesc')}
+              </p>
+
+              <div className="rounded-lg border border-border/80 bg-secondary/45 p-3 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
                     <span
-                      key={i}
                       className={cn(
-                        'h-1.5 rounded-xs transition-colors',
-                        active
-                          ? filledTicks <= 2
-                            ? 'bg-amber-500/85'
-                            : 'bg-emerald-600/70 dark:bg-emerald-400/70'
-                          : 'bg-secondary',
+                        'h-2 w-2 rounded-full shrink-0',
+                        builtinStatus === 'available'
+                          ? 'bg-emerald-500'
+                          : builtinStatus === 'downloadable'
+                            ? 'bg-amber-500'
+                            : 'bg-muted-foreground/60',
                       )}
                     />
-                  );
-                })}
+                    <span className="text-[13px] font-medium text-foreground">
+                      {builtinStatus === 'checking'
+                        ? lang === 'zh'
+                          ? '正在检测内置模型状态…'
+                          : 'Checking on-device model…'
+                        : builtinStatus === 'available'
+                          ? t('builtinStatusAvailable')
+                          : builtinStatus === 'downloadable'
+                            ? t('builtinStatusDownloadable')
+                            : t('builtinStatusUnavailable')}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void checkBuiltinStatus()}
+                    className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
+                  >
+                    <RefreshCw
+                      className={cn('h-3.5 w-3.5', builtinStatus === 'checking' && 'animate-spin')}
+                    />
+                    <span>{lang === 'zh' ? '重新检测' : 'Re-check'}</span>
+                  </button>
+                </div>
+
+                {builtinStatus !== 'available' && builtinStatus !== 'checking' && (
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {t('builtinSetupHint')}
+                    {builtinReason ? ` (${builtinReason})` : ''}
+                  </p>
+                )}
               </div>
-              <p className="text-[13px] text-muted-foreground leading-relaxed">
-                {t('cloudQuotaDesc')}
-              </p>
-              <button
-                type="button"
-                onClick={() => setKeyGuideOpen((o) => !o)}
-                className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline cursor-pointer"
-              >
-                <HelpCircle className="h-3.5 w-3.5" />
-                <span>{t('keyGuideToggle')}</span>
-                <ChevronDown
-                  className={cn(
-                    'h-3.5 w-3.5 transition-transform',
-                    keyGuideOpen && 'rotate-180',
-                  )}
-                />
-              </button>
-              {keyGuideOpen && (
-                <ol className="list-decimal list-inside rounded-lg bg-secondary/50 border border-border/70 px-3 py-2.5 space-y-1.5 text-xs text-muted-foreground leading-relaxed">
-                  <li>{t('keyGuideStep1')}</li>
-                  <li>{t('keyGuideStep2')}</li>
-                  <li>{t('keyGuideStep3')}</li>
-                </ol>
-              )}
             </div>
           ) : (
             <div className="space-y-3 pt-1">
@@ -358,9 +383,9 @@ export default function SettingsPage({
                 )}
               </div>
 
-              {/* Quick Presets */}
+              {/* Quick Presets (Cloud BYOK + Local Ollama & LM Studio) */}
               <div className="flex flex-wrap gap-1.5">
-                {AI_PRESETS.map((p) => {
+                {AI_PROVIDER_PRESETS.map((p) => {
                   const active = activePreset?.id === p.id;
                   const presetLabel = p.labelKey ? t(p.labelKey) : p.label;
                   return (
@@ -491,15 +516,6 @@ export default function SettingsPage({
                             ? '显示 API Key'
                             : 'Show API key'
                       }
-                      title={
-                        showKey
-                          ? lang === 'zh'
-                            ? '隐藏密钥'
-                            : 'Hide key'
-                          : lang === 'zh'
-                            ? '显示密钥'
-                            : 'Show key'
-                      }
                       className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1 rounded text-muted-foreground hover:text-foreground cursor-pointer"
                     >
                       {showKey ? (
@@ -613,7 +629,151 @@ export default function SettingsPage({
           )}
         </section>
 
-        {/* 2. Execution Engine Health */}
+        {/* 2. Agent Capabilities Toggles (Multimodal Vision + Closed-Loop Auto-Heal) */}
+        <section className="p-4 space-y-3">
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="h-4 w-4 text-primary shrink-0" />
+            <h2 className="text-[14px] font-semibold text-foreground">
+              {t('capabilitiesTitle')}
+            </h2>
+          </div>
+
+          <div className="space-y-3">
+            <label className="flex items-start justify-between gap-3 cursor-pointer">
+              <div className="space-y-0.5 min-w-0">
+                <div className="text-[13px] font-medium text-foreground">
+                  {t('visionToggleLabel')}
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {t('visionToggleDesc')}
+                </p>
+              </div>
+              <Switch
+                checked={s.enableVisionCapture}
+                onCheckedChange={(checked) =>
+                  commitPatch({ ...s, enableVisionCapture: checked })
+                }
+              />
+            </label>
+
+            <label className="flex items-start justify-between gap-3 cursor-pointer pt-1">
+              <div className="space-y-0.5 min-w-0">
+                <div className="text-[13px] font-medium text-foreground">
+                  {t('autoHealToggleLabel')}
+                </div>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {t('autoHealToggleDesc')}
+                </p>
+              </div>
+              <Switch
+                checked={s.enableAutoHeal}
+                onCheckedChange={(checked) => commitPatch({ ...s, enableAutoHeal: checked })}
+              />
+            </label>
+          </div>
+        </section>
+
+        {/* 3. Local Coding Agent Bridge (`pagecraft-mcp`) */}
+        <section className="p-4 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <PlugZap className="h-4 w-4 text-primary shrink-0" />
+              <h2 className="text-[14px] font-semibold text-foreground truncate">
+                {t('mcpTitle')}
+              </h2>
+            </div>
+            <Switch
+              checked={s.mcpBridgeEnabled}
+              onCheckedChange={(checked) => commitPatch({ ...s, mcpBridgeEnabled: checked })}
+            />
+          </div>
+
+          <p className="text-xs text-muted-foreground leading-relaxed">{t('mcpDesc')}</p>
+
+          <div className="space-y-2.5">
+            <div className="space-y-1">
+              <label htmlFor="pc-mcp-url" className="text-[13px] font-medium text-muted-foreground">
+                {t('mcpWsUrlLabel')}
+              </label>
+              <Input
+                id="pc-mcp-url"
+                value={s.mcpBridgeUrl}
+                onChange={(e) => commitPatch({ ...s, mcpBridgeUrl: e.target.value })}
+                placeholder="ws://127.0.0.1:17321"
+                className="font-mono text-xs max-w-none"
+              />
+              {!mcpUrlValid && (
+                <p className="text-xs text-destructive leading-snug">{t('mcpLoopbackWarn')}</p>
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <label
+                htmlFor="pc-mcp-token"
+                className="text-[13px] font-medium text-muted-foreground"
+              >
+                {t('mcpTokenLabel')}
+              </label>
+              <Input
+                id="pc-mcp-token"
+                type="password"
+                value={s.mcpBridgeToken}
+                onChange={(e) => commitPatch({ ...s, mcpBridgeToken: e.target.value })}
+                placeholder={t('mcpTokenPlaceholder')}
+                className="font-mono text-xs max-w-none"
+              />
+            </div>
+
+            <div className="rounded-lg border border-border/80 bg-secondary/45 p-2.5 space-y-2">
+              <pre className="font-mono text-[11px] leading-snug text-foreground overflow-x-auto select-all">
+                {mcpConfigJson}
+              </pre>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard?.writeText(mcpConfigJson).catch(() => {});
+                    setCopiedMcpJson(true);
+                    onToast(t('mcpCopiedToast'));
+                    setTimeout(() => setCopiedMcpJson(false), 1800);
+                  }}
+                  className="pc-press text-xs gap-1.5 cursor-pointer"
+                >
+                  {copiedMcpJson ? (
+                    <Check className="h-3.5 w-3.5 text-emerald-600" />
+                  ) : (
+                    <Copy className="h-3.5 w-3.5" />
+                  )}
+                  <span>{t('mcpCopyConfigBtn')}</span>
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard?.writeText(mcpCliCmd).catch(() => {});
+                    setCopiedMcpCli(true);
+                    onToast(t('mcpCopiedToast'));
+                    setTimeout(() => setCopiedMcpCli(false), 1800);
+                  }}
+                  className="pc-press text-xs gap-1.5 cursor-pointer"
+                >
+                  {copiedMcpCli ? (
+                    <Check className="h-3.5 w-3.5 text-emerald-600" />
+                  ) : (
+                    <Terminal className="h-3.5 w-3.5" />
+                  )}
+                  <span>{t('mcpCopyCliBtn')}</span>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 4. Execution Engine Health */}
         <section className="p-4 space-y-2.5">
           <div className="flex items-center justify-between">
             <h2 className="text-[14px] font-semibold text-foreground">{t('runtimeTitle')}</h2>
@@ -672,7 +832,7 @@ export default function SettingsPage({
           </div>
         </section>
 
-        {/* 3. Appearance & Language */}
+        {/* 5. Appearance & Language */}
         <section className="p-4 space-y-3">
           <h2 className="text-[14px] font-semibold text-foreground">{t('appearanceTitle')}</h2>
 
@@ -700,7 +860,7 @@ export default function SettingsPage({
         </section>
       </div>
 
-      {/* Zero-Tracking Privacy Guarantee & Support Contact */}
+      {/* Zero-Backend Privacy Guarantee & Support Contact */}
       <div className="space-y-1.5 px-1 pt-4 text-[13px] text-muted-foreground leading-relaxed">
         <div className="flex items-start gap-2">
           <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />

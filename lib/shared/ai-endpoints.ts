@@ -1,18 +1,86 @@
-// Resolution of a user-entered AI base URL into concrete endpoints.
+// Resolution of a user-entered AI base URL into concrete endpoints, plus
+// curated provider & local-loopback presets.
 //
 // Users paste all sorts of things into "Base URL": `https://host/v1`, a URL with
-// a trailing slash, `http://localhost:11434/v1` for local Ollama, or the full
-// `https://host/v1/chat/completions` copied from another tool's docs. All of
-// them resolve to a canonical API root here, enforcing `https://` for all
-// remote hosts while permitting `http://` strictly on local loopback addresses.
+// a trailing slash, `http://localhost:11434/v1` for local Ollama, `http://localhost:1234/v1`
+// for LM Studio, or the full `https://host/v1/chat/completions` copied from docs.
+// All resolve to a canonical API root here, enforcing `https://` for all remote
+// hosts while permitting `http://` strictly on local loopback addresses.
 
 /** Endpoint suffixes that are *not* part of the API root, stripped off the tail. */
-const ENDPOINT_SUFFIXES = /\/(chat\/completions|completions|responses|models)$/i;
+const ENDPOINT_SUFFIXES = /\/(chat\/completions|completions|messages|responses|models)$/i;
 
 const LOOPBACK_HOSTNAMES = new Set(['localhost', '127.0.0.1', '[::1]']);
 
 export const OLLAMA_DEFAULT_BASE_URL = 'http://localhost:11434/v1';
 export const OLLAMA_DEFAULT_MODEL = 'qwen2.5-coder:7b';
+
+export const LM_STUDIO_DEFAULT_BASE_URL = 'http://localhost:1234/v1';
+export const LM_STUDIO_DEFAULT_MODEL = 'qwen2.5-coder-7b-instruct';
+
+export const ANTHROPIC_DEFAULT_BASE_URL = 'https://api.anthropic.com/v1';
+export const ANTHROPIC_DEFAULT_MODEL = 'claude-3-5-sonnet-latest';
+
+export const OPENROUTER_DEFAULT_BASE_URL = 'https://openrouter.ai/api/v1';
+export const OPENROUTER_DEFAULT_MODEL = 'deepseek/deepseek-chat';
+
+export interface AiProviderPreset {
+  id: string;
+  label: string;
+  labelKey?: string;
+  baseUrl: string;
+  model: string;
+  local?: boolean;
+}
+
+export const AI_PROVIDER_PRESETS: readonly AiProviderPreset[] = [
+  {
+    id: 'deepseek',
+    label: 'DeepSeek',
+    baseUrl: 'https://api.deepseek.com/v1',
+    model: 'deepseek-chat',
+  },
+  {
+    id: 'siliconflow',
+    label: 'SiliconFlow 硅基流动',
+    baseUrl: 'https://api.siliconflow.cn/v1',
+    model: 'deepseek-ai/DeepSeek-V3',
+  },
+  {
+    id: 'openai',
+    label: 'OpenAI',
+    baseUrl: 'https://api.openai.com/v1',
+    model: 'gpt-4o-mini',
+  },
+  {
+    id: 'anthropic',
+    label: 'Anthropic',
+    baseUrl: ANTHROPIC_DEFAULT_BASE_URL,
+    model: ANTHROPIC_DEFAULT_MODEL,
+  },
+  {
+    id: 'openrouter',
+    label: 'OpenRouter',
+    baseUrl: OPENROUTER_DEFAULT_BASE_URL,
+    model: OPENROUTER_DEFAULT_MODEL,
+  },
+  {
+    id: 'ollama',
+    label: 'Ollama',
+    labelKey: 'presetOllama',
+    baseUrl: OLLAMA_DEFAULT_BASE_URL,
+    model: OLLAMA_DEFAULT_MODEL,
+    local: true,
+  },
+  {
+    id: 'lmstudio',
+    label: 'LM Studio',
+    labelKey: 'presetLmStudio',
+    baseUrl: LM_STUDIO_DEFAULT_BASE_URL,
+    model: LM_STUDIO_DEFAULT_MODEL,
+    local: true,
+  },
+] as const;
 
 export interface ResolvedEndpoints {
   /** Normalized API root, e.g. `https://host/v1` or `http://localhost:11434/v1`. Empty when unusable. */
@@ -69,8 +137,7 @@ export function normalizeBaseUrl(raw: string): string {
   stripped = stripped.replace(/\/+$/, '');
 
   // Never strip down to a bare origin if that would drop a real path segment
-  // the user meant, e.g. a gateway mounted at `https://host/api`. Only accept
-  // the strip when something path-like survives or the original had no path.
+  // the user meant, e.g. a gateway mounted at `https://host/api`.
   return stripped || s;
 }
 

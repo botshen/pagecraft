@@ -1,5 +1,6 @@
 /**
- * PageCraft Dual-Engine Execution & AI Mod Generation Subsystem.
+ * PageCraft Dual-Engine Execution, Multimodal Vision, Closed-Loop Auto-Heal,
+ * & Local Coding Agent (MCP) Handler Subsystem.
  *
  * Engine 1 (`css`): Instant `chrome.scripting.insertCSS` / `removeCSS` across
  * matching tabs + automatic injection on tab navigation. Works on fresh CWS
@@ -14,7 +15,9 @@ import type {
   GenerateUserScriptPayload,
   GenerateUserScriptResult,
   MODS_STORAGE_KEY as ModsKeyType,
+  ModEngine,
   PageContextResult,
+  PickedElementContext,
   SelectorVerifyResult,
   UserScript,
   UserScriptsAvailability,
@@ -24,18 +27,27 @@ import {
   hostPatternFromUrl,
   isBroadMatch,
   readUserScripts,
+  upsertUserScript,
   validateMatches,
 } from '../../lib/userscripts/store';
 import { urlMatchesAny } from '../../lib/userscripts/matcher';
 import { wrapWithGmShimIfNeeded } from '../../lib/userscripts/gm-shim';
 import { redactSensitiveText, sanitizePageUrl } from '../../lib/shared/privacy';
 import { isLocalLoopbackEndpoint, resolveEndpoints } from '../../lib/shared/ai-endpoints';
-import { requestCloudGeneration } from '../../lib/api/cloud';
+import { byokLlmChat } from '../../lib/shared/ai-client';
+import { generateWithBuiltinAi } from '../../lib/shared/builtin-ai';
 import { tryBuildPlaygroundMod } from '../../lib/userscripts/playground';
-import type { AppSettings, AIConfig } from '../../types';
-import { extractLivePageContext, probeTargetSelectors } from './picker-injected';
+import type { AppSettings, AIConfig } from '../../lib/types';
+import {
+  extractLivePageContext,
+  injectElementPickerOverlay,
+  probeTargetSelectors,
+} from './picker-injected';
 
 void (null as unknown as typeof ModsKeyType);
+
+const BUILTIN_AI_SYSTEM_PROMPT =
+  'You are PageCraft, a Chrome MV3 CSS & Userscript mod generator. Return ONLY valid JSON matching the requested schema with no markdown fences.';
 
 /** Probe: true only when `chrome.userScripts` exists and `getScripts()` resolves. */
 export async function checkUserScriptsAvailability(): Promise<UserScriptsAvailability> {
@@ -104,7 +116,6 @@ async function doSyncCssForTab(tabId: number, tabUrl?: string): Promise<void> {
 
   const desiredIds = new Set(desiredCssMods.map((m) => m.id));
 
-  // Remove CSS mods that were turned off, deleted, or changed
   for (const [modId, prevCss] of [...applied.entries()]) {
     const targetMod = desiredCssMods.find((m) => m.id === modId);
     if (!targetMod || targetMod.css !== prevCss) {
@@ -117,7 +128,6 @@ async function doSyncCssForTab(tabId: number, tabUrl?: string): Promise<void> {
     }
   }
 
-  // Inject newly enabled or updated CSS mods
   for (const mod of desiredCssMods) {
     const cssText = mod.css!;
     if (applied.get(mod.id) === cssText) continue;
@@ -126,7 +136,7 @@ async function doSyncCssForTab(tabId: number, tabUrl?: string): Promise<void> {
       await chrome.scripting.insertCSS({ target: { tabId }, css: cssText });
       applied.set(mod.id, cssText);
     } catch {
-      /* restricted page (e.g. Chrome Web Store) — non-fatal */
+      /* restricted page — non-fatal */
     }
   }
 }
@@ -169,7 +179,6 @@ export function syncUserScripts(): Promise<void> {
 }
 
 async function doSyncAllMods(): Promise<void> {
-  // Always sync CSS mods first — they never require `chrome.userScripts`!
   await syncAllOpenTabsCss();
 
   const api = getUserScriptsApi();
@@ -262,11 +271,9 @@ export function initModsRuntime(): void {
     chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       const nextUrl = changeInfo.url ?? tab.url;
       if (changeInfo.status === 'loading') {
-        // Fresh navigation wiped previous document styles; clear tab registry so CSS re-injects cleanly
         tabCssRegistry.delete(tabId);
         if (nextUrl) void syncCssForTab(tabId, nextUrl);
       } else if (Boolean(changeInfo.url) && nextUrl) {
-        // SPA pushState / replaceState navigation: immediately sync path-scoped CSS rules
         void syncCssForTab(tabId, nextUrl);
       } else if (changeInfo.status === 'complete' && nextUrl) {
         void syncCssForTab(tabId, nextUrl);
@@ -282,7 +289,7 @@ export function initModsRuntime(): void {
   }
 }
 
-// ─── Live Page Context & Selector Verification ────────────────────────────
+// ─── Live Page Context, Selector Verification & Cropped Vision Capture ────
 
 export async function getActiveTabPageContext(): Promise<PageContextResult> {
   try {
@@ -336,10 +343,438 @@ export async function verifySelectorsOnActiveTab(
   }
 }
 
+export interface ScreenshotCaptureDeps {
+  captureVisibleTab?: () => Promise<string>;
+  createImageBitmapImpl?: (blob: Blob) => Promise<{
+    width: number;
+    height: number;
+    close?: () => void;
+  }>;
+  createOffscreenCanvas?: (
+    width: number,
+    height: number,
+  ) => {
+    getContext: (type: '2d') => {
+      drawImage: (
+        image: unknown,
+        sx: number,
+        sy: number,
+        sw: number,
+        sh: number,
+        dx: number,
+        dy: number,
+        dw: number,
+        dh: number,
+      ) => void;
+    } | null;
+    convertToBlob: (options?: { type?: string; quality?: number }) => Promise<Blob>;
+  };
+}
+
+function dataUrlToBlob(dataUrl: string): Blob | null {
+  const commaIdx = dataUrl.indexOf(',');
+  if (commaIdx === -1) return null;
+  const header = dataUrl.slice(0, commaIdx);
+  const b64 = dataUrl.slice(commaIdx + 1);
+  const mimeMatch = /^data:([^;]+);base64$/i.exec(header);
+  const mime = mimeMatch?.[1] || 'image/jpeg';
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new Blob([bytes], { type: mime });
+}
+
+async function blobToDataUrl(blob: Blob): Promise<string> {
+  const buf = await blob.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i] ?? 0);
+  }
+  const mime = blob.type || 'image/jpeg';
+  return `data:${mime};base64,${btoa(binary)}`;
+}
+
+/**
+ * Captures the visible tab and crops around `pickedElement.rect` (with ~32px
+ * context padding, scaled down so max side <= 640px) into a compact JPEG/PNG
+ * `data:image/...;base64,...` URL. Gracefully returns `undefined` on any error.
+ */
+export async function captureElementScreenshot(
+  pickedElement?: PickedElementContext | null,
+  deps: ScreenshotCaptureDeps = {},
+): Promise<string | undefined> {
+  const rect = pickedElement?.rect;
+  if (!rect || !(rect.width > 0) || !(rect.height > 0)) {
+    return undefined;
+  }
+
+  const captureFn =
+    deps.captureVisibleTab ??
+    (typeof chrome !== 'undefined' && typeof chrome.tabs?.captureVisibleTab === 'function'
+      ? () => chrome.tabs.captureVisibleTab({ format: 'jpeg', quality: 78 })
+      : undefined);
+  if (!captureFn) return undefined;
+
+  try {
+    const rawDataUrl = await captureFn();
+    if (typeof rawDataUrl !== 'string' || !rawDataUrl.startsWith('data:image/')) {
+      return undefined;
+    }
+
+    const createBitmap =
+      deps.createImageBitmapImpl ??
+      (typeof createImageBitmap === 'function'
+        ? (b: Blob) => createImageBitmap(b)
+        : undefined);
+    const makeCanvas =
+      deps.createOffscreenCanvas ??
+      (typeof OffscreenCanvas !== 'undefined'
+        ? (w: number, h: number) =>
+            new OffscreenCanvas(w, h) as unknown as ReturnType<
+              NonNullable<ScreenshotCaptureDeps['createOffscreenCanvas']>
+            >
+        : undefined);
+
+    if (!createBitmap || !makeCanvas) {
+      return rawDataUrl;
+    }
+
+    const srcBlob = dataUrlToBlob(rawDataUrl);
+    if (!srcBlob) return rawDataUrl;
+
+    const bitmap = await createBitmap(srcBlob);
+    try {
+      const dpr = typeof rect.dpr === 'number' && rect.dpr > 0 ? rect.dpr : 1;
+      const padCss = 32;
+      const rawX = typeof rect.x === 'number' ? rect.x : 0;
+      const rawY = typeof rect.y === 'number' ? rect.y : 0;
+
+      const sx = Math.max(0, Math.min(bitmap.width - 1, Math.round((rawX - padCss) * dpr)));
+      const sy = Math.max(0, Math.min(bitmap.height - 1, Math.round((rawY - padCss) * dpr)));
+      const sw = Math.max(
+        1,
+        Math.min(bitmap.width - sx, Math.round((rect.width + padCss * 2) * dpr)),
+      );
+      const sh = Math.max(
+        1,
+        Math.min(bitmap.height - sy, Math.round((rect.height + padCss * 2) * dpr)),
+      );
+
+      const maxSide = 640;
+      const scale = Math.min(1, maxSide / Math.max(sw, sh));
+      const dw = Math.max(1, Math.round(sw * scale));
+      const dh = Math.max(1, Math.round(sh * scale));
+
+      const canvas = makeCanvas(dw, dh);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return rawDataUrl;
+
+      ctx.drawImage(bitmap, sx, sy, sw, sh, 0, 0, dw, dh);
+      const croppedBlob = await canvas.convertToBlob({ type: 'image/jpeg', quality: 0.78 });
+      return await blobToDataUrl(croppedBlob);
+    } finally {
+      bitmap.close?.();
+    }
+  } catch {
+    return undefined;
+  }
+}
+
+// ─── MV3 CSP-Safe JS & CSS Structural Validation (Zero eval / new Function) ─
+
+const REGEX_PRECEDING_KEYWORDS = new Set([
+  'return',
+  'typeof',
+  'case',
+  'throw',
+  'delete',
+  'void',
+  'in',
+  'of',
+  'instanceof',
+  'yield',
+  'await',
+]);
+
+/**
+ * Validates JavaScript structural syntax (balanced `{}`, `()`, `[]`, closed
+ * strings, template literals, comments, and regex literals) WITHOUT calling
+ * `eval` or `new Function` (which MV3 CSP `script-src 'self'` blocks).
+ */
+export function validateJsStructureSafely(code: string): string | null {
+  const trimmed = code.trim();
+  if (!trimmed) {
+    return 'AI 选择了 JS 脚本模式但未生成可执行代码。';
+  }
+
+  const stack: string[] = [];
+  let canStartRegex = true;
+  let lastWord = '';
+  let i = 0;
+  const n = trimmed.length;
+
+  while (i < n) {
+    const ch = trimmed[i]!;
+    const next = trimmed[i + 1];
+
+    if (/\s/.test(ch)) {
+      if (lastWord) {
+        if (REGEX_PRECEDING_KEYWORDS.has(lastWord)) {
+          canStartRegex = true;
+        }
+        lastWord = '';
+      }
+      i++;
+      continue;
+    }
+
+    if (ch === '/' && next === '/') {
+      i += 2;
+      while (i < n && trimmed[i] !== '\n') i++;
+      continue;
+    }
+
+    if (ch === '/' && next === '*') {
+      i += 2;
+      let closed = false;
+      while (i < n - 1) {
+        if (trimmed[i] === '*' && trimmed[i + 1] === '/') {
+          i += 2;
+          closed = true;
+          break;
+        }
+        i++;
+      }
+      if (!closed) {
+        return 'AI 生成的 JS 代码包含未闭合的多行注释（/* ... */）。';
+      }
+      continue;
+    }
+
+    if (ch === "'" || ch === '"') {
+      const quote = ch;
+      i++;
+      let closed = false;
+      while (i < n) {
+        const c = trimmed[i]!;
+        if (c === '\\') {
+          i += 2;
+          continue;
+        }
+        if (c === '\n' || c === '\r') break;
+        if (c === quote) {
+          i++;
+          closed = true;
+          break;
+        }
+        i++;
+      }
+      if (!closed) {
+        return 'AI 生成的 JS 代码包含未闭合的字符串引号。';
+      }
+      lastWord = '';
+      canStartRegex = false;
+      continue;
+    }
+
+    if (ch === '`') {
+      i++;
+      let closed = false;
+      while (i < n) {
+        const c = trimmed[i]!;
+        if (c === '\\') {
+          i += 2;
+          continue;
+        }
+        if (c === '`') {
+          i++;
+          closed = true;
+          break;
+        }
+        if (c === '$' && trimmed[i + 1] === '{') {
+          stack.push('`');
+          stack.push('{');
+          i += 2;
+          canStartRegex = true;
+          lastWord = '';
+          closed = true;
+          break;
+        }
+        i++;
+      }
+      if (!closed) {
+        return 'AI 生成的 JS 代码包含未闭合的模板字符串（`...`）。';
+      }
+      if (stack[stack.length - 1] !== '{') {
+        lastWord = '';
+        canStartRegex = false;
+      }
+      continue;
+    }
+
+    if (ch === '/' && canStartRegex) {
+      i++;
+      let inCharClass = false;
+      let closed = false;
+      while (i < n) {
+        const c = trimmed[i]!;
+        if (c === '\\') {
+          i += 2;
+          continue;
+        }
+        if (c === '\n' || c === '\r') break;
+        if (c === '[') inCharClass = true;
+        else if (c === ']') inCharClass = false;
+        else if (c === '/' && !inCharClass) {
+          i++;
+          while (i < n && /[a-z]/i.test(trimmed[i]!)) i++;
+          closed = true;
+          break;
+        }
+        i++;
+      }
+      if (!closed) {
+        return 'AI 生成的 JS 代码包含未闭合的正则表达式字面量。';
+      }
+      lastWord = '';
+      canStartRegex = false;
+      continue;
+    }
+
+    if (/[A-Za-z_$]/.test(ch)) {
+      const start = i;
+      i++;
+      while (i < n && /[A-Za-z0-9_$]/.test(trimmed[i]!)) i++;
+      lastWord = trimmed.slice(start, i);
+      canStartRegex = REGEX_PRECEDING_KEYWORDS.has(lastWord);
+      continue;
+    }
+
+    if (/[0-9]/.test(ch)) {
+      i++;
+      while (i < n && /[0-9a-fA-FxXoObBn_.]/.test(trimmed[i]!)) i++;
+      lastWord = '';
+      canStartRegex = false;
+      continue;
+    }
+
+    lastWord = '';
+
+    if (ch === '{' || ch === '(' || ch === '[') {
+      stack.push(ch);
+      canStartRegex = true;
+      i++;
+      continue;
+    }
+
+    if (ch === '}' || ch === ')' || ch === ']') {
+      const expected = ch === '}' ? '{' : ch === ')' ? '(' : '[';
+      const top = stack.pop();
+      if (top !== expected) {
+        return `AI 生成的 JS 代码括号不匹配（意外的 "${ch}"）。`;
+      }
+      if (ch === '}' && stack[stack.length - 1] === '`') {
+        stack.pop();
+        i++;
+        let closedTpl = false;
+        while (i < n) {
+          const c = trimmed[i]!;
+          if (c === '\\') {
+            i += 2;
+            continue;
+          }
+          if (c === '`') {
+            i++;
+            closedTpl = true;
+            break;
+          }
+          if (c === '$' && trimmed[i + 1] === '{') {
+            stack.push('`');
+            stack.push('{');
+            i += 2;
+            canStartRegex = true;
+            closedTpl = true;
+            break;
+          }
+          i++;
+        }
+        if (!closedTpl) {
+          return 'AI 生成的 JS 代码包含未闭合的模板字符串（`...`）。';
+        }
+        if (stack[stack.length - 1] !== '{') {
+          canStartRegex = false;
+        }
+        continue;
+      }
+      canStartRegex = false;
+      i++;
+      continue;
+    }
+
+    canStartRegex = '=,:;!&|?+-*~^%<>'.includes(ch);
+    i++;
+  }
+
+  if (stack.length > 0) {
+    return 'AI 生成的 JS 代码被截断或存在未闭合的括号。';
+  }
+  return null;
+}
+
+export function validateCssStructureSafely(css: string): string | null {
+  const stripped = css
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'/g, '')
+    .trim();
+  if (!stripped) {
+    return 'AI 选择了 CSS 模式但未生成有效样式代码。';
+  }
+  let depth = 0;
+  for (let i = 0; i < stripped.length; i++) {
+    const ch = stripped[i];
+    if (ch === '{') depth++;
+    else if (ch === '}') {
+      depth--;
+      if (depth < 0) return 'AI 生成的 CSS 样式大括号不匹配。';
+    }
+  }
+  if (depth !== 0) {
+    return 'AI 生成的 CSS 样式被截断或缺少闭合 "}"。';
+  }
+  return null;
+}
+
 // ─── AI Prompt & Dual-Engine Parser ───────────────────────────────────────
 
 export interface LlmChatFn {
-  (config: AIConfig, prompt: string, isTest?: boolean): Promise<{ content: string }>;
+  (
+    config: AIConfig,
+    prompt: string,
+    isTest?: boolean,
+    imageDataUrl?: string,
+  ): Promise<{ content: string; usedVision?: boolean }>;
+}
+
+export interface GenerateModRuntimeHooks {
+  verifySelectors?: (selectors: string[]) => Promise<SelectorVerifyResult>;
+  fetchPageContext?: () => Promise<PageContextResult>;
+  captureScreenshot?: (picked: PickedElementContext) => Promise<string | undefined>;
+  builtinGenerate?: (systemPrompt: string, userPrompt: string) => Promise<string>;
+}
+
+export function defaultExtractJsonString(text: string): string {
+  const trimmed = text.trim();
+  const fenceMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fenceMatch?.[1]) return fenceMatch[1].trim();
+  const firstBrace = trimmed.indexOf('{');
+  const lastBrace = trimmed.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    return trimmed.slice(firstBrace, lastBrace + 1);
+  }
+  return trimmed;
 }
 
 export function buildModPrompt(p: GenerateUserScriptPayload): string {
@@ -399,7 +834,9 @@ ${
     : `- Previous JS Code:\n\`\`\`js\n${p.previousMod.code ?? ''}\n\`\`\``
 }
 ${p.diagnosticHint ? `\n- Runtime Diagnostic Warning: ${p.diagnosticHint}` : ''}`
-    : '';
+    : p.diagnosticHint
+      ? `## Runtime Diagnostic Warning\n${p.diagnosticHint}`
+      : '';
 
   return `You generate browser mods for PageCraft, an expert Chrome webpage modifier & Tampermonkey/Userscript engineer.
 Turn the user's request into a clean, reliable, persistent webpage modification.
@@ -457,7 +894,7 @@ Return ONLY valid JSON matching this exact schema (no markdown code fences):
 
 export function parseGeneratedMod(
   raw: string,
-  extractJsonString: (s: string) => string,
+  extractJsonString: (s: string) => string = defaultExtractJsonString,
   fallbackMatchUrl?: string,
 ): GeneratedUserScript | { error: string } {
   const cleaned = extractJsonString(raw);
@@ -474,27 +911,29 @@ export function parseGeneratedMod(
   let css = typeof parsed.css === 'string' ? parsed.css.trim() : '';
   let code = typeof parsed.code === 'string' ? parsed.code.trim() : '';
 
-  // Strip accidental <style> wrappers on CSS
   css = css.replace(/^<style[^>]*>/i, '').replace(/<\/style>$/i, '').trim();
 
-  // Strip accidental ==UserScript== header on JS
   const headerEnd = code.indexOf('==/UserScript==');
   if (headerEnd !== -1) {
     const rest = code.slice(headerEnd).split('\n');
     code = rest.slice(1).join('\n').trim() || code;
   }
 
-  const engine =
+  const engine: ModEngine =
     parsed.engine === 'css' || (css.length > 0 && code.length === 0) ? 'css' : 'js';
 
   if (!name) {
     return { error: 'AI 返回结果缺少名称（name）。' };
   }
-  if (engine === 'css' && !css) {
-    return { error: 'AI 选择了 CSS 模式但未生成有效样式代码。' };
+  if (engine === 'css') {
+    if (!css) return { error: 'AI 选择了 CSS 模式但未生成有效样式代码。' };
+    const cssErr = validateCssStructureSafely(css);
+    if (cssErr) return { error: cssErr };
   }
-  if (engine === 'js' && !code) {
-    return { error: 'AI 选择了 JS 脚本模式但未生成可执行代码。' };
+  if (engine === 'js') {
+    if (!code) return { error: 'AI 选择了 JS 脚本模式但未生成可执行代码。' };
+    const jsErr = validateJsStructureSafely(code);
+    if (jsErr) return { error: jsErr };
   }
   if (css.length > 100_000 || code.length > 100_000) {
     return { error: '生成的代码体积超出安全上限。' };
@@ -548,37 +987,50 @@ export function parseGeneratedMod(
   };
 }
 
+const defaultByokLlmChat: LlmChatFn = (cfg, prompt, isTest, imageDataUrl) =>
+  byokLlmChat(cfg, prompt, isTest, fetch, imageDataUrl);
+
 export async function generateUserScript(
   payload: GenerateUserScriptPayload,
   settings: AppSettings,
-  llmChat: LlmChatFn,
-  extractJsonString: (s: string) => string,
+  llmChat: LlmChatFn = defaultByokLlmChat,
+  extractJsonString: (s: string) => string = defaultExtractJsonString,
+  runtimeHooks: GenerateModRuntimeHooks = {},
 ): Promise<GenerateUserScriptResult> {
   if (!payload.intent?.trim()) {
     return {
       ok: false,
-      error: payload.lang === 'zh' ? '请输入你想修改的网页效果描述。' : 'Please enter what you want to change.',
+      error:
+        payload.lang === 'zh'
+          ? '请输入你想修改的网页效果描述。'
+          : 'Please enter what you want to change.',
     };
   }
 
-  // Zero-credit instant sandbox generation on https://pagecraft.shenxin.space/playground
   const playgroundScript = tryBuildPlaygroundMod(payload);
   if (playgroundScript) {
+    const verifyFn = runtimeHooks.verifySelectors ?? verifySelectorsOnActiveTab;
+    const selectorCheck =
+      playgroundScript.targetSelectors && playgroundScript.targetSelectors.length > 0
+        ? await verifyFn(playgroundScript.targetSelectors)
+        : undefined;
     return {
       ok: true,
       script: playgroundScript,
       provider: 'playground',
+      ...(selectorCheck?.ok ? { selectorCheck } : {}),
     };
   }
 
-  const prompt = buildModPrompt(payload);
-  const rawBaseUrl = settings.ai?.baseUrl ?? '';
-  const isLocalAi = isLocalLoopbackEndpoint(rawBaseUrl);
-  const useByok =
-    settings.aiMode === 'byok' ||
-    ((Boolean(settings.ai?.apiKey?.trim()) || isLocalAi) && settings.cloud.quota?.remaining === 0);
+  const verifyFn = runtimeHooks.verifySelectors ?? verifySelectorsOnActiveTab;
+  const fetchContextFn = runtimeHooks.fetchPageContext ?? getActiveTabPageContext;
+  const captureFn = runtimeHooks.captureScreenshot ?? ((p) => captureElementScreenshot(p));
+  const builtinFn = runtimeHooks.builtinGenerate ?? ((sys, usr) => generateWithBuiltinAi(sys, usr));
 
-  if (useByok) {
+  const useBuiltin = settings.aiMode === 'builtin';
+
+  if (!useBuiltin) {
+    const rawBaseUrl = settings.ai?.baseUrl ?? '';
     const resolved = resolveEndpoints(rawBaseUrl);
     if (resolved.error === 'insecure') {
       return {
@@ -606,65 +1058,342 @@ export async function generateUserScript(
         code: 'missing_api_key',
         error:
           payload.lang === 'zh'
-            ? '当前处于「自带 Key / 本地 AI」模式，请先在设置中填写 API Key（或选择本地 Ollama 预设），也可切回免费云端额度。'
-            : 'API key is empty. Add your API key in Settings, choose the local Ollama preset, or switch to Free Cloud Trial.',
+            ? '请先在「设置」中填写 API Key，或切换为本地 Ollama / LM Studio / Chrome 内置 AI（免 Key 离线可用）。'
+            : 'API key is empty. Add your API key in Settings, or switch to Local Ollama / LM Studio / Chrome Built-in AI.',
       };
     }
+  }
+
+  let imageDataUrl: string | undefined;
+  if (
+    !useBuiltin &&
+    settings.enableVisionCapture &&
+    payload.pickedElement &&
+    payload.pickedElement.rect.width > 0 &&
+    payload.pickedElement.rect.height > 0
+  ) {
+    imageDataUrl =
+      payload.pickedElement.screenshotDataUrl || (await captureFn(payload.pickedElement));
+  }
+
+  const runSinglePass = async (
+    passPayload: GenerateUserScriptPayload,
+  ): Promise<
+    | { ok: true; script: GeneratedUserScript; usedVision: boolean }
+    | { ok: false; code: 'builtin_unavailable' | 'network' | 'invalid_output'; error: string }
+  > => {
+    const prompt = buildModPrompt(passPayload);
     try {
-      const res = await llmChat(settings.ai, prompt);
-      const parsed = parseGeneratedMod(res.content, extractJsonString, payload.targetUrl);
+      if (useBuiltin) {
+        const rawOut = await builtinFn(BUILTIN_AI_SYSTEM_PROMPT, prompt);
+        const parsed = parseGeneratedMod(rawOut, extractJsonString, passPayload.targetUrl);
+        if ('error' in parsed) {
+          return { ok: false, code: 'invalid_output', error: parsed.error };
+        }
+        return { ok: true, script: parsed, usedVision: false };
+      }
+
+      const res = await llmChat(settings.ai, prompt, false, imageDataUrl);
+      const parsed = parseGeneratedMod(res.content, extractJsonString, passPayload.targetUrl);
       if ('error' in parsed) {
         return { ok: false, code: 'invalid_output', error: parsed.error };
       }
-      return { ok: true, script: parsed, provider: 'byok' };
+      const didUseVision = Boolean(imageDataUrl && (res.usedVision ?? true));
+      return { ok: true, script: parsed, usedVision: didUseVision };
     } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
       return {
         ok: false,
-        code: 'network',
-        error: e instanceof Error ? e.message : String(e),
+        code: useBuiltin ? 'builtin_unavailable' : 'network',
+        error: msg,
       };
     }
+  };
+
+  const firstPass = await runSinglePass(payload);
+  if (!firstPass.ok) {
+    return firstPass;
   }
 
-  // Cloud Trial mode (10 free generations per install)
-  const cloudRes = await requestCloudGeneration(prompt);
-  if (!cloudRes.ok) {
-    if (cloudRes.code === 'quota_exhausted') {
-      return {
-        ok: false,
-        code: 'quota_exhausted',
-        quota: cloudRes.quota,
-        error:
-          payload.lang === 'zh'
-            ? '10 次免费云端体验额度已用完。前往「设置」填入你自己的 DeepSeek / 硅基流动 / OpenAI Key 即可无限免费使用！'
-            : 'Your 10 free cloud generations are used up. Add your own DeepSeek or OpenAI API key in Settings for unlimited use.',
-      };
+  const provider = useBuiltin ? 'builtin' : 'byok';
+  let finalScript = firstPass.script;
+  let usedVision = firstPass.usedVision;
+  let autoHealed = false;
+  let selectorCheck: SelectorVerifyResult | undefined;
+
+  if (finalScript.targetSelectors && finalScript.targetSelectors.length > 0) {
+    const initialVerify = await verifyFn(finalScript.targetSelectors);
+    if (initialVerify.ok) {
+      selectorCheck = initialVerify;
     }
-    return {
-      ok: false,
-      code: 'network',
-      quota: cloudRes.quota,
-      error:
-        payload.lang === 'zh'
-          ? `云端 AI 服务暂不可用（${cloudRes.error}）。你也可以在「设置」填写自己的 DeepSeek API Key 直接生成。`
-          : `Cloud AI unavailable (${cloudRes.error}). You can also configure your own API key in Settings.`,
-    };
-  }
 
-  const parsed = parseGeneratedMod(cloudRes.content, extractJsonString, payload.targetUrl);
-  if ('error' in parsed) {
-    return {
-      ok: false,
-      code: 'invalid_output',
-      quota: cloudRes.quota,
-      error: parsed.error,
-    };
+    // Closed-Loop Auto-Verification & 1-Pass Self-Heal when 0 live elements match
+    if (
+      settings.enableAutoHeal &&
+      !payload.previousMod &&
+      initialVerify.ok &&
+      initialVerify.totalHits === 0
+    ) {
+      let freshPageContext = payload.pageContext;
+      if (!freshPageContext) {
+        const liveCtx = await fetchContextFn();
+        if (liveCtx.ok && liveCtx.context) {
+          freshPageContext = liveCtx.context;
+        }
+      }
+
+      const failedSelectors = finalScript.targetSelectors.join(', ');
+      const healPayload: GenerateUserScriptPayload = {
+        ...payload,
+        pageContext: freshPageContext || payload.pageContext,
+        previousMod: {
+          name: finalScript.name,
+          description: finalScript.description,
+          engine: finalScript.engine,
+          matches: finalScript.matches,
+          code: finalScript.engine === 'js' ? finalScript.code : undefined,
+          css: finalScript.engine === 'css' ? finalScript.css : undefined,
+          targetSelectors: finalScript.targetSelectors,
+        },
+        diagnosticHint: `Auto-Verify: Generated selector(s) [${failedSelectors}] matched 0 elements on the live DOM. Inspect the live DOM landmarks and output corrected selectors that match existing elements.`,
+      };
+
+      const secondPass = await runSinglePass(healPayload);
+      if (secondPass.ok) {
+        finalScript = secondPass.script;
+        usedVision = usedVision || secondPass.usedVision;
+        autoHealed = true;
+        if (finalScript.targetSelectors && finalScript.targetSelectors.length > 0) {
+          const healedVerify = await verifyFn(finalScript.targetSelectors);
+          if (healedVerify.ok) {
+            selectorCheck = healedVerify;
+          }
+        } else {
+          selectorCheck = { ok: true, totalHits: 0, details: [] };
+        }
+      }
+    }
   }
 
   return {
     ok: true,
-    script: parsed,
-    provider: 'cloud',
-    quota: cloudRes.quota,
+    script: finalScript,
+    provider,
+    usedVision,
+    autoHealed,
+    ...(selectorCheck ? { selectorCheck } : {}),
+  };
+}
+
+// ─── Local Coding Agent Bridge (`pagecraft-mcp`) Tool Handlers ────────────
+
+export interface McpBridgeApplyModInput {
+  name: string;
+  description?: string;
+  engine: 'css' | 'js';
+  matches?: string[];
+  body: string;
+  targetSelectors?: string[];
+}
+
+export interface McpBridgeHandlers {
+  getActivePage: () => Promise<unknown>;
+  getPickedElement: () => Promise<unknown>;
+  triggerPicker: () => Promise<unknown>;
+  verifySelectors: (selectors: string[]) => Promise<unknown>;
+  applyMod: (input: McpBridgeApplyModInput) => Promise<unknown>;
+  listMods: () => Promise<unknown>;
+  toggleMod: (id: string, enabled: boolean) => Promise<unknown>;
+}
+
+export interface McpBridgeHandlerDeps {
+  getLastPickedElement?: () => PickedElementContext | null | Promise<PickedElementContext | null>;
+  startPicker?: (lang?: 'zh' | 'en') => Promise<{ ok: boolean; error?: string }>;
+  captureScreenshot?: (picked: PickedElementContext) => Promise<string | undefined>;
+  includeVisionScreenshot?: () => boolean | Promise<boolean>;
+}
+
+export function buildMcpBridgeHandlers(deps: McpBridgeHandlerDeps = {}): McpBridgeHandlers {
+  const captureFn = deps.captureScreenshot ?? ((p) => captureElementScreenshot(p));
+
+  return {
+    async getActivePage() {
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true }).catch(() => []);
+      const rawUrl = tab?.url ?? '';
+      const supported = Boolean(tab?.id && /^https?:\/\//i.test(rawUrl));
+      const ctx = supported ? await getActiveTabPageContext() : { ok: false };
+      const allMods = await readUserScripts();
+      const activeMods = supported
+        ? allMods
+            .filter((m) => m.enabled && urlMatchesAny(rawUrl, m.matches))
+            .map((m) => ({
+              id: m.id,
+              name: m.name,
+              engine: m.engine,
+              matches: m.matches,
+              targetSelectors: m.targetSelectors,
+            }))
+        : [];
+
+      return {
+        supported,
+        tabId: tab?.id,
+        url: rawUrl ? sanitizePageUrl(rawUrl) : undefined,
+        title: tab?.title ? redactSensitiveText(tab.title, 100) : undefined,
+        domSkeleton: ctx.ok ? ctx.context : undefined,
+        activeMods,
+      };
+    },
+
+    async getPickedElement() {
+      const picked = (await deps.getLastPickedElement?.()) ?? null;
+      if (!picked) {
+        return { pickedElement: null };
+      }
+      const allowShot = (await deps.includeVisionScreenshot?.()) ?? true;
+      if (allowShot && !picked.screenshotDataUrl && picked.rect.width > 0 && picked.rect.height > 0) {
+        const shot = await captureFn(picked);
+        if (shot) {
+          return { pickedElement: { ...picked, screenshotDataUrl: shot } };
+        }
+      }
+      return { pickedElement: picked };
+    },
+
+    async triggerPicker() {
+      if (deps.startPicker) {
+        return deps.startPicker('en');
+      }
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true }).catch(() => []);
+      if (!tab?.id || !tab.url || !/^https?:\/\//i.test(tab.url)) {
+        return { ok: false, error: 'Active tab is not a scriptable http/https webpage.' };
+      }
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: injectElementPickerOverlay,
+        args: ['en'],
+        world: 'ISOLATED',
+      });
+      return { ok: true, url: sanitizePageUrl(tab.url) };
+    },
+
+    async verifySelectors(selectors: string[]) {
+      return verifySelectorsOnActiveTab(selectors);
+    },
+
+    async applyMod(input: McpBridgeApplyModInput) {
+      const name = String(input.name ?? '').trim();
+      const engine: ModEngine = input.engine === 'js' ? 'js' : 'css';
+      const body = String(input.body ?? '').trim();
+
+      if (!name) {
+        throw new Error('Mod `name` is required.');
+      }
+      if (!body) {
+        throw new Error('Mod `body` cannot be empty.');
+      }
+      if (engine === 'css') {
+        const err = validateCssStructureSafely(body);
+        if (err) throw new Error(err);
+      } else {
+        const err = validateJsStructureSafely(body);
+        if (err) throw new Error(err);
+      }
+
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true }).catch(() => []);
+      const tabUrl = tab?.url ?? '';
+
+      let matches = Array.isArray(input.matches)
+        ? input.matches.map((m) => String(m).trim()).filter(Boolean)
+        : [];
+      if (matches.length === 0 && tabUrl) {
+        const derived = hostPatternFromUrl(tabUrl);
+        if (derived) matches = [derived];
+      }
+      if (matches.length === 0) {
+        throw new Error('No valid `@match` pattern provided and no active http/https tab open.');
+      }
+      const matchErr = validateMatches(matches, false);
+      if (matchErr || matches.some((m) => isBroadMatch(m))) {
+        throw new Error(
+          `Invalid or overly broad @match pattern (${matchErr ?? 'broad wildcard disallowed'}).`,
+        );
+      }
+
+      const now = Date.now();
+      const existing = (await readUserScripts()).find(
+        (m) => m.name === name && JSON.stringify(m.matches) === JSON.stringify(matches),
+      );
+      const mod: UserScript = {
+        id: existing?.id ?? crypto.randomUUID(),
+        name,
+        description: String(input.description ?? '').trim(),
+        engine,
+        matches,
+        code: engine === 'js' ? body : '',
+        css: engine === 'css' ? body : undefined,
+        targetSelectors: Array.isArray(input.targetSelectors)
+          ? input.targetSelectors.map((s) => String(s).trim()).filter(Boolean).slice(0, 6)
+          : undefined,
+        enabled: true,
+        source: 'ai',
+        runAt: engine === 'css' ? 'document_start' : 'document_idle',
+        allowAllUrls: false,
+        createdAt: existing?.createdAt ?? now,
+        updatedAt: now,
+      };
+
+      await upsertUserScript(mod);
+      await syncUserScripts();
+      if (engine === 'css' && tab?.id && tabUrl && urlMatchesAny(tabUrl, matches)) {
+        await syncCssForTab(tab.id, tabUrl);
+      }
+
+      const selectorCheck =
+        mod.targetSelectors && mod.targetSelectors.length > 0
+          ? await verifySelectorsOnActiveTab(mod.targetSelectors)
+          : undefined;
+
+      return {
+        ok: true,
+        id: mod.id,
+        name: mod.name,
+        engine: mod.engine,
+        matches: mod.matches,
+        selectorCheck,
+      };
+    },
+
+    async listMods() {
+      const mods = await readUserScripts();
+      return {
+        mods: mods.map((m) => ({
+          id: m.id,
+          name: m.name,
+          description: m.description,
+          engine: m.engine,
+          matches: m.matches,
+          enabled: m.enabled,
+          targetSelectors: m.targetSelectors,
+          updatedAt: m.updatedAt,
+        })),
+      };
+    },
+
+    async toggleMod(id: string, enabled: boolean) {
+      const mods = await readUserScripts();
+      const target = mods.find((m) => m.id === id);
+      if (!target) {
+        throw new Error(`Mod not found: ${id}`);
+      }
+      const updated: UserScript = {
+        ...target,
+        enabled: Boolean(enabled),
+        updatedAt: Date.now(),
+      };
+      await upsertUserScript(updated);
+      await syncUserScripts();
+      return { ok: true, id: updated.id, name: updated.name, enabled: updated.enabled };
+    },
   };
 }

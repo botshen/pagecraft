@@ -1,12 +1,12 @@
 /**
- * Zero-credit, deterministic instant CSS generator for the official
- * `https://pagecraft.shenxin.space/playground` 20-second onboarding sandbox.
+ * Deterministic instant CSS generator for the interactive 20-second onboarding
+ * sandbox (`/playground` on `pagecraft.shenxin.space`, `*.github.io`, `localhost`,
+ * or `127.0.0.1`).
  *
  * Ensures first-time users can practice "Pick -> Generate -> Apply" in ~0.2s:
- * - Consumes 0 of the user's 10 free cloud AI trial generations
- * - Works 100% reliably offline/before cloud LLM keys are configured
+ * - Works 100% offline before any API keys or local models are configured
  * - Falls through (`null`) if the user explicitly asks for interactive JS logic
- *   (e.g. CSV export button, copy button) so real AI generation handles those.
+ *   (e.g. CSV export button, copy button) so AI generation handles those.
  */
 
 import type {
@@ -21,15 +21,51 @@ const JS_INTENT_RE =
 
 const OVERDUE_ROW_RE = /(?:逾期|overdue|标红|highlight\s+(?:table\s+)?rows?)/i;
 
+function isAllowedPlaygroundHost(hostname: string): boolean {
+  const host = hostname.toLowerCase();
+  return (
+    host === 'pagecraft.shenxin.space' ||
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    (host.endsWith('.github.io') && host.length > '.github.io'.length)
+  );
+}
+
+function isPlaygroundPath(pathname: string, hostname: string): boolean {
+  if (pathname === '/playground' || pathname.startsWith('/playground/')) {
+    return true;
+  }
+  // GitHub Pages project sites serve `/<repo>/playground` or `/<repo>/playground/`
+  if (hostname.toLowerCase().endsWith('.github.io')) {
+    return /^\/[A-Za-z0-9._-]+\/playground(?:\/|$)/.test(pathname);
+  }
+  return false;
+}
+
 export function isPlaygroundUrl(url?: string): boolean {
   if (!url) return false;
   try {
     const parsed = new URL(url);
     if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false;
-    if (parsed.hostname.toLowerCase() !== 'pagecraft.shenxin.space') return false;
-    return parsed.pathname === '/playground' || parsed.pathname.startsWith('/playground/');
+    if (!isAllowedPlaygroundHost(parsed.hostname)) return false;
+    return isPlaygroundPath(parsed.pathname, parsed.hostname);
   } catch {
     return false;
+  }
+}
+
+function resolvePlaygroundMatchPattern(targetUrl?: string): string {
+  if (!targetUrl) return PLAYGROUND_MATCH_PATTERN;
+  try {
+    const parsed = new URL(targetUrl);
+    if (parsed.hostname.toLowerCase() === 'pagecraft.shenxin.space') {
+      return PLAYGROUND_MATCH_PATTERN;
+    }
+    const basePath = parsed.pathname.replace(/\/+$/, '') || '/playground';
+    // Match pattern format: `<scheme>://<host><path>*` (without port per Chrome match pattern rules)
+    return `${parsed.protocol}//${parsed.hostname}${basePath}*`;
+  } catch {
+    return PLAYGROUND_MATCH_PATTERN;
   }
 }
 
@@ -84,6 +120,7 @@ export function tryBuildPlaygroundMod(
 
   const zh = (payload.lang ?? 'zh') === 'zh';
   const pickedSel = payload.pickedElement?.selector?.trim() ?? '';
+  const matchPattern = resolvePlaygroundMatchPattern(payload.targetUrl);
 
   // 1. Sample table overdue row highlight
   if (
@@ -97,7 +134,7 @@ export function tryBuildPlaygroundMod(
         ? '将示例表格中状态为「逾期」的行柔和标红醒目提示'
         : 'Highlights overdue rows in the sample metrics table',
       engine: 'css',
-      matches: [PLAYGROUND_MATCH_PATTERN],
+      matches: [matchPattern],
       code: '',
       css: `/* ${zh ? '高亮状态为逾期的表格行' : 'Highlight overdue table rows'} */\n${sel} td {\n  background: rgba(220, 38, 38, 0.10) !important;\n  color: #b91c1c !important;\n  font-weight: 600 !important;\n}`,
       targetSelectors: [sel],
@@ -210,15 +247,15 @@ export function tryBuildPlaygroundMod(
   return {
     name,
     description: zh
-      ? '隐藏干扰区块并舒展正文排版（靶场练习 · 不扣免费额度）'
-      : 'Hides target clutter and expands the article (Sandbox · 0 quota used)',
+      ? '隐藏干扰区块并舒展正文排版（本地瞬时靶场引擎 · 免配置离线可用）'
+      : 'Hides target clutter and expands the article (Instant local sandbox · 0 setup)',
     engine: 'css',
-    matches: [PLAYGROUND_MATCH_PATTERN],
+    matches: [matchPattern],
     code: '',
     css: cssBlocks.join('\n\n'),
     targetSelectors: targetSelectors.slice(0, 4),
     explanation: zh
-      ? '已生成纯 CSS 净化样式（靶场练习不消耗 10 次免费云端额度）。点击下方「应用并保存」，左侧靶场页面将在 0.1 秒内实时变干净！'
-      : 'Generated pure CSS rules (sandbox practice uses 0 of your 10 free cloud credits). Click "Apply & Save" below to reshape the page in 0.1s!',
+      ? '已本地瞬时生成纯 CSS 净化样式（无需配置 API Key）。点击下方「应用并保存」，左侧靶场页面将在 0.1 秒内实时变干净！'
+      : 'Generated pure CSS rules locally with zero setup. Click "Apply & Save" below to reshape the page in 0.1s!',
   };
 }

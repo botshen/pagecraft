@@ -9,12 +9,18 @@ import {
 import { generateUserScript } from '../../entrypoints/background/userscripts.ts';
 import { DEFAULT_SETTINGS } from '../../lib/shared/constants.ts';
 
-test('isPlaygroundUrl matches /playground and rejects root or third-party hosts', () => {
+test('isPlaygroundUrl matches /playground on official site, *.github.io, localhost, and 127.0.0.1 while rejecting third-party hosts', () => {
   assert.equal(isPlaygroundUrl('https://pagecraft.shenxin.space/playground'), true);
   assert.equal(isPlaygroundUrl('https://pagecraft.shenxin.space/playground?lang=en'), true);
   assert.equal(isPlaygroundUrl('https://pagecraft.shenxin.space/playground/'), true);
+  assert.equal(isPlaygroundUrl('https://botshen.github.io/playground'), true);
+  assert.equal(isPlaygroundUrl('https://botshen.github.io/plugin-radar/playground?lang=zh'), true);
+  assert.equal(isPlaygroundUrl('http://localhost:4173/playground'), true);
+  assert.equal(isPlaygroundUrl('http://127.0.0.1:8080/playground/'), true);
 
   assert.equal(isPlaygroundUrl('https://pagecraft.shenxin.space/'), false);
+  assert.equal(isPlaygroundUrl('https://botshen.github.io/plugin-radar/'), false);
+  assert.equal(isPlaygroundUrl('https://evilgithub.io/playground'), false);
   assert.equal(isPlaygroundUrl('https://www.zhihu.com/playground'), false);
   assert.equal(isPlaygroundUrl('chrome://newtab'), false);
   assert.equal(isPlaygroundUrl(undefined), false);
@@ -27,7 +33,7 @@ test('defaultPlaygroundIntent tailors starter prompt to picked sandbox target', 
   assert.ok(defaultPlaygroundIntent('#pc-demo-table', 'zh').includes('逾期'));
 });
 
-test('tryBuildPlaygroundMod builds instant CSS for sandbox targets and passes JS requests through', () => {
+test('tryBuildPlaygroundMod builds instant CSS for sandbox targets across supported hosts and passes JS requests through', () => {
   const sidebarMod = tryBuildPlaygroundMod({
     intent: '隐藏右侧杂乱推荐栏，并让正文自动加宽铺满',
     targetUrl: 'https://pagecraft.shenxin.space/playground',
@@ -52,6 +58,15 @@ test('tryBuildPlaygroundMod builds instant CSS for sandbox targets and passes JS
   assert.ok(sidebarMod.css?.includes('#pc-demo-article'));
   assert.ok(sidebarMod.targetSelectors?.includes('#pc-demo-sidebar'));
 
+  // GitHub Pages subpath sandbox resolves exact subpath match pattern
+  const ghPagesMod = tryBuildPlaygroundMod({
+    intent: 'Hide the top promotional banner',
+    targetUrl: 'https://botshen.github.io/plugin-radar/playground?lang=en',
+    lang: 'en',
+  });
+  assert.ok(ghPagesMod);
+  assert.deepEqual(ghPagesMod.matches, ['https://botshen.github.io/plugin-radar/playground*']);
+
   // Follow-up refinement preserves previous hidden target and adds banner + warm paper
   const refined = tryBuildPlaygroundMod({
     intent: '把顶部横幅也隐藏，并换成暖白护眼纸底',
@@ -73,7 +88,7 @@ test('tryBuildPlaygroundMod builds instant CSS for sandbox targets and passes JS
   // Overdue row highlight
   const overdueMod = tryBuildPlaygroundMod({
     intent: '把表格里状态为「逾期」或金额大于 1000 的行高亮标红',
-    targetUrl: 'https://pagecraft.shenxin.space/playground',
+    targetUrl: 'https://localhost:4173/playground',
     lang: 'zh',
   });
   assert.ok(overdueMod);
@@ -89,7 +104,7 @@ test('tryBuildPlaygroundMod builds instant CSS for sandbox targets and passes JS
   assert.equal(jsRequest, null);
 });
 
-test('generateUserScript uses 0 LLM/cloud calls on /playground visual tasks', async () => {
+test('generateUserScript uses 0 LLM calls on /playground visual tasks', async () => {
   let llmCalls = 0;
   const res = await generateUserScript(
     {
@@ -108,7 +123,6 @@ test('generateUserScript uses 0 LLM/cloud calls on /playground visual tasks', as
   assert.equal(res.ok, true);
   if (res.ok) {
     assert.equal(res.provider, 'playground');
-    assert.equal(res.quota, undefined);
     assert.equal(res.script.engine, 'css');
   }
   assert.equal(llmCalls, 0);

@@ -6,15 +6,17 @@
  * SidePanel and Background worker never clobber each other's fields.
  */
 
-import type { AppSettings, AIConfig, CloudTrialState } from '../../types';
-import { DEFAULT_SETTINGS, FREE_TRIAL_LIMIT, STORAGE_KEYS } from './constants';
-import { isLocalLoopbackEndpoint } from './ai-endpoints';
-import { endpointBase } from './endpoint';
+import type { AiMode, AppSettings, AIConfig } from '../types';
+import { DEFAULT_MCP_BRIDGE_URL, DEFAULT_SETTINGS, STORAGE_KEYS } from './constants';
 
 export type SettingsPatch = {
-  aiMode?: AppSettings['aiMode'];
+  aiMode?: AiMode;
   ai?: Partial<AIConfig>;
-  cloud?: Partial<CloudTrialState>;
+  enableVisionCapture?: boolean;
+  enableAutoHeal?: boolean;
+  mcpBridgeEnabled?: boolean;
+  mcpBridgeUrl?: string;
+  mcpBridgeToken?: string;
   onboardingDone?: boolean;
   tutorialDone?: boolean;
 };
@@ -39,44 +41,15 @@ function withSettingsLock<T>(fn: () => Promise<T>): Promise<T> {
 export function normalizeSettings(raw: unknown): AppSettings {
   const obj = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const rawAi = (obj.ai && typeof obj.ai === 'object' ? obj.ai : {}) as Record<string, unknown>;
-  const rawCloud = (
-    obj.cloud && typeof obj.cloud === 'object' ? obj.cloud : {}
-  ) as Record<string, unknown>;
 
   const apiKey = typeof rawAi.apiKey === 'string' ? rawAi.apiKey : DEFAULT_SETTINGS.ai.apiKey;
   const baseUrl =
     typeof rawAi.baseUrl === 'string' && rawAi.baseUrl.trim()
       ? rawAi.baseUrl
       : DEFAULT_SETTINGS.ai.baseUrl;
-  const aiMode: AppSettings['aiMode'] =
-    obj.aiMode === 'byok' || obj.aiMode === 'cloud'
-      ? obj.aiMode
-      : apiKey.trim().length > 0 || isLocalLoopbackEndpoint(baseUrl)
-        ? 'byok'
-        : 'cloud';
 
-  const installSecrets: Record<string, string> = {};
-  if (rawCloud.installSecrets && typeof rawCloud.installSecrets === 'object') {
-    for (const [k, v] of Object.entries(rawCloud.installSecrets as Record<string, unknown>)) {
-      const canon = endpointBase(k);
-      if (canon && typeof v === 'string' && v) {
-        installSecrets[canon] = v;
-      }
-    }
-  }
-
-  const rawQuota = (rawCloud.quota && typeof rawCloud.quota === 'object'
-    ? rawCloud.quota
-    : null) as Record<string, unknown> | null;
-  const limit =
-    typeof rawQuota?.limit === 'number' && Number.isFinite(rawQuota.limit) && rawQuota.limit > 0
-      ? Math.round(rawQuota.limit)
-      : FREE_TRIAL_LIMIT;
-  const used =
-    typeof rawQuota?.used === 'number' && Number.isFinite(rawQuota.used) && rawQuota.used >= 0
-      ? Math.round(rawQuota.used)
-      : 0;
-  const remaining = Math.max(0, limit - used);
+  // Seamlessly migrate any legacy `'cloud'` or unknown mode to `'byok'`
+  const aiMode: AiMode = obj.aiMode === 'builtin' ? 'builtin' : 'byok';
 
   return {
     aiMode,
@@ -91,34 +64,38 @@ export function normalizeSettings(raw: unknown): AppSettings {
         ? rawAi.availableModels.filter((m): m is string => typeof m === 'string')
         : undefined,
     },
-    cloud: {
-      installId: typeof rawCloud.installId === 'string' ? rawCloud.installId : undefined,
-      installSecrets: Object.keys(installSecrets).length > 0 ? installSecrets : undefined,
-      endpoint: typeof rawCloud.endpoint === 'string' ? rawCloud.endpoint : '',
-      quota: { used, limit, remaining },
-    },
+    enableVisionCapture:
+      typeof obj.enableVisionCapture === 'boolean'
+        ? obj.enableVisionCapture
+        : DEFAULT_SETTINGS.enableVisionCapture,
+    enableAutoHeal:
+      typeof obj.enableAutoHeal === 'boolean'
+        ? obj.enableAutoHeal
+        : DEFAULT_SETTINGS.enableAutoHeal,
+    mcpBridgeEnabled:
+      typeof obj.mcpBridgeEnabled === 'boolean'
+        ? obj.mcpBridgeEnabled
+        : DEFAULT_SETTINGS.mcpBridgeEnabled,
+    mcpBridgeUrl:
+      typeof obj.mcpBridgeUrl === 'string' && obj.mcpBridgeUrl.trim()
+        ? obj.mcpBridgeUrl.trim()
+        : DEFAULT_MCP_BRIDGE_URL,
+    mcpBridgeToken:
+      typeof obj.mcpBridgeToken === 'string'
+        ? obj.mcpBridgeToken
+        : DEFAULT_SETTINGS.mcpBridgeToken,
     onboardingDone: Boolean(obj.onboardingDone),
     tutorialDone: Boolean(obj.tutorialDone),
   };
 }
 
 export function mergeSettings(current: AppSettings, patch: SettingsPatch): AppSettings {
-  const mergedSecrets =
-    patch.cloud && 'installSecrets' in patch.cloud
-      ? patch.cloud.installSecrets
-      : current.cloud.installSecrets;
-
   return normalizeSettings({
     ...current,
     ...patch,
     ai: {
       ...current.ai,
       ...(patch.ai ?? {}),
-    },
-    cloud: {
-      ...current.cloud,
-      ...(patch.cloud ?? {}),
-      installSecrets: mergedSecrets,
     },
   });
 }
@@ -177,17 +154,4 @@ export async function updateSettings(
     await storageSetSettingsRaw(next);
     return next;
   });
-}
-
-export function getOrCreateInstallId(): Promise<{ installId: string; settings: AppSettings }> {
-  return updateSettings((current) => {
-    if (current.cloud.installId && /^[A-Za-z0-9_-]{16,64}$/.test(current.cloud.installId)) {
-      return {};
-    }
-    const installId = crypto.randomUUID().replace(/-/g, '');
-    return { cloud: { installId } };
-  }).then((settings) => ({
-    installId: settings.cloud.installId!,
-    settings,
-  }));
 }

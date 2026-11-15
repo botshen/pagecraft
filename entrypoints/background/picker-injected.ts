@@ -346,8 +346,14 @@ export function injectElementPickerOverlay(lang: 'zh' | 'en'): { started: boolea
       textPreview: redact(rawText, 120) || undefined,
       attributes: attrs,
       rect: {
+        x: Math.round(rect.left),
+        y: Math.round(rect.top),
         width: Math.round(rect.width),
         height: Math.round(rect.height),
+        dpr:
+          typeof window.devicePixelRatio === 'number' && window.devicePixelRatio > 0
+            ? window.devicePixelRatio
+            : 1,
       },
       computedStyles: {
         display: cs.display,

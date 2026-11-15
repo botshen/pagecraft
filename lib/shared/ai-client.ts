@@ -1,5 +1,7 @@
 /**
- * OpenAI-compatible BYOK & Local Loopback (Ollama / LM Studio) LLM client.
+ * OpenAI-compatible BYOK & Local Loopback (Ollama / LM Studio) LLM client,
+ * with Multimodal Vision (`image_url`) + automatic text-only fallback when an
+ * upstream text-only model rejects image inputs with HTTP 400 / 415 / 422.
  *
  * - Remote endpoints MUST use `https://` and provide a non-empty API key.
  * - Local loopback endpoints (`localhost`, `127.0.0.1`, `[::1]`) may use `http://`
@@ -7,7 +9,7 @@
  *   or sent as `Bearer <key>` when provided).
  */
 
-import type { AIConfig } from '../../types';
+import type { AIConfig } from '../types';
 import { isLocalLoopbackEndpoint, resolveEndpoints, type ResolvedEndpoints } from './ai-endpoints';
 import {
   describeFetchFailure,
@@ -34,6 +36,20 @@ export class LlmHttpError extends Error {
   }
 }
 
+export interface RequestChatCompletionOptions {
+  systemPrompt?: string;
+  imageDataUrl?: string;
+  isTest?: boolean;
+  fetchImpl?: typeof fetch;
+}
+
+export interface ChatCompletionResult {
+  content: string;
+  usedVision: boolean;
+}
+
+const VISION_REJECT_STATUSES = new Set([400, 415, 422]);
+
 function describeResolveError(err: NonNullable<ResolvedEndpoints['error']>): ApiFailure {
   if (err === 'empty') {
     return { message: 'Base URL is empty', status: 0, hint: 'notFound' };
@@ -49,12 +65,38 @@ function describeResolveError(err: NonNullable<ResolvedEndpoints['error']>): Api
   return { message: 'Base URL is not a valid URL', status: 0, hint: 'notFound' };
 }
 
-export async function byokLlmChat(
+function buildTextAttempts(
+  model: string,
+  messages: Array<Record<string, unknown>>,
+  isTest: boolean,
+): Array<Record<string, unknown>> {
+  const baseBody = { model, messages };
+  const cap = isTest ? { max_completion_tokens: 32 } : {};
+  const json = { response_format: { type: 'json_object' } };
+
+  const seen = new Set<string>();
+  return [
+    { ...baseBody, temperature: 0.25, ...json, ...cap },
+    { ...baseBody, ...json, ...cap },
+    { ...baseBody, ...json },
+    { ...baseBody },
+  ].filter((body) => {
+    const key = JSON.stringify(body);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+export async function requestChatCompletion(
   config: AIConfig,
-  prompt: string,
-  isTest = false,
-  fetchImpl: typeof fetch = fetch,
-): Promise<{ content: string }> {
+  userPrompt: string,
+  options: RequestChatCompletionOptions = {},
+): Promise<ChatCompletionResult> {
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const isTest = Boolean(options.isTest);
+  const imageDataUrl = (options.imageDataUrl ?? '').trim();
+
   const { base, chatUrl: endpoint, error: resolveError } = resolveEndpoints(config.baseUrl);
   if (resolveError) {
     throw new LlmHttpError(describeResolveError(resolveError), '');
@@ -87,25 +129,82 @@ export async function byokLlmChat(
       body: JSON.stringify(body),
     });
 
-  const baseBody = {
-    model: config.model.trim(),
-    messages: [{ role: 'user', content: prompt }],
-  };
-  const cap = isTest ? { max_completion_tokens: 32 } : {};
-  const json = { response_format: { type: 'json_object' } };
+  const model = config.model.trim();
+  const sysPrefix: Array<Record<string, unknown>> = options.systemPrompt?.trim()
+    ? [{ role: 'system', content: options.systemPrompt.trim() }]
+    : [];
 
-  const seen = new Set<string>();
-  const attempts = [
-    { ...baseBody, temperature: 0.25, ...json, ...cap },
-    { ...baseBody, ...json, ...cap },
-    { ...baseBody, ...json },
-    { ...baseBody },
-  ].filter((body) => {
-    const key = JSON.stringify(body);
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  // 1. If a cropped element screenshot is provided, attempt OpenAI multimodal format first.
+  //    If the upstream model is text-only and rejects `image_url` with HTTP 400/415/422,
+  //    automatically retry ONCE with plain string `content: userPrompt` so generation never fails!
+  if (imageDataUrl) {
+    const multimodalMessages: Array<Record<string, unknown>> = [
+      ...sysPrefix,
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: userPrompt },
+          {
+            type: 'image_url',
+            image_url: { url: imageDataUrl, detail: 'low' },
+          },
+        ],
+      },
+    ];
+
+    const visionResp = await send({
+      model,
+      messages: multimodalMessages,
+      temperature: 0.25,
+      ...(isTest ? { max_completion_tokens: 32 } : {}),
+    });
+
+    if (visionResp.ok) {
+      const data = (await visionResp.json()) as ChatResponse;
+      const content =
+        data.choices?.[0]?.message?.content ?? data.content?.[0]?.text ?? '';
+      return { content, usedVision: true };
+    }
+
+    if (!VISION_REJECT_STATUSES.has(visionResp.status)) {
+      const errBody = await visionResp.text().catch(() => '');
+      throw new LlmHttpError(
+        describeHttpFailure(visionResp.status, visionResp.statusText, errBody),
+        endpoint,
+      );
+    }
+
+    // Drain body cleanly and retry once with plain string `content: userPrompt`
+    await visionResp.text().catch(() => '');
+    const fallbackResp = await send({
+      model,
+      messages: [...sysPrefix, { role: 'user', content: userPrompt }],
+      temperature: 0.25,
+      ...(isTest ? { max_completion_tokens: 32 } : {}),
+    });
+
+    if (!fallbackResp.ok) {
+      const errBody = await fallbackResp.text().catch(() => '');
+      throw new LlmHttpError(
+        describeHttpFailure(fallbackResp.status, fallbackResp.statusText, errBody),
+        endpoint,
+      );
+    }
+
+    const fallbackData = (await fallbackResp.json()) as ChatResponse;
+    const fallbackContent =
+      fallbackData.choices?.[0]?.message?.content ??
+      fallbackData.content?.[0]?.text ??
+      '';
+    return { content: fallbackContent, usedVision: false };
+  }
+
+  // 2. Standard text-only flow with response_format compatibility fallback
+  const textMessages: Array<Record<string, unknown>> = [
+    ...sysPrefix,
+    { role: 'user', content: userPrompt },
+  ];
+  const attempts = buildTextAttempts(model, textMessages, isTest);
 
   let resp: Response | null = null;
   for (const body of attempts) {
@@ -124,7 +223,21 @@ export async function byokLlmChat(
     data.choices?.[0]?.message?.content ??
     data.content?.[0]?.text ??
     '';
-  return { content };
+  return { content, usedVision: false };
+}
+
+export async function byokLlmChat(
+  config: AIConfig,
+  prompt: string,
+  isTest = false,
+  fetchImpl: typeof fetch = fetch,
+  imageDataUrl?: string,
+): Promise<ChatCompletionResult> {
+  return requestChatCompletion(config, prompt, {
+    isTest,
+    fetchImpl,
+    imageDataUrl,
+  });
 }
 
 export async function byokListModels(

@@ -1,13 +1,12 @@
 /**
- * Types for PageCraft's Dual-Engine Mod Manager (CSS + JS Userscripts).
+ * Types for PageCraft's Dual-Engine Mod Manager (CSS + JS Userscripts)
+ * and Closed-Loop Browser Micro-Agent Runtime.
  *
  * - `engine: 'css'` runs via `chrome.scripting.insertCSS` / `removeCSS`:
  *   works out-of-the-box with ZERO browser developer/userscript toggles!
  * - `engine: 'js'` runs via MV3 `chrome.userScripts` in an isolated
  *   `USER_SCRIPT` world (and exports cleanly to Tampermonkey / ScriptCat).
  */
-
-import type { CloudQuota } from '../../types';
 
 export const MODS_STORAGE_KEY = 'pc_mods';
 export const LEGACY_USERSCRIPTS_STORAGE_KEY = 'pr_userscripts';
@@ -50,6 +49,14 @@ export interface UserScriptsAvailability {
   reason?: 'unsupported' | 'disabled';
 }
 
+export interface PickedElementRect {
+  x?: number;
+  y?: number;
+  width: number;
+  height: number;
+  dpr?: number;
+}
+
 /** Context captured when the user clicks an element with the live Element Picker. */
 export interface PickedElementContext {
   selector: string;
@@ -60,12 +67,14 @@ export interface PickedElementContext {
   tag: string;
   textPreview?: string;
   attributes: Record<string, string>;
-  rect: { width: number; height: number };
+  rect: PickedElementRect;
   computedStyles: Record<string, string>;
   /** Compact, PII-redacted HTML skeleton of the element + immediate surroundings. */
   domSnippet: string;
   pageUrl: string;
   pageTitle?: string;
+  /** Optional compact cropped JPEG/PNG data URL around the picked element. */
+  screenshotDataUrl?: string;
 }
 
 export interface ActiveTabInfo {
@@ -110,18 +119,27 @@ export interface GeneratedUserScript {
   explanation: string;
 }
 
+export interface SelectorVerifyResult {
+  ok: boolean;
+  totalHits: number;
+  details: Array<{ selector: string; count: number }>;
+}
+
+export type ModGenerationProvider = 'byok' | 'builtin' | 'playground';
+
 export type GenerateUserScriptResult =
   | {
       ok: true;
       script: GeneratedUserScript;
-      provider: 'cloud' | 'byok' | 'playground';
-      quota?: CloudQuota;
+      provider: ModGenerationProvider;
+      usedVision?: boolean;
+      autoHealed?: boolean;
+      selectorCheck?: SelectorVerifyResult;
     }
   | {
       ok: false;
       error: string;
-      code?: 'quota_exhausted' | 'missing_api_key' | 'network' | 'invalid_output';
-      quota?: CloudQuota;
+      code?: 'missing_api_key' | 'builtin_unavailable' | 'network' | 'invalid_output';
     };
 
 export interface PageContextResult {
@@ -130,10 +148,4 @@ export interface PageContextResult {
   title?: string;
   context?: string;
   error?: string;
-}
-
-export interface SelectorVerifyResult {
-  ok: boolean;
-  totalHits: number;
-  details: Array<{ selector: string; count: number }>;
 }
