@@ -1,0 +1,46 @@
+{
+  "name": "@pagecraft/mcp",
+  "version": "0.2.0",
+  "description": "Zero-dependency local MCP bridge connecting Claude Code, Cursor, Codex CLI, and Windsurf to PageCraft's live authenticated browser DOM, Element Picker, and Dual-Engine runtime over 127.0.0.1.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "pagecraft-mcp": "./src/cli.ts"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./ws-server": "./src/ws-server.ts",
+    "./mcp-server": "./src/mcp-server.ts"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.6.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/botshen/plugin-radar.git",
+    "directory": "packages/mcp"
+  },
+  "bugs": {
+    "url": "https://github.com/botshen/plugin-radar/issues"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "pagecraft",
+    "browser-extension",
+    "claude-code",
+    "cursor",
+    "codex",
+    "windsurf",
+    "userscript",
+    "dom-inspector"
+  ],
+  "scripts": {
+    "start": "node --experimental-strip-types ./src/cli.ts",
+    "typecheck": "../../node_modules/.bin/tsc --noEmit -p ./tsconfig.json"
+  }
+}
