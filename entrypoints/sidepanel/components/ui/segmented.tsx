@@ -1,17 +1,6 @@
 import * as React from 'react';
 import { cn } from '~/lib/utils';
 
-/**
- * CDS segmented control — sliding pill, 1px track padding, geometric thumb.
- * Pure CSS (no framer-motion): the thumb is absolutely positioned and
- * transitions on `--cds-dur-snap` + `--cds-ease-snap`.
- *
- * Segments size to their content (flex-basis: auto) because labels differ in
- * length, so the thumb's left/width are measured from the active button's
- * real bounds — an equal-share calc would let the pill spill over the
- * neighbouring tab's label.
- */
-
 export interface SegmentedItem {
   id: string;
   label: string;
@@ -50,7 +39,6 @@ export function SegmentedControl({
     );
   }, [activeIndex, items]);
 
-  // Re-measure when the track or any item resizes (count badge, font load).
   React.useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
@@ -97,12 +85,16 @@ export function SegmentedControl({
   return (
     <div
       ref={trackRef}
-      className={cn('cds-seg-track select-none', size === 'sm' && 'h-7 text-[11px]', className)}
+      className={cn(
+        'pc-seg-track select-none',
+        size === 'sm' && 'h-7 text-[11.5px]',
+        className,
+      )}
       role="tablist"
     >
       <span
         aria-hidden="true"
-        className="cds-seg-thumb"
+        className="pc-seg-thumb"
         style={{ left: thumb.left, width: thumb.width }}
       />
       {items.map((item, index) => {
@@ -121,14 +113,18 @@ export function SegmentedControl({
             title={item.title}
             onClick={() => onChange(item.id)}
             onKeyDown={(e) => handleKeyDown(e, index)}
-            className="cds-seg-item cds-btn-squish"
+            className="pc-seg-item"
           >
             {item.icon}
             <span className="truncate">{item.label}</span>
             {typeof item.badge === 'number' && item.badge > 0 && (
               <span
-                key={item.badge}
-                className="pc-counter-tick tabular-nums text-xs px-1.5 py-0 rounded-full bg-foreground/8 text-current leading-tight"
+                className={cn(
+                  'tabular-nums text-[11px] px-1.5 py-0 rounded-[4px] leading-tight font-semibold',
+                  active
+                    ? 'bg-[var(--pc-accent-subtle)] text-[var(--pc-accent-ink)]'
+                    : 'bg-foreground/8 text-muted-foreground',
+                )}
               >
                 {item.badge}
               </span>

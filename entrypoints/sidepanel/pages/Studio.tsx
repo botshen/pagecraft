@@ -39,7 +39,6 @@ import {
 import { formatRecipeSharePost } from '~/lib/userscripts/share';
 import {
   Crosshair,
-  Sparkles,
   Check,
   Copy,
   Code2,
@@ -54,6 +53,7 @@ import {
   RotateCcw,
   Eye,
   PlugZap,
+  ArrowRight,
 } from 'lucide-react';
 import { cn } from '~/lib/utils';
 import { recheckOrRecoverJsPermission } from '../utils';
@@ -172,7 +172,6 @@ export default function StudioPage({
   const [errorCode, setErrorCode] = useState<string | undefined>(undefined);
   const [recipeFilter, setRecipeFilter] = useState<RecipeFilterKey>('all');
 
-  // Active draft state (persisted across tab switches via studioSession)
   const [draft, setDraft] = useState<GeneratedUserScript | null>(studioSession.draft);
   const [savedModId, setSavedModId] = useState<string | null>(studioSession.savedModId);
   const [appliedOnce, setAppliedOnce] = useState<boolean>(studioSession.appliedOnce);
@@ -189,9 +188,7 @@ export default function StudioPage({
   const [draftRefined, setDraftRefined] = useState(studioSession.draftRefined);
   const [draftUsedVision, setDraftUsedVision] = useState(studioSession.draftUsedVision);
   const [draftAutoHealed, setDraftAutoHealed] = useState(studioSession.draftAutoHealed);
-  const [feedbackVote, setFeedbackVote] = useState<'up' | null>(
-    studioSession.feedbackVote,
-  );
+  const [feedbackVote, setFeedbackVote] = useState<'up' | null>(studioSession.feedbackVote);
   const [mcpStatus, setMcpStatus] = useState<McpBridgeStatus | null>(null);
   const previewCssRef = useRef<{ tabId: number; css: string } | null>(null);
 
@@ -262,7 +259,6 @@ export default function StudioPage({
   const onPlayground = isPlaygroundUrl(activeTab.url);
   const tutorialStep: 1 | 2 | 3 = draft ? 3 : pickedElement ? 2 : 1;
 
-  // Auto-prefill a tailored prompt when the user picks an element on the sandbox page
   useEffect(() => {
     if (!showTutorial || !onPlayground || !pickedElement || draft) return;
     setIntent((prev) =>
@@ -365,7 +361,7 @@ export default function StudioPage({
       });
 
       if (!res) {
-        setError(lang === 'zh' ? '后台服务未响应，请重试。' : 'No response from background worker.');
+        setError(lang === 'zh' ? '后台服务未响应，请重试。' : 'Background worker did not respond.');
         return;
       }
 
@@ -450,12 +446,12 @@ export default function StudioPage({
     setNeedsJsPermForId(null);
     await safeSendMessage({ type: 'USERSCRIPTS_TEST', payload: { id } });
     if (wasInTutorial) {
-      onToast(t('coachCelebrationToast'), 3800);
+      onToast(t('coachCelebrationToast'), 3600);
     } else {
       onToast(
         lang === 'zh'
-          ? `已启用并保存：${mod.name}`
-          : `Applied & saved: ${mod.name}`,
+          ? `已应用并保存：${mod.name}`
+          : `Applied and saved: ${mod.name}`,
       );
     }
   }
@@ -476,7 +472,7 @@ export default function StudioPage({
       customIntent:
         lang === 'zh'
           ? '刚才生成的改造在页面上未明显生效，请结合最新真实页面 DOM 结构修正选择器或提高样式优先级'
-          : 'The previous mod did not visibly take effect on the live page; please recalibrate the selectors and specificity against the live DOM landmarks',
+          : 'The previous mod did not visibly take effect on the live page; recalibrate selectors and specificity against live DOM landmarks',
       isRefine: true,
       diagnosticHint: selectorSummary
         ? `User reported visual no-op on live page. Current target selectors: [${selectorSummary}].`
@@ -613,7 +609,6 @@ export default function StudioPage({
         return;
       }
 
-      // Non-destructively re-enable existing customized mod
       const reenabled: UserScript = {
         ...existing,
         enabled: true,
@@ -646,11 +641,11 @@ export default function StudioPage({
       onToast(
         matchesHere
           ? lang === 'zh'
-            ? `已为当前网站启用：${reenabled.name}`
+            ? `已在当前站启用：${reenabled.name}`
             : `Enabled on site: ${reenabled.name}`
           : lang === 'zh'
-            ? `已保存规则（访问 ${siteHint ?? '目标站点'} 时自动生效）`
-            : `Saved (activates automatically on ${siteHint ?? 'target site'})`,
+            ? `已保存规则（访问 ${siteHint ?? '目标站点'} 自动生效）`
+            : `Saved (activates on ${siteHint ?? 'target site'})`,
       );
       return;
     }
@@ -683,9 +678,7 @@ export default function StudioPage({
     setNeedsJsPermForId(null);
     const matchedHere =
       recipe.scope === 'current_site' ||
-      Boolean(
-        activeTab.url && urlMatchesAny(activeTab.url, mod.matches),
-      );
+      Boolean(activeTab.url && urlMatchesAny(activeTab.url, mod.matches));
     if (matchedHere) {
       await safeSendMessage({ type: 'USERSCRIPTS_TEST', payload: { id: mod.id } });
     } else {
@@ -695,11 +688,11 @@ export default function StudioPage({
     onToast(
       matchedHere
         ? lang === 'zh'
-          ? `已为当前网站启用：${mod.name}`
+          ? `已在当前站启用：${mod.name}`
           : `Enabled on site: ${mod.name}`
         : lang === 'zh'
-          ? `已保存规则（访问 ${siteHint ?? '目标站点'} 时自动生效）`
-          : `Saved (activates automatically on ${siteHint ?? 'target site'})`,
+          ? `已保存规则（访问 ${siteHint ?? '目标站点'} 自动生效）`
+          : `Saved (activates on ${siteHint ?? 'target site'})`,
     );
   }
 
@@ -712,23 +705,23 @@ export default function StudioPage({
       beforeReload: () =>
         onToast(
           lang === 'zh'
-            ? '检测到授权已开启，正在重启引擎并应用…'
-            : 'Permission detected! Reloading engine to apply…',
+            ? '已检测到授权，正在重启引擎并应用…'
+            : 'Permission detected. Reloading engine…',
         ),
     });
     if (status === 'reloading') return;
     if (status === 'disabled') {
       onToast(
         lang === 'zh'
-          ? '尚未检测到开关开启，请在扩展详情页打开「允许用户脚本」后再试'
-          : 'Still disabled — turn ON "Allow User Scripts" on the extension details page first',
+          ? '尚未检测到开关开启，请先在扩展详情页打开「允许用户脚本」'
+          : 'Toggle still off — enable "Allow User Scripts" on extension details first',
       );
       return;
     }
     setNeedsJsPermForId(null);
     if (targetId) {
       await safeSendMessage({ type: 'USERSCRIPTS_TEST', payload: { id: targetId } });
-      onToast(lang === 'zh' ? 'JS 引擎已激活并在当前页生效！' : 'JS Userscript active on page!');
+      onToast(lang === 'zh' ? 'JS 引擎已激活并在当前页生效' : 'JS userscript active on page');
     }
   }
 
@@ -739,35 +732,37 @@ export default function StudioPage({
     : `${isLocalAi ? t('localAiActiveLabel') : t('byokActiveLabel')} · ${settings.ai.model || 'API'}`;
 
   return (
-    <div className="space-y-4 pb-6">
-      {/* 0. First-Time 3-Step Interactive Coach Card (auto-hides once 1st mod is applied or skipped) */}
+    <div className="space-y-3.5 pb-6 pc-enter">
+      {/* 0. First-Time 3-Step Coach Card (strict max 2 boxes deep via divide-y) */}
       {showTutorial && (
-        <section className="animate-page-enter rounded-xl border border-primary/35 bg-primary/[0.06] px-3.5 py-3 space-y-2">
-          <div className="flex items-center justify-between gap-2">
+        <section className="rounded-[10px] border border-primary/35 bg-card divide-y divide-border overflow-hidden">
+          <div className="px-3.5 py-2.5 bg-[var(--pc-accent-subtle)] flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0 flex-wrap">
-              <span className="text-xs font-semibold text-[#8f381e] dark:text-[#f29b80]">
+              <span className="text-xs font-semibold text-[var(--pc-accent-ink)]">
                 {t('coachTitle')}
               </span>
               {activeTab.supported && (
                 <div className="inline-flex items-center gap-1 text-[11px] font-medium">
-                  {([
-                    [1, t('coachStep1Short')],
-                    [2, t('coachStep2Short')],
-                    [3, t('coachStep3Short')],
-                  ] as const).map(([num, label], idx) => {
+                  {(
+                    [
+                      [1, t('coachStep1Short')],
+                      [2, t('coachStep2Short')],
+                      [3, t('coachStep3Short')],
+                    ] as const
+                  ).map(([num, label], idx) => {
                     const doneStep = tutorialStep > num;
                     const activeStep = tutorialStep === num;
                     return (
                       <span key={num} className="inline-flex items-center gap-1">
-                        {idx > 0 && <span className="text-muted-foreground/60">→</span>}
+                        {idx > 0 && <span className="text-muted-foreground/70">→</span>}
                         <span
                           className={cn(
-                            'px-1.5 py-0.5 rounded tabular-nums',
+                            'px-1.5 py-0.5 rounded-[4px] tabular-nums',
                             doneStep
-                              ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                              ? 'bg-emerald-500/12 text-emerald-800 dark:text-emerald-300'
                               : activeStep
-                                ? 'bg-primary text-white font-semibold'
-                                : 'bg-background/70 text-muted-foreground',
+                                ? 'bg-primary text-[#FAF8F5] font-semibold'
+                                : 'bg-card text-muted-foreground border border-border',
                           )}
                         >
                           {doneStep ? '✓' : num} {label}
@@ -781,76 +776,78 @@ export default function StudioPage({
             <button
               type="button"
               onClick={() => void onCompleteTutorial()}
-              className="text-xs text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
+              className="pc-focus text-xs text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
             >
               {t('coachSkip')}
             </button>
           </div>
 
-          {!activeTab.supported ? (
-            <div className="space-y-2">
-              <p className="text-[13px] text-foreground leading-snug">
-                {t('coachUnsupportedDesc')}
-              </p>
-              <Button
-                size="sm"
-                variant="primary"
-                onClick={() =>
-                  void safeSendMessage({ type: 'OPEN_PRACTICE_TAB', payload: { lang } })
-                }
-                className="pc-press text-xs gap-1 cursor-pointer"
-              >
-                <span>{t('openPracticePage')}</span>
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-1.5">
-              <p className="text-[13px] text-foreground leading-snug">
-                {tutorialStep === 1
-                  ? onPlayground
-                    ? t('coachStep1Playground')
-                    : t('coachStep1AnySite')
-                  : tutorialStep === 2
-                    ? onPlayground
-                      ? t('coachStep2Playground')
-                      : t('coachStep2AnySite')
-                    : t('coachStep3')}
-              </p>
-              {tutorialStep === 1 && !onPlayground && (
-                <button
-                  type="button"
+          <div className="px-3.5 py-2.5 space-y-2">
+            {!activeTab.supported ? (
+              <>
+                <p className="text-[13px] text-foreground leading-snug">
+                  {t('coachUnsupportedDesc')}
+                </p>
+                <Button
+                  size="sm"
+                  variant="primary"
                   onClick={() =>
                     void safeSendMessage({ type: 'OPEN_PRACTICE_TAB', payload: { lang } })
                   }
-                  className="text-xs font-medium text-primary hover:underline cursor-pointer"
                 >
-                  {t('coachTrySandboxLink')}
-                </button>
-              )}
-              {tutorialStep === 2 && !onPlayground && !intent.trim() && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setIntent(
-                      lang === 'zh'
-                        ? '隐藏这个干扰区域，让页面干净清爽'
-                        : 'Hide this distracting block for a clean view',
-                    )
-                  }
-                  className="inline-flex items-center px-2 py-0.5 rounded bg-background border border-border/80 text-xs font-medium text-foreground hover:bg-secondary cursor-pointer"
-                >
-                  {t('coachQuickHideChip')}
-                </button>
-              )}
-            </div>
-          )}
+                  <span>{t('openPracticePage')}</span>
+                </Button>
+              </>
+            ) : (
+              <>
+                <p className="text-[13px] text-foreground leading-snug">
+                  {tutorialStep === 1
+                    ? onPlayground
+                      ? t('coachStep1Playground')
+                      : t('coachStep1AnySite')
+                    : tutorialStep === 2
+                      ? onPlayground
+                        ? t('coachStep2Playground')
+                        : t('coachStep2AnySite')
+                      : t('coachStep3')}
+                </p>
+                {tutorialStep === 1 && !onPlayground && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      void safeSendMessage({ type: 'OPEN_PRACTICE_TAB', payload: { lang } })
+                    }
+                    className="pc-focus text-xs font-medium text-primary hover:underline cursor-pointer"
+                  >
+                    {t('coachTrySandboxLink')}
+                  </button>
+                )}
+                {tutorialStep === 2 && !onPlayground && !intent.trim() && (
+                  <Button
+                    type="button"
+                    size="xs"
+                    variant="secondary"
+                    onClick={() =>
+                      setIntent(
+                        lang === 'zh'
+                          ? '隐藏这个干扰区域，让正文区域干净易读'
+                          : 'Hide this distracting block cleanly',
+                      )
+                    }
+                  >
+                    {t('coachQuickHideChip')}
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
         </section>
       )}
 
-      {/* 1. Primary Proofing Slip Composer (zero nested box-in-box) */}
-      <section className="pc-stagger-1 rounded-xl bg-card border border-border shadow-2xs overflow-hidden">
-        {/* Proofing Slip Header Bar: Primary Picker Anchor + Aligned Quota */}
-        <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 bg-secondary/45 border-b border-border/70">
+      {/* 1. Unified Live-Target & Prompt Composer Card (flat divide-y, max 2 boxes deep) */}
+      <section className="rounded-[10px] bg-card border border-border divide-y divide-border overflow-hidden">
+        {/* Header Rail: Element Picker Trigger + MCP Pill + Engine Link */}
+        <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 bg-secondary/40">
           <Button
             type="button"
             variant={activeTab.supported ? 'primary' : 'secondary'}
@@ -858,12 +855,12 @@ export default function StudioPage({
             disabled={!activeTab.supported}
             onClick={picking ? onCancelPicker : onStartPicker}
             className={cn(
-              'pc-press gap-1.5 px-3 text-[13px] font-medium cursor-pointer',
+              'px-2.5 text-[12.5px]',
               showTutorial &&
                 activeTab.supported &&
                 tutorialStep === 1 &&
                 !picking &&
-                'ring-2 ring-primary/45 ring-offset-2 ring-offset-background',
+                'ring-2 ring-primary/40 ring-offset-1 ring-offset-background',
             )}
           >
             <Crosshair className={cn('h-3.5 w-3.5', picking && 'animate-spin')} />
@@ -877,10 +874,10 @@ export default function StudioPage({
                 onClick={onNavigateSettings}
                 title={mcpStatus?.lastError || settings.mcpBridgeUrl}
                 className={cn(
-                  'inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-medium cursor-pointer shrink-0',
+                  'pc-btn inline-flex items-center gap-1 h-6 px-2 rounded-[5px] border text-[11px] font-medium cursor-pointer shrink-0',
                   mcpStatus?.connected
-                    ? 'bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 border-emerald-500/25'
-                    : 'bg-amber-500/12 text-amber-700 dark:text-amber-300 border-amber-500/25',
+                    ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-600/25'
+                    : 'bg-amber-500/12 text-amber-900 dark:text-amber-300 border-amber-600/25',
                 )}
               >
                 <PlugZap className="h-3 w-3" />
@@ -890,50 +887,56 @@ export default function StudioPage({
             <button
               type="button"
               onClick={onNavigateSettings}
-              className="h-8 inline-flex items-center px-1.5 rounded-md text-[13px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer tabular-nums truncate"
+              title={enginePillText}
+              className="pc-focus h-7 inline-flex items-center px-1.5 rounded-[5px] font-mono text-[11.5px] text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors cursor-pointer tabular-nums truncate max-w-[125px] sm:max-w-[180px]"
             >
               {enginePillText}
             </button>
           </div>
         </div>
 
-        {/* Unsupported Tab Helper Strip (e.g. chrome://newtab or Web Store) */}
+        {/* Unsupported Tab Notice */}
         {!activeTab.supported && !showTutorial && (
-          <div className="flex items-center justify-between gap-2 px-3.5 py-2 bg-amber-500/8 border-b border-border/60 text-xs">
+          <div className="flex items-center justify-between gap-2 px-3.5 py-2 bg-amber-500/[0.08] text-xs">
             <span className="text-muted-foreground leading-snug">{t('unsupportedBanner')}</span>
             <button
               type="button"
               onClick={() =>
                 void safeSendMessage({ type: 'OPEN_PRACTICE_TAB', payload: { lang } })
               }
-              className="shrink-0 font-medium text-primary hover:underline cursor-pointer"
+              className="pc-focus shrink-0 font-medium text-primary hover:underline cursor-pointer"
             >
               {t('openPracticePage')}
             </button>
           </div>
         )}
 
-        {/* Locked Element Strip */}
+        {/* Picked-Selector Inspector Strip */}
         {pickedElement && (
-          <div className="flex items-start justify-between gap-2 bg-primary/[0.06] border-b border-border/60 px-3.5 py-2 text-[13px]">
-            <div className="min-w-0 space-y-0.5">
+          <div className="flex items-start justify-between gap-2 bg-[var(--pc-accent-subtle)] px-3.5 py-2 text-xs">
+            <div className="min-w-0 space-y-1 flex-1">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="font-medium text-[#8f381e] dark:text-[#f29b80]">
+                <span className="font-semibold text-[var(--pc-accent-ink)]">
                   {t('lockedTarget')}
                 </span>
-                <code className="font-mono text-xs px-1.5 py-0.5 rounded bg-background text-foreground truncate max-w-[220px]">
+                <code className="font-mono text-[11.5px] px-1.5 py-0.5 rounded-[4px] bg-card border border-border text-foreground truncate max-w-[190px] sm:max-w-[240px]">
                   {pickedElement.selector}
                 </code>
+                {pickedElement.rect && pickedElement.rect.width > 0 && (
+                  <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
+                    {pickedElement.rect.width}×{pickedElement.rect.height}
+                  </span>
+                )}
                 {pickedElement.similarCount && pickedElement.similarCount > 1 && (
-                  <span className="text-xs text-muted-foreground tabular-nums">
+                  <span className="px-1.5 py-0.5 rounded-[4px] bg-amber-500/12 text-amber-900 dark:text-amber-300 border border-amber-600/25 text-[11px] font-medium tabular-nums">
                     {lang === 'zh'
-                      ? `· 同类列表 ${pickedElement.similarCount} 项`
-                      : `· ${pickedElement.similarCount} list items`}
+                      ? `同类 ${pickedElement.similarCount} 项`
+                      : `${pickedElement.similarCount} siblings`}
                   </span>
                 )}
               </div>
               {pickedElement.textPreview && (
-                <p className="text-[13px] text-muted-foreground truncate">
+                <p className="text-xs text-muted-foreground truncate">
                   “{pickedElement.textPreview}”
                 </p>
               )}
@@ -942,14 +945,14 @@ export default function StudioPage({
               type="button"
               onClick={onClearPicked}
               aria-label={t('clearTarget')}
-              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-background/60 cursor-pointer shrink-0"
+              className="pc-btn p-1 rounded-[5px] text-muted-foreground hover:text-foreground hover:bg-card cursor-pointer shrink-0"
             >
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
         )}
 
-        {/* Seamless Proofing Pad (borderless writing surface) */}
+        {/* Prompt Composer Surface */}
         {!draft ? (
           <div>
             {pickedElement && !onPlayground && (
@@ -959,7 +962,7 @@ export default function StudioPage({
                     key={chip}
                     type="button"
                     onClick={() => handleStarterChip(chip)}
-                    className="pc-press px-2 py-0.5 rounded-full border border-border/80 bg-secondary/55 hover:bg-secondary text-xs text-foreground transition-colors cursor-pointer"
+                    className="pc-btn px-2 py-0.5 rounded-[5px] border border-border bg-secondary/70 hover:bg-secondary text-xs text-foreground cursor-pointer"
                   >
                     {chip}
                   </button>
@@ -980,16 +983,16 @@ export default function StudioPage({
               placeholder={
                 pickedElement ? t('composerPickedPlaceholder') : t('composerPlaceholder')
               }
-              className="block w-full min-h-[78px] px-3.5 pt-3 pb-2 bg-transparent border-0 rounded-none outline-none focus-visible:border-transparent focus-visible:shadow-none text-[13px] leading-relaxed text-foreground placeholder:text-muted-foreground resize-none select-text"
+              className="block w-full min-h-[82px] px-3.5 pt-2.5 pb-2 bg-transparent border-0 rounded-none outline-none focus-visible:border-transparent focus-visible:ring-0 text-[13px] leading-relaxed text-foreground placeholder:text-muted-foreground resize-none"
             />
 
-            <div className="flex items-center justify-between gap-2 px-3.5 pb-3 pt-1">
+            <div className="flex items-center justify-between gap-2 px-3.5 pb-2.5 pt-1">
               <div className="flex items-center gap-1.5 min-w-0 overflow-hidden">
                 {intent.trim() ? (
                   <button
                     type="button"
                     onClick={() => setIntent('')}
-                    className="text-[13px] text-muted-foreground hover:text-foreground cursor-pointer"
+                    className="pc-focus text-xs text-muted-foreground hover:text-foreground cursor-pointer"
                   >
                     {lang === 'zh' ? '清空输入' : 'Clear'}
                   </button>
@@ -999,13 +1002,13 @@ export default function StudioPage({
                     onClick={() =>
                       setIntent(
                         lang === 'zh'
-                          ? '把表格里状态为「逾期」或金额大于 1000 的行高亮标红'
+                          ? '将表格中状态为「逾期」或金额大于 1000 的行标红高亮'
                           : 'Highlight table rows where status is Overdue',
                       )
                     }
-                    className="px-2 py-1 rounded-md bg-secondary/75 hover:bg-secondary text-xs text-muted-foreground hover:text-foreground transition-colors truncate cursor-pointer"
+                    className="pc-btn px-2 py-1 rounded-[5px] bg-secondary/70 hover:bg-secondary border border-border text-xs text-muted-foreground hover:text-foreground truncate cursor-pointer"
                   >
-                    {lang === 'zh' ? '例：标红逾期数据行' : 'e.g. Highlight rows'}
+                    {lang === 'zh' ? '示例：标红逾期行' : 'Try: Highlight rows'}
                   </button>
                 ) : null}
               </div>
@@ -1016,12 +1019,12 @@ export default function StudioPage({
                 disabled={generating || !intent.trim()}
                 onClick={() => void runGenerate()}
                 className={cn(
-                  'pc-press gap-1.5 px-3.5 text-[13px] font-medium cursor-pointer shrink-0',
+                  'px-3 text-[13px] shrink-0',
                   showTutorial &&
                     tutorialStep === 2 &&
                     Boolean(intent.trim()) &&
                     !generating &&
-                    'ring-2 ring-primary/45 ring-offset-2 ring-offset-background',
+                    'ring-2 ring-primary/40 ring-offset-1 ring-offset-background',
                 )}
               >
                 {generating ? (
@@ -1031,9 +1034,9 @@ export default function StudioPage({
                   </>
                 ) : (
                   <>
-                    <Sparkles className="h-3.5 w-3.5" />
                     <span>{t('generateBtn')}</span>
-                    <kbd className="ml-0.5 text-[11px] font-sans opacity-75 tracking-tight">
+                    <ArrowRight className="h-3.5 w-3.5" />
+                    <kbd className="hidden sm:inline ml-0.5 text-[11px] font-mono opacity-80">
                       ⌘↵
                     </kbd>
                   </>
@@ -1042,8 +1045,8 @@ export default function StudioPage({
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-between text-[13px] px-3.5 py-2.5">
-            <span className="text-muted-foreground truncate pr-2">“{intent}”</span>
+          <div className="flex items-center justify-between gap-2 text-[13px] px-3.5 py-2.5">
+            <span className="text-muted-foreground truncate">“{intent}”</span>
             <button
               type="button"
               onClick={() => {
@@ -1057,7 +1060,7 @@ export default function StudioPage({
                 setDraftUsedVision(false);
                 setDraftAutoHealed(false);
               }}
-              className="text-[13px] font-medium text-primary hover:underline shrink-0 cursor-pointer"
+              className="pc-focus text-xs font-medium text-primary hover:underline shrink-0 cursor-pointer"
             >
               {t('newDraft')}
             </button>
@@ -1067,19 +1070,14 @@ export default function StudioPage({
 
       {/* Error Banner */}
       {error && (
-        <div className="rounded-xl border border-destructive/35 bg-destructive/8 px-3.5 py-2.5 text-[13px] space-y-2">
+        <div className="rounded-[10px] border border-destructive/35 bg-destructive/8 px-3.5 py-2.5 text-[13px] space-y-2">
           <div className="flex items-start gap-2">
             <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
             <p className="text-foreground leading-relaxed flex-1">{error}</p>
           </div>
           {(errorCode === 'missing_api_key' || errorCode === 'builtin_unavailable') && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={onNavigateSettings}
-              className="pc-press text-[13px] cursor-pointer"
-            >
-              {lang === 'zh' ? '前往设置切换引擎或配置密钥' : 'Configure AI Engine in Settings'}
+            <Button size="sm" variant="secondary" onClick={onNavigateSettings}>
+              {lang === 'zh' ? '前往设置配置引擎' : 'Configure AI engine'}
             </Button>
           )}
         </div>
@@ -1087,23 +1085,22 @@ export default function StudioPage({
 
       {/* One-time JS Permission Guide Banner */}
       {needsJsPermForId && availability?.available === false && (
-        <section className="rounded-xl border border-primary/35 bg-primary/8 p-3.5 space-y-2.5">
-          <div className="font-medium text-[14px] text-foreground">{t('jsPermTitle')}</div>
-          <ol className="list-decimal list-inside space-y-1 text-[13px] text-muted-foreground leading-relaxed">
+        <section className="rounded-[10px] border border-primary/35 bg-card p-3.5 space-y-2.5">
+          <div className="font-semibold text-[13.5px] text-foreground">{t('jsPermTitle')}</div>
+          <ol className="list-decimal list-inside space-y-1 text-[12.5px] text-muted-foreground leading-relaxed">
             <li>{t('jsPermStep1')}</li>
             <li>{t('jsPermStep2')}</li>
           </ol>
-          <div className="flex items-center gap-2 pt-1 flex-wrap">
+          <div className="flex items-center gap-2 pt-0.5 flex-wrap">
             <Button
               size="sm"
-              variant="outline"
+              variant="secondary"
               onClick={() => {
                 void safeSendMessage({
                   type: 'OPEN_EXTENSION_DETAILS',
                   payload: { modId: needsJsPermForId ?? undefined },
                 });
               }}
-              className="pc-press text-[13px] gap-1 cursor-pointer"
             >
               <span>{t('openExtDetails')}</span>
               <ExternalLink className="h-3.5 w-3.5" />
@@ -1112,7 +1109,6 @@ export default function StudioPage({
               variant="primary"
               size="sm"
               onClick={() => void handleRetryAfterJsPerm()}
-              className="pc-press text-[13px] gap-1 cursor-pointer"
             >
               <Check className="h-3.5 w-3.5" />
               <span>{t('recheckPerm')}</span>
@@ -1121,46 +1117,30 @@ export default function StudioPage({
         </section>
       )}
 
-      {/* 2A. Active Generated Draft Card + Multi-turn Refinement */}
+      {/* 2A. Flat-Divided Draft Card (strict max 2 boxes deep via divide-y) */}
       {draft && (
-        <section className="animate-page-enter rounded-xl bg-card border border-border p-4 space-y-3.5">
-          <div className="space-y-1.5">
+        <section className="pc-enter rounded-[10px] bg-card border border-border divide-y divide-border overflow-hidden">
+          {/* Header + Status Pills + Summary */}
+          <div className="px-3.5 py-3 space-y-1.5">
             <div className="flex items-start justify-between gap-2">
               <h2 className="text-[14px] font-semibold leading-snug text-foreground">
                 {draft.name}
               </h2>
               <div className="flex items-center gap-1 shrink-0 flex-wrap justify-end">
                 {draftUsedVision && (
-                  <Badge
-                    variant="outline"
-                    className="gap-1 text-xs font-medium bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/25"
-                  >
+                  <Badge variant="success" className="gap-1">
                     <Eye className="h-3 w-3" />
                     <span>{t('visionBadge')}</span>
                   </Badge>
                 )}
                 {draftAutoHealed && (
-                  <Badge
-                    variant="outline"
-                    className="text-xs font-medium bg-amber-500/12 text-amber-800 dark:text-amber-300 border-amber-500/30"
-                  >
-                    {t('autoHealedBadge')}
-                  </Badge>
+                  <Badge variant="warning">{t('autoHealedBadge')}</Badge>
                 )}
                 <Badge
-                  variant={draft.engine === 'css' ? 'secondary' : 'outline'}
-                  className={cn(
-                    'text-xs font-medium',
-                    draft.engine === 'css' && 'bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 border-emerald-500/25',
-                  )}
+                  variant={draft.engine === 'css' ? 'default' : 'secondary'}
+                  className="font-mono uppercase"
                 >
-                  {draft.engine === 'css'
-                    ? lang === 'zh'
-                      ? 'CSS 免开关秒生效'
-                      : 'Instant CSS'
-                    : lang === 'zh'
-                      ? 'JS 油猴脚本'
-                      : 'JS Userscript'}
+                  {draft.engine}
                 </Badge>
               </div>
             </div>
@@ -1169,25 +1149,30 @@ export default function StudioPage({
             </p>
           </div>
 
-          {/* Live Selector Hit Check */}
+          {/* Live Selector Hit Strip */}
           {selectorCheck && selectorCheck.details.length > 0 && (
             <div
               className={cn(
-                'rounded-lg px-3 py-2 text-[13px] flex items-center justify-between gap-2',
+                'px-3.5 py-2 text-xs flex items-center justify-between gap-2',
                 selectorCheck.totalHits > 0
-                  ? 'bg-secondary/70 text-foreground'
-                  : 'bg-amber-500/10 border border-amber-500/30 text-foreground',
+                  ? 'bg-secondary/40 text-foreground'
+                  : 'bg-amber-500/[0.08] text-foreground',
               )}
             >
               {selectorCheck.totalHits > 0 ? (
-                <span className="tabular-nums">
-                  {lang === 'zh'
-                    ? `已在当前页命中 ${selectorCheck.totalHits} 个目标元素`
-                    : `Matched ${selectorCheck.totalHits} live element(s) on this page`}
+                <span className="inline-flex items-center gap-1.5 tabular-nums">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+                  <span>
+                    {lang === 'zh'
+                      ? `当前页面已匹配 ${selectorCheck.totalHits} 个目标节点`
+                      : `Matched ${selectorCheck.totalHits} live element(s) on this page`}
+                  </span>
                 </span>
               ) : (
                 <>
-                  <span className="leading-snug">{t('selectorZeroWarn')}</span>
+                  <span className="leading-snug text-amber-900 dark:text-amber-300">
+                    {t('selectorZeroWarn')}
+                  </span>
                   <button
                     type="button"
                     disabled={generating}
@@ -1196,14 +1181,14 @@ export default function StudioPage({
                         customIntent:
                           lang === 'zh'
                             ? '当前选择器在页面上匹配到了 0 个元素，请根据页面最新真实 DOM 结构修正选择器'
-                            : 'Previous selectors matched 0 elements on the live page; please recalibrate selectors against the live DOM landmarks',
+                            : 'Previous selectors matched 0 elements on the live page; recalibrate selectors against live DOM landmarks',
                         isRefine: true,
                         diagnosticHint: `Selectors ${JSON.stringify(
                           selectorCheck.details.map((d) => d.selector),
                         )} matched 0 elements on the live DOM.`,
                       })
                     }
-                    className="shrink-0 font-medium text-primary hover:underline cursor-pointer"
+                    className="pc-focus shrink-0 font-medium text-primary hover:underline cursor-pointer"
                   >
                     {t('autoCalibrateBtn')}
                   </button>
@@ -1212,96 +1197,103 @@ export default function StudioPage({
             </div>
           )}
 
-          {/* Zero-Credit CSS Quick Sliders (font-size / max-width / warmth) */}
-          {draft.engine === 'css' && (() => {
-            const tweaks = readCssTweaks(draftBody);
-            const fontVal = tweaks.fontSize ?? CSS_TWEAK_LIMITS.fontSize.fallback;
-            const widthVal = tweaks.maxWidth ?? CSS_TWEAK_LIMITS.maxWidth.fallback;
-            const warmthVal = tweaks.warmth;
-            const hasBlocks = /pc-tweak:/.test(draftBody);
-            return (
-              <div className="rounded-lg bg-secondary/50 px-3 py-2 space-y-2 text-xs">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-muted-foreground font-medium">
-                    {t('cssQuickStepLabel')}
-                  </span>
-                  {hasBlocks && (
-                    <button
-                      type="button"
-                      onClick={handleResetCssTweaks}
-                      className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground cursor-pointer"
-                    >
-                      <RotateCcw className="h-3 w-3" />
-                      <span>{t('cssResetTweaks')}</span>
-                    </button>
-                  )}
+          {/* Precision CSS Quick Sliders (Font, Width, Warmth) */}
+          {draft.engine === 'css' &&
+            (() => {
+              const tweaks = readCssTweaks(draftBody);
+              const fontVal = tweaks.fontSize ?? CSS_TWEAK_LIMITS.fontSize.fallback;
+              const widthVal = tweaks.maxWidth ?? CSS_TWEAK_LIMITS.maxWidth.fallback;
+              const warmthVal = tweaks.warmth;
+              const hasBlocks = /pc-tweak:/.test(draftBody);
+              return (
+                <div className="px-3.5 py-2.5 space-y-2 text-xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-muted-foreground font-medium">
+                      {t('cssQuickStepLabel')}
+                    </span>
+                    {hasBlocks && (
+                      <button
+                        type="button"
+                        onClick={handleResetCssTweaks}
+                        className="pc-focus inline-flex items-center gap-1 text-[11.5px] text-muted-foreground hover:text-foreground cursor-pointer"
+                      >
+                        <RotateCcw className="h-3 w-3" />
+                        <span>{t('cssResetTweaks')}</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2.5">
+                      <span className="w-11 shrink-0 text-muted-foreground">
+                        {t('cssFontSize')}
+                      </span>
+                      <input
+                        type="range"
+                        min={CSS_TWEAK_LIMITS.fontSize.min}
+                        max={CSS_TWEAK_LIMITS.fontSize.max}
+                        step={CSS_TWEAK_LIMITS.fontSize.step}
+                        value={fontVal}
+                        onChange={(e) => handleTweakCss('fontSize', Number(e.target.value))}
+                        className="pc-range flex-1"
+                      />
+                      <span className="w-12 text-right font-mono tabular-nums text-foreground">
+                        {tweaks.fontSize !== null ? `${tweaks.fontSize}px` : '—'}
+                      </span>
+                    </label>
+
+                    <label className="flex items-center gap-2.5">
+                      <span className="w-11 shrink-0 text-muted-foreground">
+                        {t('cssMaxWidth')}
+                      </span>
+                      <input
+                        type="range"
+                        min={CSS_TWEAK_LIMITS.maxWidth.min}
+                        max={CSS_TWEAK_LIMITS.maxWidth.max}
+                        step={CSS_TWEAK_LIMITS.maxWidth.step}
+                        value={widthVal}
+                        onChange={(e) => handleTweakCss('maxWidth', Number(e.target.value))}
+                        className="pc-range flex-1"
+                      />
+                      <span className="w-12 text-right font-mono tabular-nums text-foreground">
+                        {tweaks.maxWidth !== null ? `${tweaks.maxWidth}px` : '—'}
+                      </span>
+                    </label>
+
+                    <label className="flex items-center gap-2.5">
+                      <span className="w-11 shrink-0 text-muted-foreground">
+                        {t('cssWarmth')}
+                      </span>
+                      <input
+                        type="range"
+                        min={CSS_TWEAK_LIMITS.warmth.min}
+                        max={CSS_TWEAK_LIMITS.warmth.max}
+                        step={CSS_TWEAK_LIMITS.warmth.step}
+                        value={warmthVal}
+                        onChange={(e) => handleTweakCss('warmth', Number(e.target.value))}
+                        className="pc-range flex-1"
+                      />
+                      <span className="w-12 text-right font-mono tabular-nums text-foreground">
+                        {warmthVal}%
+                      </span>
+                    </label>
+                  </div>
                 </div>
+              );
+            })()}
 
-                <div className="grid grid-cols-1 gap-1.5">
-                  <label className="flex items-center gap-2">
-                    <span className="w-10 shrink-0 text-muted-foreground">{t('cssFontSize')}</span>
-                    <input
-                      type="range"
-                      min={CSS_TWEAK_LIMITS.fontSize.min}
-                      max={CSS_TWEAK_LIMITS.fontSize.max}
-                      step={CSS_TWEAK_LIMITS.fontSize.step}
-                      value={fontVal}
-                      onChange={(e) => handleTweakCss('fontSize', Number(e.target.value))}
-                      className="flex-1 h-1.5 accent-primary cursor-pointer"
-                    />
-                    <span className="w-11 text-right font-mono tabular-nums text-foreground">
-                      {tweaks.fontSize !== null ? `${tweaks.fontSize}px` : '—'}
-                    </span>
-                  </label>
-
-                  <label className="flex items-center gap-2">
-                    <span className="w-10 shrink-0 text-muted-foreground">{t('cssMaxWidth')}</span>
-                    <input
-                      type="range"
-                      min={CSS_TWEAK_LIMITS.maxWidth.min}
-                      max={CSS_TWEAK_LIMITS.maxWidth.max}
-                      step={CSS_TWEAK_LIMITS.maxWidth.step}
-                      value={widthVal}
-                      onChange={(e) => handleTweakCss('maxWidth', Number(e.target.value))}
-                      className="flex-1 h-1.5 accent-primary cursor-pointer"
-                    />
-                    <span className="w-11 text-right font-mono tabular-nums text-foreground">
-                      {tweaks.maxWidth !== null ? `${tweaks.maxWidth}px` : '—'}
-                    </span>
-                  </label>
-
-                  <label className="flex items-center gap-2">
-                    <span className="w-10 shrink-0 text-muted-foreground">{t('cssWarmth')}</span>
-                    <input
-                      type="range"
-                      min={CSS_TWEAK_LIMITS.warmth.min}
-                      max={CSS_TWEAK_LIMITS.warmth.max}
-                      step={CSS_TWEAK_LIMITS.warmth.step}
-                      value={warmthVal}
-                      onChange={(e) => handleTweakCss('warmth', Number(e.target.value))}
-                      className="flex-1 h-1.5 accent-primary cursor-pointer"
-                    />
-                    <span className="w-11 text-right font-mono tabular-nums text-foreground">
-                      {warmthVal}%
-                    </span>
-                  </label>
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* Primary Actions: Apply & Save + Export .user.js + Toggle Code */}
-          <div className="flex items-center gap-2 flex-wrap">
+          {/* Primary Actions Rail */}
+          <div className="px-3.5 py-2.5 flex items-center gap-1.5 flex-wrap">
             <Button
               variant="primary"
               size="sm"
               onClick={() => void handleApplyDraft()}
               className={cn(
-                'pc-press gap-1.5 px-4 text-[13px] cursor-pointer',
+                'px-3.5',
                 showTutorial &&
                   tutorialStep === 3 &&
                   !savedModId &&
-                  'ring-2 ring-primary/45 ring-offset-2 ring-offset-background',
+                  'ring-2 ring-primary/40 ring-offset-1 ring-offset-background',
               )}
             >
               <Check className="h-3.5 w-3.5" />
@@ -1312,7 +1304,6 @@ export default function StudioPage({
               size="sm"
               variant="secondary"
               onClick={() => void handleCopyDraftUserscript()}
-              className="pc-press gap-1.5 text-[13px] cursor-pointer"
             >
               <Copy className="h-3.5 w-3.5" />
               <span>{t('exportUserscript')}</span>
@@ -1322,7 +1313,6 @@ export default function StudioPage({
               size="sm"
               variant="secondary"
               onClick={() => void handleShareDraftRecipe()}
-              className="pc-press gap-1.5 text-[13px] cursor-pointer"
             >
               <Share2 className="h-3.5 w-3.5" />
               <span>{t('shareRecipe')}</span>
@@ -1331,53 +1321,50 @@ export default function StudioPage({
             <button
               type="button"
               onClick={() => setCodeOpen((v) => !v)}
-              className="ml-auto inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground cursor-pointer"
+              className="pc-focus ml-auto inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground cursor-pointer py-1"
             >
               <Code2 className="h-3.5 w-3.5" />
               <span>{codeOpen ? t('hideSource') : t('viewSource')}</span>
             </button>
           </div>
 
-          {/* "Did it work?" — 100% local check + instant Auto-Calibrate / Refine */}
+          {/* Local Live Verification Row */}
           {(savedModId || appliedOnce) && (
-            <div className="rounded-lg bg-secondary/55 px-3 py-2 space-y-1">
+            <div className="px-3.5 py-2.5 bg-secondary/35">
               {feedbackVote ? (
-                <p className="text-[13px] text-foreground leading-relaxed">
+                <p className="text-xs text-muted-foreground leading-relaxed">
                   {t('feedbackThanksUp')}
                 </p>
               ) : (
                 <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="text-[13px] text-foreground">{t('feedbackAsk')}</span>
+                  <span className="text-xs font-medium text-foreground">{t('feedbackAsk')}</span>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                      type="button"
-                      onClick={handleLocalWorked}
-                      className="pc-press inline-flex items-center gap-1 h-7 px-2.5 rounded-md border border-border/80 bg-background hover:bg-emerald-500/10 text-[13px] text-foreground cursor-pointer"
-                    >
-                      <ThumbsUp className="h-3.5 w-3.5" />
+                    <Button size="xs" variant="secondary" onClick={handleLocalWorked}>
+                      <ThumbsUp className="h-3 w-3" />
                       <span>{t('feedbackUp')}</span>
-                    </button>
-                    <button
-                      type="button"
+                    </Button>
+                    <Button
+                      size="xs"
+                      variant="secondary"
                       disabled={generating}
                       onClick={handleLocalAutoCalibrate}
-                      className="pc-press inline-flex items-center gap-1 h-7 px-2.5 rounded-md border border-primary/35 bg-primary/10 hover:bg-primary/15 text-[13px] font-medium text-[#8f381e] dark:text-[#f29b80] disabled:opacity-50 cursor-pointer"
+                      className="text-[var(--pc-accent-ink)] border-primary/30"
                     >
-                      <Wand2 className="h-3.5 w-3.5" />
+                      <Wand2 className="h-3 w-3" />
                       <span>{t('feedbackDown')}</span>
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
             </div>
           )}
 
-          {/* Editable Source Code & @match Drawer */}
+          {/* Editable Source Drawer */}
           {codeOpen && (
-            <div className="space-y-2.5 pt-2 border-t border-border/60">
+            <div className="px-3.5 py-3 space-y-2.5 bg-secondary/20">
               <div className="space-y-1">
-                <label className="text-[13px] font-medium text-muted-foreground">
-                  {lang === 'zh' ? '生效网址规则（@match，每行一条）' : '@match patterns (one per line)'}
+                <label className="text-xs font-medium text-muted-foreground">
+                  {lang === 'zh' ? '@match 规则（每行一条）' : '@match patterns (one per line)'}
                 </label>
                 <Textarea
                   rows={2}
@@ -1387,7 +1374,7 @@ export default function StudioPage({
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[13px] font-medium text-muted-foreground">
+                <label className="text-xs font-medium text-muted-foreground">
                   {draft.engine === 'css' ? 'CSS' : 'JavaScript'}
                 </label>
                 <Textarea
@@ -1410,57 +1397,57 @@ export default function StudioPage({
             </div>
           )}
 
-          {/* Continuous Multi-turn Follow-up Refinement */}
-          <div className="pt-3 border-t border-border/60 space-y-2">
-            <div className="flex items-center gap-2">
-              <Input
-                value={refineText}
-                onChange={(e) => setRefineText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (
-                    e.key === 'Enter' &&
-                    !e.shiftKey &&
-                    !e.nativeEvent.isComposing &&
-                    refineText.trim()
-                  ) {
-                    e.preventDefault();
-                    void runGenerate({ customIntent: refineText, isRefine: true });
-                  }
-                }}
-                placeholder={t('refinePlaceholder')}
-                className="text-[13px] h-9 max-w-none"
-              />
-              <Button
-                size="sm"
-                variant="secondary"
-                disabled={generating || !refineText.trim()}
-                onClick={() => void runGenerate({ customIntent: refineText, isRefine: true })}
-                className="pc-press shrink-0 h-9 gap-1 px-3 text-[13px] cursor-pointer"
-              >
-                {generating ? (
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <CornerDownLeft className="h-3.5 w-3.5" />
-                )}
-                <span>{t('refineBtn')}</span>
-              </Button>
-            </div>
+          {/* Follow-up Multi-turn Refinement Row */}
+          <div className="px-3.5 py-2.5 flex items-center gap-2">
+            <Input
+              value={refineText}
+              onChange={(e) => setRefineText(e.target.value)}
+              onKeyDown={(e) => {
+                if (
+                  e.key === 'Enter' &&
+                  !e.shiftKey &&
+                  !e.nativeEvent.isComposing &&
+                  refineText.trim()
+                ) {
+                  e.preventDefault();
+                  void runGenerate({ customIntent: refineText, isRefine: true });
+                }
+              }}
+              placeholder={t('refinePlaceholder')}
+              className="h-8 text-[12.5px]"
+            />
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={generating || !refineText.trim()}
+              onClick={() => void runGenerate({ customIntent: refineText, isRefine: true })}
+              className="h-8 px-2.5 shrink-0"
+            >
+              {generating ? (
+                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <CornerDownLeft className="h-3.5 w-3.5" />
+              )}
+              <span>{t('refineBtn')}</span>
+            </Button>
           </div>
         </section>
       )}
 
-      {/* 2B. Curated 1-Click Recipes (Idle state) */}
+      {/* 2B. Scannable 1-Click Recipe List (Idle state) */}
       {!draft && (
-        <section className="pc-stagger-2 space-y-2">
-          <div className="flex items-center gap-1.5 px-0.5 pt-0.5">
-            <Wand2 className="h-4 w-4 text-primary" />
-            <h2 className="text-[14px] font-semibold text-foreground">
+        <section className="space-y-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-[13.5px] font-semibold text-foreground">
               {t('templatesTitle')}
             </h2>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {filteredTemplates.length}
+            </span>
           </div>
 
-          {/* Recipe Category Filter Pills */}
-          <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
+          {/* 6px-radius Filter Chips (wraps cleanly at 320px, zero horizontal overflow) */}
+          <div className="flex items-center gap-1 flex-wrap">
             {(
               [
                 { id: 'all', label: t('recipeFilterAll') },
@@ -1481,20 +1468,20 @@ export default function StudioPage({
                   type="button"
                   onClick={() => setRecipeFilter(pill.id)}
                   className={cn(
-                    'pc-press inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border shrink-0 transition-colors cursor-pointer',
+                    'pc-btn inline-flex items-center gap-1 h-7 px-2.5 rounded-[6px] text-xs font-medium border cursor-pointer',
                     active
-                      ? 'bg-primary text-white border-primary'
-                      : 'bg-card hover:bg-secondary/75 text-muted-foreground hover:text-foreground border-border/80',
+                      ? 'bg-primary text-[#FAF8F5] border-transparent'
+                      : 'bg-card hover:bg-secondary text-muted-foreground hover:text-foreground border-border',
                   )}
                 >
                   <span>{pill.label}</span>
                   {typeof pill.badge === 'number' && pill.badge > 0 && (
                     <span
                       className={cn(
-                        'px-1.5 rounded-full text-[11px] font-semibold tabular-nums leading-tight',
+                        'px-1 rounded-[4px] text-[11px] font-semibold tabular-nums leading-tight',
                         active
-                          ? 'bg-white/20 text-white'
-                          : 'bg-primary/12 text-[#8f381e] dark:text-[#f29b80]',
+                          ? 'bg-white/20 text-[#FAF8F5]'
+                          : 'bg-[var(--pc-accent-subtle)] text-[var(--pc-accent-ink)]',
                       )}
                     >
                       {pill.badge}
@@ -1506,11 +1493,11 @@ export default function StudioPage({
           </div>
 
           {filteredTemplates.length === 0 ? (
-            <div className="rounded-xl border border-border bg-card px-4 py-6 text-center text-[13px] text-muted-foreground">
+            <div className="rounded-[10px] border border-border bg-card px-4 py-6 text-center text-[13px] text-muted-foreground">
               {t('unsupportedTab')}
             </div>
           ) : (
-            <div className="divide-y divide-border/70 rounded-xl border border-border bg-card overflow-hidden">
+            <div className="divide-y divide-border rounded-[10px] border border-border bg-card overflow-hidden">
               {filteredTemplates.map((recipe) => {
                 const copy = lang === 'zh' ? recipe.zh : recipe.en;
                 const activeMod = findActiveTemplateMod(recipe);
@@ -1518,55 +1505,43 @@ export default function StudioPage({
                 const isSiteMatched = Boolean(
                   hostLower && recipe.siteHints?.some((h) => hostLower.includes(h)),
                 );
-                const statusBadge = isSiteMatched
-                  ? t('forThisSite')
-                  : recipe.engine === 'css'
-                    ? copy.tag
-                    : null;
 
                 return (
                   <div
                     key={recipe.id}
                     className={cn(
-                      'px-3.5 py-[14px] flex items-start justify-between gap-3 transition-colors',
-                      isSiteMatched && 'bg-primary/[0.04]',
+                      'pc-row px-3.5 py-3 flex items-start justify-between gap-3',
+                      isSiteMatched && 'bg-[var(--pc-accent-subtle)]/40',
                     )}
                   >
                     <div className="min-w-0 space-y-1 flex-1">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-[14px] font-medium text-foreground leading-snug">
+                        <span className="text-[13.5px] font-medium text-foreground leading-snug">
                           {copy.name}
                         </span>
-                        {statusBadge && (
-                          <span
-                            className={cn(
-                              'text-xs px-1.5 py-0.5 rounded font-medium',
-                              isSiteMatched
-                                ? 'bg-primary/10 text-[#8f381e] dark:text-[#f29b80]'
-                                : 'bg-emerald-500/12 text-emerald-800 dark:text-emerald-300',
-                            )}
-                          >
-                            {statusBadge}
-                          </span>
+                        <Badge variant="secondary" className="font-mono uppercase px-1.5 py-0">
+                          {recipe.engine}
+                        </Badge>
+                        {isSiteMatched && (
+                          <Badge variant="default" className="px-1.5 py-0">
+                            {t('forThisSite')}
+                          </Badge>
                         )}
                       </div>
-                      <p className="text-[13px] text-muted-foreground leading-relaxed">
+                      <p className="text-[12.5px] text-muted-foreground leading-relaxed">
                         {copy.description}
                       </p>
                     </div>
 
-                    <button
+                    <Button
                       type="button"
+                      size="xs"
+                      variant={isEnabled ? 'primary' : 'secondary'}
                       onClick={() => void handleToggleTemplate(recipe)}
-                      className={cn(
-                        'pc-press shrink-0 mt-0.5 px-3 py-1.5 rounded-lg text-[13px] font-medium cursor-pointer border',
-                        isEnabled
-                          ? 'pc-confirm-pop bg-primary/12 text-[#8f381e] dark:text-[#f29b80] border-primary/30'
-                          : 'bg-secondary/80 hover:bg-secondary text-foreground border-border/80',
-                      )}
+                      className="mt-0.5 shrink-0"
                     >
                       {isEnabled ? `✓ ${t('activeNow')}` : t('applyNow')}
-                    </button>
+                    </Button>
                   </div>
                 );
               })}

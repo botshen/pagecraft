@@ -19,6 +19,10 @@ export function injectElementPickerOverlay(lang: 'zh' | 'en'): { started: boolea
     existing.remove();
   }
 
+  const prefersReducedMotion =
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   const EPHEMERAL_ID = /^(?:react-.*|radix-.*|headlessui-.*|:r[0-9a-z]+:|ember\d+|mui-\d+|\d+|[0-9a-f]{12,})$/i;
   const HASHED_CLS =
     /^(?:css-[0-9a-z]{5,}|sc-[a-zA-Z0-9]{5,}|svelte-[0-9a-z]{4,}|jsx-\d+|_[a-zA-Z0-9]{5,}_[a-zA-Z0-9]{4,}|style_[a-zA-Z0-9]+__[a-zA-Z0-9]{4,})$/;
@@ -109,7 +113,6 @@ export function injectElementPickerOverlay(lang: 'zh' | 'en'): { started: boolea
     similarSelector?: string;
     similarCount?: number;
   } {
-    // 1. Try concise path up to 4 levels
     const parts: string[] = [];
     let cur: Element | null = target;
     let depth = 0;
@@ -129,7 +132,6 @@ export function injectElementPickerOverlay(lang: 'zh' | 'en'): { started: boolea
     const selector = parts.join(' > ') || target.tagName.toLowerCase();
     const matchCount = safeCount(selector);
 
-    // 2. Detect repeating list/table items (without :nth-of-type)
     const parent = target.parentElement;
     let similarSelector: string | undefined;
     let similarCount: number | undefined;
@@ -194,42 +196,91 @@ export function injectElementPickerOverlay(lang: 'zh' | 'en'): { started: boolea
   host.style.cssText = 'position:fixed;inset:0;z-index:2147483647;pointer-events:none;';
   const shadow = host.attachShadow({ mode: 'open' });
 
+  // Warm-amber sibling outline pool (up to 10 repeating sibling elements in view)
+  const MAX_SIBLING_BOXES = 10;
+  const siblingBoxes: HTMLDivElement[] = [];
+  for (let i = 0; i < MAX_SIBLING_BOXES; i++) {
+    const sb = document.createElement('div');
+    sb.style.cssText =
+      'position:fixed;top:-9999px;left:-9999px;width:0;height:0;pointer-events:none;display:none;' +
+      'border:1.5px dashed rgba(217,119,6,0.82);background:rgba(217,119,6,0.05);border-radius:5px;';
+    siblingBoxes.push(sb);
+    shadow.appendChild(sb);
+  }
+
+  function hideSiblingBoxes() {
+    for (let i = 0; i < siblingBoxes.length; i++) {
+      siblingBoxes[i]!.style.display = 'none';
+    }
+  }
+
+  // Terracotta primary target frame
+  const box = document.createElement('div');
+  const boxTransition = prefersReducedMotion
+    ? 'none'
+    : 'top 50ms cubic-bezier(0.2,0.8,0.2,1),left 50ms cubic-bezier(0.2,0.8,0.2,1),width 50ms cubic-bezier(0.2,0.8,0.2,1),height 50ms cubic-bezier(0.2,0.8,0.2,1)';
+  box.style.cssText =
+    'position:fixed;top:-9999px;left:-9999px;width:0;height:0;pointer-events:none;' +
+    'border:2px solid #C95533;background:rgba(201,85,51,0.10);border-radius:6px;' +
+    'box-shadow:0 0 0 1px rgba(250,248,245,0.35);' +
+    `transition:${boxTransition};`;
+
+  // Crisp Inspector Tooltip (selector + dimensions + warm-amber sibling count)
+  const tagPill = document.createElement('div');
+  tagPill.style.cssText =
+    'position:fixed;top:-9999px;left:-9999px;pointer-events:none;max-width:400px;' +
+    'display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:6px;' +
+    'background:#161514;color:#F2EFE9;border:1px solid #292725;' +
+    'font:500 11.5px/1.3 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;' +
+    'font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;' +
+    'box-shadow:0 4px 14px rgba(0,0,0,0.28);';
+
+  const pillSelSpan = document.createElement('span');
+  pillSelSpan.style.cssText = 'overflow:hidden;text-overflow:ellipsis;color:#F2EFE9;font-weight:600;';
+
+  const pillDimSpan = document.createElement('span');
+  pillDimSpan.style.cssText = 'color:#9A958E;flex-shrink:0;font-size:11px;';
+
+  const pillSibSpan = document.createElement('span');
+  pillSibSpan.style.cssText =
+    'display:none;padding:1px 5px;border-radius:4px;background:rgba(217,119,6,0.18);' +
+    'color:#FBBF24;border:1px solid rgba(217,119,6,0.35);font-size:10.5px;flex-shrink:0;';
+
+  tagPill.append(pillSelSpan, pillDimSpan, pillSibSpan);
+
+  // Top Developer-Tool HUD Bar
   const hud = document.createElement('div');
   hud.style.cssText =
-    'position:fixed;top:14px;left:50%;transform:translateX(-50%);pointer-events:auto;' +
-    'display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:999px;' +
-    'background:#181817;color:#f7f6f2;font:500 13px/1.3 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;' +
-    'box-shadow:0 8px 28px rgba(0,0,0,0.32),0 0 0 1px rgba(255,255,255,0.12);';
+    'position:fixed;top:12px;left:50%;transform:translateX(-50%);pointer-events:auto;' +
+    'display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:8px;max-width:calc(100vw - 24px);' +
+    'background:#161514;color:#F2EFE9;border:1px solid #292725;' +
+    'font:500 12.5px/1.35 -apple-system,BlinkMacSystemFont,"Inter","PingFang SC",sans-serif;' +
+    'box-shadow:0 8px 24px rgba(0,0,0,0.32);';
 
   const dot = document.createElement('span');
-  dot.style.cssText = 'width:8px;height:8px;border-radius:999px;background:#d97757;flex-shrink:0;';
+  dot.style.cssText = 'width:8px;height:8px;border-radius:2px;background:#E06643;flex-shrink:0;';
+
   const label = document.createElement('span');
+  label.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
   label.textContent =
     lang === 'zh'
-      ? '移动鼠标指向要修改的区域，点击锁定目标（Esc 取消）'
-      : 'Hover and click any element on the page to target it (Esc to cancel)';
+      ? '指向页面元素并点击锁定目标'
+      : 'Hover and click any element to target';
+
+  const kbd = document.createElement('kbd');
+  kbd.textContent = 'Esc';
+  kbd.style.cssText =
+    'padding:1px 5px;border-radius:4px;background:#211F1D;border:1px solid #3B3835;' +
+    'color:#9A958E;font:500 11px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;flex-shrink:0;';
+
   const cancelBtn = document.createElement('button');
   cancelBtn.type = 'button';
   cancelBtn.textContent = lang === 'zh' ? '取消' : 'Cancel';
   cancelBtn.style.cssText =
-    'margin-left:4px;padding:3px 9px;border-radius:999px;border:1px solid rgba(255,255,255,0.2);' +
-    'background:rgba(255,255,255,0.08);color:#fff;font-size:12px;cursor:pointer;';
+    'padding:3px 9px;border-radius:5px;border:1px solid #3B3835;' +
+    'background:#211F1D;color:#F2EFE9;font:500 12px/1.25 inherit;cursor:pointer;flex-shrink:0;';
 
-  hud.append(dot, label, cancelBtn);
-
-  const box = document.createElement('div');
-  box.style.cssText =
-    'position:fixed;top:-9999px;left:-9999px;width:0;height:0;pointer-events:none;' +
-    'border:2px solid #d97757;background:rgba(217,119,87,0.11);border-radius:5px;' +
-    'transition:top 50ms ease-out,left 50ms ease-out,width 50ms ease-out,height 50ms ease-out;';
-
-  const tagPill = document.createElement('div');
-  tagPill.style.cssText =
-    'position:fixed;top:-9999px;left:-9999px;pointer-events:none;max-width:360px;' +
-    'padding:3px 8px;border-radius:5px;background:#c6613f;color:#fff;' +
-    'font:600 11px/1.3 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;' +
-    'box-shadow:0 4px 12px rgba(0,0,0,0.22);';
-
+  hud.append(dot, label, kbd, cancelBtn);
   shadow.append(box, tagPill, hud);
   document.documentElement.appendChild(host);
 
@@ -271,6 +322,7 @@ export function injectElementPickerOverlay(lang: 'zh' | 'en'): { started: boolea
         hoveredEl = null;
         box.style.width = '0px';
         tagPill.style.top = '-9999px';
+        hideSiblingBoxes();
         return;
       }
       hoveredEl = el;
@@ -281,16 +333,55 @@ export function injectElementPickerOverlay(lang: 'zh' | 'en'): { started: boolea
       box.style.height = `${rect.height}px`;
 
       const info = computeBestSelector(el);
-      const countText =
-        info.similarCount && info.similarCount > 1
-          ? lang === 'zh'
-            ? ` · 同类 ${info.similarCount} 项`
-            : ` · ${info.similarCount} similar`
-          : '';
-      tagPill.textContent = `${info.selector}${countText}`;
-      const pillTop = rect.top > 28 ? rect.top - 24 : Math.min(window.innerHeight - 28, rect.bottom + 6);
-      tagPill.style.top = `${Math.max(6, pillTop)}px`;
-      tagPill.style.left = `${Math.max(6, Math.min(window.innerWidth - 260, rect.left))}px`;
+      pillSelSpan.textContent = info.selector;
+      pillDimSpan.textContent = `${Math.round(rect.width)}×${Math.round(rect.height)}`;
+
+      if (info.similarSelector && info.similarCount && info.similarCount > 1) {
+        pillSibSpan.style.display = 'inline-block';
+        pillSibSpan.textContent =
+          lang === 'zh' ? `同类 ${info.similarCount}` : `${info.similarCount} similar`;
+
+        try {
+          const allSibs = document.querySelectorAll(info.similarSelector);
+          let idx = 0;
+          for (let i = 0; i < allSibs.length && idx < siblingBoxes.length; i++) {
+            const sib = allSibs[i]!;
+            if (sib === el) continue;
+            const sr = sib.getBoundingClientRect();
+            if (
+              sr.width < 2 ||
+              sr.height < 2 ||
+              sr.bottom < 0 ||
+              sr.top > window.innerHeight ||
+              sr.right < 0 ||
+              sr.left > window.innerWidth
+            ) {
+              continue;
+            }
+            const sb = siblingBoxes[idx]!;
+            sb.style.display = 'block';
+            sb.style.top = `${sr.top}px`;
+            sb.style.left = `${sr.left}px`;
+            sb.style.width = `${sr.width}px`;
+            sb.style.height = `${sr.height}px`;
+            idx++;
+          }
+          for (let j = idx; j < siblingBoxes.length; j++) {
+            siblingBoxes[j]!.style.display = 'none';
+          }
+        } catch {
+          hideSiblingBoxes();
+        }
+      } else {
+        pillSibSpan.style.display = 'none';
+        hideSiblingBoxes();
+      }
+
+      const pillTop =
+        rect.top > 32 ? rect.top - 28 : Math.min(window.innerHeight - 30, rect.bottom + 6);
+      const maxLeft = Math.max(8, window.innerWidth - 320);
+      tagPill.style.top = `${Math.max(8, pillTop)}px`;
+      tagPill.style.left = `${Math.max(8, Math.min(maxLeft, rect.left))}px`;
     });
   }
 

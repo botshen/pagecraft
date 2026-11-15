@@ -15,17 +15,18 @@ const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
       aria-checked={checked}
       onClick={() => onCheckedChange?.(!checked)}
       className={cn(
-        'peer inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border border-transparent transition-colors',
-        'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+        'pc-focus peer inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border transition-colors duration-150',
         'disabled:cursor-not-allowed disabled:opacity-50',
-        checked ? 'bg-primary' : 'bg-secondary border-border',
+        checked
+          ? 'bg-primary border-primary'
+          : 'bg-secondary border-[var(--pc-border-strong)]',
         className,
       )}
       {...props}
     >
       <span
         className={cn(
-          'pointer-events-none block h-3.5 w-3.5 rounded-full bg-white shadow-xs ring-0 transition-transform',
+          'pointer-events-none block h-3.5 w-3.5 rounded-full bg-[#FAF8F5] shadow-2xs transition-transform duration-150 ease-[cubic-bezier(.2,.8,.2,1)]',
           checked ? 'translate-x-4' : 'translate-x-0.5',
         )}
       />

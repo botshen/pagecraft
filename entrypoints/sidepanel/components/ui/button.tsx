@@ -2,74 +2,56 @@ import * as React from 'react';
 import { cn } from '~/lib/utils';
 
 /**
- * Claude Design System button — 4-size ladder, 5 variants, physical press.
- *
- * Key CDS rules enforced here:
- *  - 1-border rule: inside a card, `secondary` never draws a border — it uses
- *    the surface-2 fill instead. `outline` is for empty canvases only.
- *  - Squish physics: every variant gets `.cds-btn-squish` so the press springs
- *    back on release via the 15-stop `linear()` curve (globals.css).
- *  - Paint layer is an inner <span> so padding/border never fight the fill —
- *    the button element itself stays border-0 outline-0.
+ * PageCraft Developer-Tool Button System (taste-skill 2.5.1):
+ * - Strict one button pair: solid terracotta `primary` + crisp hairline `secondary`
+ *   (with `ghost` for quiet inline toolbar actions and `danger` for destructive).
+ * - Uniform 6px control radius (`rounded-[6px]`).
+ * - Tactile fine-pointer `-1px` step on hover and `scale(0.985)` press via `.pc-btn`.
  */
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost' | 'outline' | 'danger' | 'destructive' | 'default' | 'link';
+  variant?:
+    | 'primary'
+    | 'secondary'
+    | 'ghost'
+    | 'outline'
+    | 'danger'
+    | 'destructive'
+    | 'default'
+    | 'link';
   size?: 'xxs' | 'xs' | 'sm' | 'md' | 'lg' | 'icon' | 'icon-sm' | 'icon-lg' | 'default';
   isLoading?: boolean;
 }
 
 const SIZE: Record<string, string> = {
-  xxs: 'h-6 px-2 rounded text-xs gap-1',
-  xs: 'h-7 px-2.5 rounded-md text-xs gap-1',
-  sm: 'h-8 px-3 rounded-lg text-[13px] gap-1.5',
-  md: 'h-9 px-3.5 rounded-lg text-[13px] gap-1.5',
-  lg: 'h-10 px-5 rounded-xl text-[14px] gap-2 font-medium',
-  icon: 'size-8 rounded-lg p-0',
-  'icon-sm': 'size-7 rounded-md p-0',
-  'icon-lg': 'size-9 rounded-lg p-0',
-  // legacy aliases mapped to CDS ladder
-  default: 'h-9 px-3.5 rounded-lg text-[13px] gap-1.5',
+  xxs: 'h-6 px-2 rounded-[5px] text-xs gap-1',
+  xs: 'h-7 px-2.5 rounded-[6px] text-xs gap-1',
+  sm: 'h-8 px-3 rounded-[6px] text-[13px] gap-1.5',
+  md: 'h-9 px-3.5 rounded-[6px] text-[13px] gap-1.5',
+  lg: 'h-11 px-5 rounded-[6px] text-[14px] gap-2 font-medium',
+  icon: 'size-8 rounded-[6px] p-0',
+  'icon-sm': 'size-7 rounded-[6px] p-0',
+  'icon-lg': 'size-9 rounded-[6px] p-0',
+  default: 'h-9 px-3.5 rounded-[6px] text-[13px] gap-1.5',
 };
 
-const VARIANT: Record<string, { text: string; paint: string }> = {
-  primary: {
-    text: 'text-white font-medium',
-    paint: 'bg-[#b54d2e] hover:bg-[#9e4125] shadow-2xs',
-  },
-  secondary: {
-    text: 'text-foreground font-normal',
-    paint:
-      'bg-[var(--cds-fill-secondary)] hover:bg-[var(--cds-fill-secondary-hover)]',
-  },
-  ghost: {
-    text: 'text-[var(--cds-text-secondary)] font-normal',
-    paint:
-      'bg-transparent hover:bg-[var(--cds-fill-ghost-hover)]',
-  },
-  outline: {
-    text: 'text-foreground font-normal',
-    paint:
-      'bg-transparent hover:bg-[var(--cds-fill-ghost-hover)] shadow-[inset_0_0_0_1px_var(--cds-border)]',
-  },
-  danger: {
-    text: 'text-white font-medium',
-    paint: 'bg-red-700 hover:bg-red-800 shadow-2xs',
-  },
-  destructive: {
-    text: 'text-white font-medium',
-    paint: 'bg-red-700 hover:bg-red-800 shadow-2xs',
-  },
-  // legacy shadcn aliases
-  default: {
-    text: 'text-white font-medium',
-    paint: 'bg-[#b54d2e] hover:bg-[#9e4125] shadow-2xs',
-  },
-  link: {
-    text: 'text-primary font-normal underline-offset-4 hover:underline',
-    paint: 'bg-transparent',
-  },
+const VARIANT: Record<string, string> = {
+  primary:
+    'bg-[#C95533] hover:bg-[#B24627] dark:bg-[#D45A37] dark:hover:bg-[#E06643] text-[#FAF8F5] border border-transparent font-medium',
+  default:
+    'bg-[#C95533] hover:bg-[#B24627] dark:bg-[#D45A37] dark:hover:bg-[#E06643] text-[#FAF8F5] border border-transparent font-medium',
+  secondary:
+    'bg-card hover:bg-secondary text-foreground border border-border hover:border-[var(--pc-border-strong)] font-medium',
+  outline:
+    'bg-card hover:bg-secondary text-foreground border border-border hover:border-[var(--pc-border-strong)] font-medium',
+  ghost:
+    'bg-transparent hover:bg-secondary text-muted-foreground hover:text-foreground border border-transparent font-medium',
+  danger:
+    'bg-[#B93829] hover:bg-[#9E2E21] text-[#FAF8F5] border border-transparent font-medium',
+  destructive:
+    'bg-[#B93829] hover:bg-[#9E2E21] text-[#FAF8F5] border border-transparent font-medium',
+  link: 'bg-transparent border-0 text-primary font-medium underline-offset-4 hover:underline px-0 h-auto',
 };
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -87,19 +69,16 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     const v = VARIANT[variant] ?? VARIANT.secondary!;
     const s = SIZE[size] ?? SIZE.md!;
-    const isIconSize = size.startsWith('icon');
 
     return (
       <button
         ref={ref}
         disabled={disabled || isLoading}
         className={cn(
-          'group/btn cds-btn-squish relative inline-flex shrink-0 items-center justify-center font-sans select-none cursor-pointer border-0 outline-none transition-[background-color,box-shadow,color] duration-[var(--cds-dur-fast)] ease-out disabled:bg-secondary disabled:text-muted-foreground disabled:shadow-none disabled:cursor-not-allowed disabled:pointer-events-none',
-          'focus-visible:shadow-[var(--cds-focus-shadow)]',
+          'pc-btn relative inline-flex shrink-0 items-center justify-center font-sans select-none cursor-pointer',
+          'disabled:opacity-45 disabled:cursor-not-allowed disabled:pointer-events-none',
           s,
-          v.text,
-          v.paint,
-          isIconSize && 'flex items-center justify-center',
+          v,
           className,
         )}
         {...props}
