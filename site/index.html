@@ -1,19 +1,49 @@
 <!DOCTYPE html>
-<html lang="en" data-type="software" data-radius="soft" data-ground="sand" data-buttons="arrow" data-motion>
+<html lang="zh-CN" data-lang="zh" data-type="software" data-radius="soft" data-ground="sand" data-buttons="arrow" data-motion>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; base-uri 'self'; form-action 'self' mailto:">
-<title>PageCraft: live webpage customizer for Chrome and coding agents</title>
-<meta name="description" content="Pick any live DOM element, tune CSS in 0.1s or run sandboxed MV3 scripts via Gemini Nano, local Ollama, your own API key, or pagecraft-mcp.">
+<script>
+(function () {
+  try {
+    var root = document.documentElement;
+    var q = new URLSearchParams(window.location.search).get('lang');
+    var saved = localStorage.getItem('pc_site_lang');
+    var lang;
+    if (q === 'zh' || q === 'en') {
+      lang = q;
+    } else if (saved === 'zh' || saved === 'en') {
+      lang = saved;
+    } else {
+      var list = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ''];
+      var hasZh = false;
+      for (var i = 0; i < list.length; i++) {
+        if (/^zh/i.test(list[i])) { hasZh = true; break; }
+      }
+      lang = hasZh ? 'zh' : 'en';
+    }
+    root.setAttribute('data-lang', lang);
+    root.setAttribute('lang', lang === 'zh' ? 'zh-CN' : 'en');
+    document.title = lang === 'zh'
+      ? 'PageCraft — 指哪改哪的浏览器网页改造与本地智能体插件'
+      : 'PageCraft: live webpage customizer for Chrome and coding agents';
+  } catch (e) {}
+})();
+</script>
+<title>PageCraft — 指哪改哪的浏览器网页改造与本地智能体插件</title>
+<meta name="description" content="鼠标点选任意网页元素，用自然语言即时注入 0.1s CSS 样式或 MV3 隔离油猴脚本。100% 纯本地零服务端，支持 Chrome 内置 Gemini Nano、本地 Ollama、自有 API Key 与 pagecraft-mcp。">
 <meta property="og:type" content="website">
-<meta property="og:title" content="PageCraft: live webpage customizer for Chrome and coding agents">
-<meta property="og:description" content="Local-first Chrome extension and MCP bridge for live CSS, MV3 userScripts, and self-healing selectors.">
+<meta property="og:title" content="PageCraft — 指哪改哪的浏览器网页改造与本地智能体插件">
+<meta property="og:description" content="100% 纯本地零服务端 Chrome/Edge 网页定制与 MCP 桥接插件：支持 0.1s CSS、MV3 userScripts 与选择器自动自愈。">
 <meta property="og:image" content="share.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <meta name="theme-color" content="#FAF8F5">
 <link rel="canonical" href="https://pagecraft.shenxin.space/">
+<link rel="alternate" hreflang="zh-CN" href="https://pagecraft.shenxin.space/?lang=zh">
+<link rel="alternate" hreflang="en" href="https://pagecraft.shenxin.space/?lang=en">
+<link rel="alternate" hreflang="x-default" href="https://pagecraft.shenxin.space/">
 <meta name="site-kind" content="software">
 <meta name="page-type" content="software">
 
@@ -31,14 +61,21 @@
   --p-accent: #b84727; --p-accent-ink: #ffffff; --p-action: #b84727; --p-action-ink: #ffffff;
   --p-inv-bg: #1c1917; --p-inv-surface: #292624; --p-inv-ink: #faf8f5; --p-inv-muted: #bab5ae;
   --p-inv-accent: #e06d4b; --p-inv-accent-ink: #1c1917; --p-inv-action: #b84727; --p-inv-action-ink: #ffffff;
-  --font-display: "Epilogue", system-ui, sans-serif;
-  --font-text: "Epilogue", system-ui, sans-serif;
+  --font-display: "Epilogue", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-text: "Epilogue", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Microsoft YaHei", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   --display-weight: 400;
   --display-tracking: -0.035em;
   --display-tracking-xl: -0.045em;
   --ly-scale: 0.97;
 }
+html[data-lang="zh"] {
+  --display-weight: 500;
+  --display-tracking: -0.01em;
+  --display-tracking-xl: -0.015em;
+}
+html[data-lang="zh"] [data-l="en"] { display: none !important; }
+html:not([data-lang="zh"]) [data-l="zh"] { display: none !important; }
 </style>
 <link rel="stylesheet" href="assets/ui/base.css">
 <link rel="stylesheet" href="assets/ui/window/fragment.css">
@@ -55,14 +92,50 @@
 <link rel="modulepreload" href="assets/moments/lib.js">
 <link rel="modulepreload" href="assets/moments/line-carries-colour/moment.js">
 <style>
-  /* Brand mark inside nav & footer */
+  /* Brand mark & language segmented switcher inside nav */
   .pc-mark { width: 24px; height: 24px; border-radius: 6px; flex: none; display: block; }
+  .pc-lang {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: color-mix(in oklab, var(--card) 70%, var(--bg));
+    gap: 1px;
+  }
+  .pc-lang button {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font: 500 12.5px/1 var(--font-text);
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+  }
+  .pc-lang button:hover { color: var(--ink); }
+  .pc-lang button[aria-pressed="true"] {
+    background: var(--bg);
+    color: var(--ink);
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
+  }
+  @media (max-width: 1023px) {
+    .nav:not(.is-open) .nav__actions > .pc-lang { display: inline-flex; }
+    .nav.is-open .nav__actions > .pc-lang { justify-self: center; order: 2; }
+  }
+  @media (max-width: 479px) {
+    .pc-lang button { height: 28px; padding: 0 8px; font-size: 12px; }
+  }
   @media (max-width: 359px) {
     .nav:not(.is-open) .nav__actions .btn { padding-inline: var(--s-2); font-size: 12.5px; }
     .nav:not(.is-open) .nav__actions .btn .m-arrow { display: none; }
   }
-  /* Epilogue has a compact 0-glyph (ch), so 19ch holds 36 characters cleanly on 2 lines inside 880px */
+  /* Epilogue has a compact 0-glyph (ch), so 19ch holds 36 English chars; Chinese uses 15em for clean 2-line balance */
   .hero--centred h1 { max-width: 19ch; }
+  html[data-lang="zh"] .hero--centred h1 { max-width: 15.5em; line-height: 1.18; }
 
   /* Hero window: warm non-violet CSS fallback behind gradient-mesh + live Browser + SidePanel UI */
   .hero__window {
@@ -267,45 +340,59 @@
 </style>
 </head>
 <body>
-<!--
-  plan:
-  1. type: software; kind: software; category: live webpage customizer; primary: Get PageCraft
-  2. palette: client brand (#faf8f5 warm paper, #f1ece4 sand surface, #1c1917 ink, #c95533 terracotta — echoes warm editorial paper and live markup); type: epilogue (Epilogue + JetBrains Mono); hero: centred; effects: gradient-mesh (hero + 2x2 panels on sand lit ground); moment: line-carries-colour (on #bridge .ground-inverse); parts: nav-centre (re-dealt from nav-cards since software uses UI rather than photos), footer-dark, close-type, rhythm dark-band (one inverse band #bridge for line-carries-colour, followed by base #questions before footer-dark), buttons arrow, mark client SVG (#C95533).
-  3. sections: hero--centred (1 screen), #studio app-frame (1 screen), #compute features-2x2 (.g2, 2 screens), #bridge MCP moment (.ground-inverse, 1 screen), #questions open faq (1 screen), footer.closing footer--dark (1 screen).
--->
 
 <header class="nav nav--centre">
   <div class="wrap nav__bar">
-    <a class="skip-link" href="#top">Skip to content</a>
+    <a class="skip-link" href="#top"><span data-l="zh">跳至正文</span><span data-l="en">Skip to content</span></a>
     <a class="nav__logo" href="#top">
       <img class="pc-mark" src="icon.svg" alt="" width="24" height="24" aria-hidden="true">
       PageCraft
     </a>
     <nav class="nav__links" aria-label="Main">
       <div class="nav__item">
-        <a class="nav__link" href="#studio" aria-haspopup="true" aria-expanded="false">Studio <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        <a class="nav__link" href="#studio" aria-haspopup="true" aria-expanded="false">
+          <span data-l="zh">工作台</span><span data-l="en">Studio</span>
+          <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
         <div class="nav__menu" role="region" aria-label="Studio">
           <div class="wrap grid">
             <div class="menu-col span-4">
-              <p class="t-label">Workspace</p>
-              <a href="#studio">Recipe shelf<span>Manage per-site CSS, MV3 scripts, and Auto-Heal diffs</span></a>
-              <a href="./playground/">Live sandbox<span>Test 5 interactive targets and #PC1:...# shortcodes</span></a>
+              <p class="t-label"><span data-l="zh">工作空间</span><span data-l="en">Workspace</span></p>
+              <a href="#studio">
+                <span data-l="zh">规则书架</span><span data-l="en">Recipe shelf</span>
+                <span><span data-l="zh">统一管理各站 CSS 样式、MV3 脚本与自愈记录</span><span data-l="en">Manage per-site CSS, MV3 scripts, and Auto-Heal diffs</span></span>
+              </a>
+              <a href="./playground/">
+                <span data-l="zh">在线练习靶场</span><span data-l="en">Live sandbox</span>
+                <span><span data-l="zh">20 秒免配置体验 5 个改造目标与 #PC1:...# 口令</span><span data-l="en">Test 5 interactive targets and #PC1:...# shortcodes</span></span>
+              </a>
             </div>
             <div class="menu-col span-4">
-              <p class="t-label">Architecture</p>
-              <a href="#compute">Dual engine<span>0.1s Chrome insertCSS and sandboxed userScripts</span></a>
-              <a href="#bridge">MCP bridge<span>Connect Claude Code, Cursor, or Codex over 127.0.0.1</span></a>
+              <p class="t-label"><span data-l="zh">核心架构</span><span data-l="en">Architecture</span></p>
+              <a href="#compute">
+                <span data-l="zh">双引擎运行时</span><span data-l="en">Dual engine</span>
+                <span><span data-l="zh">0.1 秒原生 insertCSS 注入与隔离 userScripts 沙箱</span><span data-l="en">0.1s Chrome insertCSS and sandboxed userScripts</span></span>
+              </a>
+              <a href="#bridge">
+                <span data-l="zh">MCP 智能体桥接</span><span data-l="en">MCP bridge</span>
+                <span><span data-l="zh">通过本机 127.0.0.1 直连 Claude Code、Cursor 与 Codex</span><span data-l="en">Connect Claude Code, Cursor, or Codex over 127.0.0.1</span></span>
+              </a>
             </div>
           </div>
         </div>
       </div>
-      <div class="nav__item"><a class="nav__link" href="#compute">Compute</a></div>
-      <div class="nav__item"><a class="nav__link" href="#bridge">Bridge</a></div>
-      <div class="nav__item"><a class="nav__link" href="#questions">Questions</a></div>
+      <div class="nav__item"><a class="nav__link" href="#compute"><span data-l="zh">本地算力</span><span data-l="en">Compute</span></a></div>
+      <div class="nav__item"><a class="nav__link" href="#bridge"><span data-l="zh">MCP 桥接</span><span data-l="en">Bridge</span></a></div>
+      <div class="nav__item"><a class="nav__link" href="#questions"><span data-l="zh">常见问题</span><span data-l="en">Questions</span></a></div>
     </nav>
     <div class="nav__actions">
-      <a class="nav__link" href="#bridge">MCP docs</a>
-      <a class="btn btn--primary" href="https://github.com/botshen/pagecraft">Get PageCraft<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a>
+      <div class="pc-lang" role="group" aria-label="Language">
+        <button type="button" data-set-lang="zh" aria-pressed="true">中文</button>
+        <button type="button" data-set-lang="en" aria-pressed="false">EN</button>
+      </div>
+      <a class="btn btn--primary" href="https://github.com/botshen/pagecraft">
+        <span data-l="zh">获取插件</span><span data-l="en">Get PageCraft</span><svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg>
+      </a>
     </div>
     <button class="nav__toggle" type="button" aria-expanded="false" aria-label="Menu">
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h14M2 13h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -318,12 +405,25 @@
     <div class="wrap">
       <div class="hero-text">
         <div class="hero__c">
-          <a class="pill" href="#compute"><span>MIT open source</span><span class="muted">Zero PageCraft servers</span></a>
-          <h1 id="hero-h">Live webpage customizer for Chrome</h1>
-          <p class="hero__lead">Pick any element, describe your edit, and inject 0.1s CSS or chrome.userScripts locally via Gemini Nano, Ollama, or pagecraft-mcp.</p>
+          <a class="pill" href="#compute">
+            <span><span data-l="zh">MIT 开源免费</span><span data-l="en">MIT open source</span></span>
+            <span class="muted"><span data-l="zh">100% 纯本地 · 零官方服务器</span><span data-l="en">Zero PageCraft servers</span></span>
+          </a>
+          <h1 id="hero-h">
+            <span data-l="zh">指哪改哪，一句话定制任何网页</span>
+            <span data-l="en">Live webpage customizer for Chrome</span>
+          </h1>
+          <p class="hero__lead">
+            <span data-l="zh">鼠标点选网页任意元素，说出你的修改需求，即可在本地通过 Gemini Nano、Ollama、自有密钥或 pagecraft-mcp 注入 0.1 秒生效的 CSS 样式与隔离油猴脚本。</span>
+            <span data-l="en">Pick any element, describe your edit, and inject 0.1s CSS or chrome.userScripts locally via Gemini Nano, Ollama, or pagecraft-mcp.</span>
+          </p>
           <div class="btn-row">
-            <a class="btn btn--primary" href="https://github.com/botshen/pagecraft">Get PageCraft<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a>
-            <a class="btn btn--secondary" href="./playground/">Open live sandbox</a>
+            <a class="btn btn--primary" href="https://github.com/botshen/pagecraft">
+              <span data-l="zh">免费获取 PageCraft</span><span data-l="en">Get PageCraft</span><svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg>
+            </a>
+            <a class="btn btn--secondary" href="./playground/">
+              <span data-l="zh">打开在线练习靶场</span><span data-l="en">Open live sandbox</span>
+            </a>
           </div>
         </div>
         <div class="hero__window" data-fx="gradient-mesh" data-fx-seed="7" role="img" aria-label="Browser window with live webpage element #pc-banner picked alongside the PageCraft SidePanel showing CSS sliders, Vision and Auto-Healed badges, and pagecraft-mcp connected to Claude Code and Cursor">
@@ -333,8 +433,8 @@
               <span class="pc-win__url">news.ycombinator.com · Live DOM</span>
               <span class="pc-win__sp"></span>
               <div class="pc-win__chips">
-                <span class="pc-chip pc-chip--acc">Vision</span>
-                <span class="pc-chip pc-chip--ok">Auto-Healed ✓</span>
+                <span class="pc-chip pc-chip--acc"><span data-l="zh">多模态视觉</span><span data-l="en">Vision</span></span>
+                <span class="pc-chip pc-chip--ok"><span data-l="zh">已自动自愈 ✓</span><span data-l="en">Auto-Healed ✓</span></span>
                 <span class="pc-chip">pagecraft-mcp · Claude Code / Cursor</span>
               </div>
             </div>
@@ -342,22 +442,25 @@
               <div class="pc-dom">
                 <div class="pc-picked">
                   <span class="pc-picked__tag">#pc-banner</span>
-                  <span class="pc-picked__meta">1 node matched · hidden via insertCSS</span>
+                  <span class="pc-picked__meta"><span data-l="zh">命中 1 个节点 · insertCSS 秒级隐藏</span><span data-l="en">1 node matched · hidden via insertCSS</span></span>
                 </div>
                 <div class="pc-article">
-                  <strong>Warm paper reader · 920px column</strong>
-                  <p>PageCraft applies #FAF8F5 paper ground, 17px body copy, and calm line spacing in 0.1s with zero page reload.</p>
+                  <strong><span data-l="zh">暖纸护眼阅读 · 920px 宽屏正文</span><span data-l="en">Warm paper reader · 920px column</span></strong>
+                  <p>
+                    <span data-l="zh">无需刷新页面，0.1 秒应用 #FAF8F5 暖纸底色、17px 舒适字号与沉浸阅读行距。</span>
+                    <span data-l="en">PageCraft applies #FAF8F5 paper ground, 17px body copy, and calm line spacing in 0.1s with zero page reload.</span>
+                  </p>
                 </div>
               </div>
               <div class="pc-side">
                 <div class="pc-side__top">
-                  <b>PageCraft SidePanel</b>
+                  <b><span data-l="zh">PageCraft 侧边栏</span><span data-l="en">PageCraft SidePanel</span></b>
                   <span class="pc-chip pc-chip--ok">CSS · 0.1s</span>
                 </div>
                 <div class="pc-sliders">
-                  <div class="pc-srow"><span>Font</span><span class="pc-strack"><i style="width:62%"></i></span><code>17px</code></div>
-                  <div class="pc-srow"><span>Width</span><span class="pc-strack"><i style="width:74%"></i></span><code>920px</code></div>
-                  <div class="pc-srow"><span>Warmth</span><span class="pc-strack"><i style="width:44%"></i></span><code>20%</code></div>
+                  <div class="pc-srow"><span><span data-l="zh">字号</span><span data-l="en">Font</span></span><span class="pc-strack"><i style="width:62%"></i></span><code>17px</code></div>
+                  <div class="pc-srow"><span><span data-l="zh">版宽</span><span data-l="en">Width</span></span><span class="pc-strack"><i style="width:74%"></i></span><code>920px</code></div>
+                  <div class="pc-srow"><span><span data-l="zh">暖色</span><span data-l="en">Warmth</span></span><span class="pc-strack"><i style="width:44%"></i></span><code>20%</code></div>
                 </div>
                 <div class="pc-mcp">
                   <span>MCP 127.0.0.1</span>
@@ -375,11 +478,21 @@
     <div class="wrap">
       <div class="grid">
         <div class="span-5">
-          <h2 id="studio-h">Inspect and self-heal any webpage</h2>
+          <h2 id="studio-h">
+            <span data-l="zh">可视化点选，网页改版也能自动自愈</span>
+            <span data-l="en">Inspect and self-heal any webpage</span>
+          </h2>
         </div>
         <div class="span-6 start-7">
-          <p class="muted">Keep 10 built-in site recipes and your own rules in one shelf, share #PC1:...# text shortcodes, and repair broken selectors automatically when a site ships new markup.</p>
-          <p class="mt-4"><a class="link" href="./playground/">Test 5 live targets in the sandbox</a></p>
+          <p class="muted">
+            <span data-l="zh">在一个书架里集中管理内置一键净化配方与自建规则，支持 #PC1:...# 纯文本口令分享；当网站前端改版导致旧选择器失效时，自动比对实时 DOM 完成修复。</span>
+            <span data-l="en">Keep built-in site recipes and your own rules in one shelf, share #PC1:...# text shortcodes, and repair broken selectors automatically when a site ships new markup.</span>
+          </p>
+          <p class="mt-4">
+            <a class="link" href="./playground/">
+              <span data-l="zh">前往靶场实测 5 个交互目标</span><span data-l="en">Test 5 live targets in the sandbox</span>
+            </a>
+          </p>
         </div>
       </div>
       <div class="ui app fill" role="img" aria-label="PageCraft shelf showing 9 active site mods beside an Auto-Heal selector diff on #pc-banner" data-ui-pause-host>
@@ -387,31 +500,36 @@
           <div class="ui ui-panel ui-win" data-ui="window" data-open="CSS 0.1s" data-work="Healing" data-done="Healed">
             <div class="ui-win__bar">
               <span class="ui-dots" aria-hidden="true"><i></i><i></i><i></i></span>
-              <span class="ui-win__crumb">PageCraft <i>/</i> <b>Site mods</b></span>
+              <span class="ui-win__crumb">PageCraft <i>/</i> <b><span data-l="zh">站点规则</span><span data-l="en">Site mods</span></b></span>
               <span class="ui-spacer"></span>
-              <span class="ui-win__search" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg><span class="ui-win__ph">Search</span><span class="ui-kbd">/</span></span>
+              <span class="ui-win__search" aria-hidden="true"><svg class="ui-icon" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg><span class="ui-win__ph"><span data-l="zh">搜索</span><span data-l="en">Search</span></span><span class="ui-kbd">/</span></span>
             </div>
             <div class="ui-win__body">
               <nav class="ui-win__side" aria-hidden="true">
-                <span class="ui-win__nav is-on"><svg class="ui-icon" viewBox="0 0 16 16"><path d="M2.5 9h3l1 1.5h3l1-1.5h3"/><path d="M2.5 9 4 3.5h8L13.5 9v3.5h-11z"/></svg>Active<em>10</em></span>
+                <span class="ui-win__nav is-on"><svg class="ui-icon" viewBox="0 0 16 16"><path d="M2.5 9h3l1 1.5h3l1-1.5h3"/><path d="M2.5 9 4 3.5h8L13.5 9v3.5h-11z"/></svg><span data-l="zh">启用中</span><span data-l="en">Active</span><em>10</em></span>
                 <span class="ui-win__nav"><svg class="ui-icon" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 1.5"/></svg>CSS<em>7</em></span>
-                <span class="ui-win__nav"><svg class="ui-icon" viewBox="0 0 16 16"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg>Healed<em>3</em></span>
-                <span class="ui-win__label">Packs</span>
-                <span class="ui-win__nav"><span class="ui-win__hash">#</span>Reader</span>
-                <span class="ui-win__nav"><span class="ui-win__hash">#</span>Focus</span>
+                <span class="ui-win__nav"><svg class="ui-icon" viewBox="0 0 16 16"><path d="m3.5 8.4 2.8 2.8 6.2-6.4"/></svg><span data-l="zh">已自愈</span><span data-l="en">Healed</span><em>3</em></span>
+                <span class="ui-win__label"><span data-l="zh">分组</span><span data-l="en">Packs</span></span>
+                <span class="ui-win__nav"><span class="ui-win__hash">#</span><span data-l="zh">沉浸阅读</span><span data-l="en">Reader</span></span>
+                <span class="ui-win__nav"><span class="ui-win__hash">#</span><span data-l="zh">专注净化</span><span data-l="en">Focus</span></span>
               </nav>
               <div class="ui-win__main">
-                <div class="ui-win__cols" aria-hidden="true"><span>Site</span><span>Recipe</span><span>Engine</span><span>Speed</span></div>
+                <div class="ui-win__cols" aria-hidden="true">
+                  <span><span data-l="zh">网站</span><span data-l="en">Site</span></span>
+                  <span><span data-l="zh">改造规则</span><span data-l="en">Recipe</span></span>
+                  <span><span data-l="zh">引擎</span><span data-l="en">Engine</span></span>
+                  <span><span data-l="zh">耗时</span><span data-l="en">Speed</span></span>
+                </div>
                 <ul class="ui-win__rows">
-                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="1">RD</span><span class="ui-win__who">reddit.com</span><span class="ui-win__sub">Hide #pc-banner promo bar</span><span class="ui-win__st" data-st>CSS 0.1s</span><span class="ui-win__age">0.1s</span></li>
-                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="3">HN</span><span class="ui-win__who">news.ycombinator.com</span><span class="ui-win__sub">Warm paper 920px reader</span><span class="ui-win__st is-done" data-st>Active</span><span class="ui-win__age">0.1s</span></li>
-                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="4">GH</span><span class="ui-win__who">github.com</span><span class="ui-win__sub">Wide pull-request split diff</span><span class="ui-win__st is-done" data-st>Active</span><span class="ui-win__age">0.1s</span></li>
-                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="2">YT</span><span class="ui-win__who">youtube.com</span><span class="ui-win__sub">Hide Shorts shelf · MV3 JS</span><span class="ui-win__st is-you" data-st>JS MV3</span><span class="ui-win__age">12ms</span></li>
-                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="5">AX</span><span class="ui-win__who">arxiv.org</span><span class="ui-win__sub">17px abstract column</span><span class="ui-win__st is-done" data-st>Active</span><span class="ui-win__age">0.1s</span></li>
-                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="3">WK</span><span class="ui-win__who">wikipedia.org</span><span class="ui-win__sub">Calm margins &amp; footnote rail</span><span class="ui-win__st is-done" data-st>Active</span><span class="ui-win__age">0.1s</span></li>
-                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="1">MD</span><span class="ui-win__who">developer.mozilla.org</span><span class="ui-win__sub">High-contrast code blocks</span><span class="ui-win__st is-done" data-st>Active</span><span class="ui-win__age">0.1s</span></li>
-                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="4">PY</span><span class="ui-win__who">docs.python.org</span><span class="ui-win__sub">Pinned API table of contents</span><span class="ui-win__st is-you" data-st>JS MV3</span><span class="ui-win__age">9ms</span></li>
-                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="2">LN</span><span class="ui-win__who">linear.app</span><span class="ui-win__sub">Compact triage row density</span><span class="ui-win__st is-done" data-st>Healed</span><span class="ui-win__age">0.1s</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="1">RD</span><span class="ui-win__who">reddit.com</span><span class="ui-win__sub"><span data-l="zh">屏蔽 #pc-banner 顶部横幅</span><span data-l="en">Hide #pc-banner promo bar</span></span><span class="ui-win__st" data-st>CSS 0.1s</span><span class="ui-win__age">0.1s</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="3">HN</span><span class="ui-win__who">news.ycombinator.com</span><span class="ui-win__sub"><span data-l="zh">920px 暖纸宽屏阅读</span><span data-l="en">Warm paper 920px reader</span></span><span class="ui-win__st is-done" data-st>Active</span><span class="ui-win__age">0.1s</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="4">GH</span><span class="ui-win__who">github.com</span><span class="ui-win__sub"><span data-l="zh">PR 代码双栏宽屏对比</span><span data-l="en">Wide pull-request split diff</span></span><span class="ui-win__st is-done" data-st>Active</span><span class="ui-win__age">0.1s</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="2">YT</span><span class="ui-win__who">youtube.com</span><span class="ui-win__sub"><span data-l="zh">隐藏短视频推荐栏 · MV3</span><span data-l="en">Hide Shorts shelf · MV3 JS</span></span><span class="ui-win__st is-you" data-st>JS MV3</span><span class="ui-win__age">12ms</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="5">AX</span><span class="ui-win__who">arxiv.org</span><span class="ui-win__sub"><span data-l="zh">论文摘要 17px 舒适排版</span><span data-l="en">17px abstract column</span></span><span class="ui-win__st is-done" data-st>Active</span><span class="ui-win__age">0.1s</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="3">WK</span><span class="ui-win__who">wikipedia.org</span><span class="ui-win__sub"><span data-l="zh">精简侧栏与留白优化</span><span data-l="en">Calm margins &amp; footnote rail</span></span><span class="ui-win__st is-done" data-st>Active</span><span class="ui-win__age">0.1s</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="1">MD</span><span class="ui-win__who">developer.mozilla.org</span><span class="ui-win__sub"><span data-l="zh">高对比度代码块高亮</span><span data-l="en">High-contrast code blocks</span></span><span class="ui-win__st is-done" data-st>Active</span><span class="ui-win__age">0.1s</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="4">PY</span><span class="ui-win__who">docs.python.org</span><span class="ui-win__sub"><span data-l="zh">吸顶悬浮 API 目录树</span><span data-l="en">Pinned API table of contents</span></span><span class="ui-win__st is-you" data-st>JS MV3</span><span class="ui-win__age">9ms</span></li>
+                  <li class="ui-win__row" data-row><span class="ui-avatar" data-tone="2">LN</span><span class="ui-win__who">linear.app</span><span class="ui-win__sub"><span data-l="zh">高密度列表紧凑视图</span><span data-l="en">Compact triage row density</span></span><span class="ui-win__st is-done" data-st>Healed</span><span class="ui-win__age">0.1s</span></li>
                 </ul>
               </div>
             </div>
@@ -441,11 +559,14 @@
                   <span class="ui-diff__time">0.4s</span>
                   <span class="ui-spacer"></span>
                   <span class="ui-diff__act" data-diff-act>
-                    <button class="ui-btn ui-btn--sm ui-diff__apply" type="button" tabindex="-1" data-diff-apply><span class="ui-diff__lbl">Apply heal</span><i class="ui-diff__spin" aria-hidden="true"></i></button>
-                    <span class="ui-chip ui-diff__done"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 8.4 2.6 2.6L12 5.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>Auto-Healed</span>
+                    <button class="ui-btn ui-btn--sm ui-diff__apply" type="button" tabindex="-1" data-diff-apply><span class="ui-diff__lbl"><span data-l="zh">应用修复</span><span data-l="en">Apply heal</span></span><i class="ui-diff__spin" aria-hidden="true"></i></button>
+                    <span class="ui-chip ui-diff__done"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="m4 8.4 2.6 2.6L12 5.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-l="zh">已自动自愈</span><span data-l="en">Auto-Healed</span></span>
                   </span>
                 </div>
-                <div class="ui-diff__msg">Verified <code>#pc-banner</code> on 1 live node after markup update.</div>
+                <div class="ui-diff__msg">
+                  <span data-l="zh">网站改版后已实时校验命中 1 个 <code>#pc-banner</code> 节点。</span>
+                  <span data-l="en">Verified <code>#pc-banner</code> on 1 live node after markup update.</span>
+                </div>
               </div>
               <div class="ui-diff__ln"><i>4</i><i>4</i><span class="ui-diff__code" data-i="0">}</span></div>
               <div class="ui-diff__ln"><i>5</i><i>5</i><span class="ui-diff__code" data-i="0">main.feed-column {</span></div>
@@ -464,15 +585,50 @@
     <div class="wrap">
       <div class="group">
         <div class="section-head">
-          <h2 id="compute-h">Two Chrome engines, four AI backends</h2>
-          <p class="muted">Prompts go straight to your chosen model with zero PageCraft cloud servers.</p>
+          <h2 id="compute-h">
+            <span data-l="zh">CSS + JS 双引擎，四种本地与自有算力</span>
+            <span data-l="en">Two Chrome engines, four AI backends</span>
+          </h2>
+          <p class="muted">
+            <span data-l="zh">无需注册账号，不经过任何官方服务器，提示词直连你选择的本地模型或自有接口。</span>
+            <span data-l="en">Prompts go straight to your chosen model with zero PageCraft cloud servers.</span>
+          </p>
         </div>
         <div class="grid">
           <article class="card card--row card--open span-6 m-nolift">
-            <h3>Route live DOM to four backends</h3>
-            <p>Pair Chrome's element picker and dual injector with Gemini Nano, local Ollama, direct BYOK keys, or MCP agents.</p>
+            <h3>
+              <span data-l="zh">实时页面结构直连四种算力</span>
+              <span data-l="en">Route live DOM to four backends</span>
+            </h3>
+            <p>
+              <span data-l="zh">将元素点选器与双引擎注入器无缝接入 Chrome 内置 Gemini Nano、本地 Ollama、自有 API Key 或 MCP 编程智能体。</span>
+              <span data-l="en">Pair Chrome's element picker and dual injector with Gemini Nano, local Ollama, direct BYOK keys, or MCP agents.</span>
+            </p>
             <div class="panel">
-              <div class="dg" data-diagram data-dg-still>
+              <div class="dg" data-diagram data-dg-still data-l="zh">
+                <script type="application/json">
+                {
+                  "layout": "bowtie",
+                  "alt": "Chrome DOM、0.1s CSS 与 MV3 JS 通过 PageCraft 直连 Gemini Nano、Ollama、自有 API Key 与 Claude Code MCP。",
+                  "sources": [
+                    { "label": "Chrome DOM", "icon": "chrome", "sub": "可视化点选" },
+                    { "label": "Edge MV3", "icon": "microsoft-edge", "sub": "0.1s 样式" },
+                    { "label": "userScripts", "icon": "javascript", "sub": "隔离沙箱" }
+                  ],
+                  "core": {
+                    "label": "PageCraft",
+                    "icon": "text:PC"
+                  },
+                  "targets": [
+                    { "label": "Gemini Nano", "icon": "gemini", "sub": "浏览器内置" },
+                    { "label": "Ollama", "icon": "ollama", "sub": "本机离线" },
+                    { "label": "Direct BYOK", "icon": "openai", "sub": "自有密钥" },
+                    { "label": "MCP 桥接", "icon": "claude", "sub": "Cursor · CLI" }
+                  ]
+                }
+                </script>
+              </div>
+              <div class="dg" data-diagram data-dg-still data-l="en">
                 <script type="application/json">
                 {
                   "layout": "bowtie",
@@ -499,28 +655,36 @@
           </article>
 
           <article class="card card--row card--open span-6 m-nolift">
-            <h3>Tune type and width in 0.1s</h3>
-            <p>Slide font scale, column width, and paper warmth via native Chrome insertCSS with zero flash of unstyled content.</p>
+            <h3>
+              <span data-l="zh">0.1 秒无闪烁调节字号与版宽</span>
+              <span data-l="en">Tune type and width in 0.1s</span>
+            </h3>
+            <p>
+              <span data-l="zh">通过原生 insertCSS 实时拉动字号缩放、正文宽度与纸张暖色，无需开启额外权限，零白屏闪烁。</span>
+              <span data-l="en">Slide font scale, column width, and paper warmth via native Chrome insertCSS with zero flash of unstyled content.</span>
+            </p>
             <div class="panel" data-fx="gradient-mesh" data-fx-seed="23">
               <div class="stage">
                 <div class="at-center" data-ui-loop>
                   <div class="ui ui-panel ui-slider" data-ui="slider">
                     <div class="ui-slider__head">
                       <span class="ui-slider__ico" aria-hidden="true"><svg viewBox="0 0 16 16"><circle cx="4" cy="4" r="1.1"/><circle cx="8" cy="4" r="1.1"/><circle cx="12" cy="4" r="1.1"/><circle cx="4" cy="8" r="1.1"/><circle cx="8" cy="8" r="1.1"/><circle cx="12" cy="8" r="1.1"/><circle cx="4" cy="12" r="1.1"/><circle cx="8" cy="12" r="1.1"/><circle cx="12" cy="12" r="1.1"/></svg></span>
-                      <span class="ui-slider__name"><span class="ui-title">Quick sliders</span><span class="ui-meta">insertCSS · 0.1s</span></span>
+                      <span class="ui-slider__name"><span class="ui-title"><span data-l="zh">快捷排版滑块</span><span data-l="en">Quick sliders</span></span><span class="ui-meta">insertCSS · 0.1s</span></span>
                       <span class="ui-spacer"></span>
-                      <span class="ui-slider__reset">Reset</span>
+                      <span class="ui-slider__reset"><span data-l="zh">重置</span><span data-l="en">Reset</span></span>
                     </div>
                     <div class="ui-slider__row">
-                      <div class="ui-slider__top"><span>Warmth</span><output data-slider-val>20</output></div>
+                      <div class="ui-slider__top"><span><span data-l="zh">纸张暖色</span><span data-l="en">Warmth</span></span><output data-slider-val>20</output></div>
                       <div class="ui-slider__track" data-slider-track style="--v:0.42"><i class="ui-slider__fill"></i><i class="ui-slider__thumb"></i></div>
                     </div>
                     <div class="ui-slider__row">
-                      <div class="ui-slider__top"><span>Column width</span><output>920 px</output></div>
+                      <div class="ui-slider__top"><span><span data-l="zh">正文版宽</span><span data-l="en">Column width</span></span><output>920 px</output></div>
                       <div class="ui-slider__track" style="--v:0.72"><i class="ui-slider__fill"></i><i class="ui-slider__thumb"></i></div>
                     </div>
                     <div class="ui-slider__seg" role="group" aria-label="Paper mode">
-                      <span class="is-on">Paper</span><span>Dark</span><span>Auto</span>
+                      <span class="is-on"><span data-l="zh">暖纸</span><span data-l="en">Paper</span></span>
+                      <span><span data-l="zh">暗色</span><span data-l="en">Dark</span></span>
+                      <span><span data-l="zh">跟随系统</span><span data-l="en">Auto</span></span>
                     </div>
                   </div>
                 </div>
@@ -532,31 +696,49 @@
 
       <div class="grid">
         <article class="card card--row card--open span-6 m-nolift">
-          <h3>Security for API keys and JS</h3>
-          <p>Credentials live only in chrome.storage.local, and JavaScript mods stay locked until Chrome's MV3 userScripts switch is on.</p>
+          <h3>
+            <span data-l="zh">密钥本机存储与脚本沙箱隔离</span>
+            <span data-l="en">Security for API keys and JS</span>
+          </h3>
+          <p>
+            <span data-l="zh">API 密钥仅保存在本机 chrome.storage.local，交互式 JS 脚本严格隔离在浏览器官方 MV3 userScripts 沙箱中。</span>
+            <span data-l="en">Credentials live only in chrome.storage.local, and JavaScript mods stay locked until Chrome's MV3 userScripts switch is on.</span>
+          </p>
           <div class="panel" data-fx="gradient-mesh" data-fx-seed="31">
             <div class="stage">
               <div class="at-rise fit" style="--fit-max: 390px">
                 <div class="ui ui-panel ui-toggles" data-ui="toggles">
                   <div class="ui-head">
                     <svg class="ui-icon ui-toggles__ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8 13 4v3.6c0 3-2.1 5.4-5 6.6-2.9-1.2-5-3.6-5-6.6V4z"/><path d="m5.8 8 1.6 1.6 3-3.2"/></svg>
-                    <div class="ui-title">Local execution guards</div>
+                    <div class="ui-title"><span data-l="zh">本地安全执行守卫</span><span data-l="en">Local execution guards</span></div>
                   </div>
                   <ul class="ui-tg-list">
                     <li class="ui-tg">
-                      <span class="ui-tg__text"><span class="ui-tg__label">Instant CSS injection</span><span class="ui-tg__sub">Chrome scripting.insertCSS</span></span>
+                      <span class="ui-tg__text">
+                        <span class="ui-tg__label"><span data-l="zh">CSS 样式秒级注入</span><span data-l="en">Instant CSS injection</span></span>
+                        <span class="ui-tg__sub">Chrome scripting.insertCSS</span>
+                      </span>
                       <button class="ui-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Instant CSS injection"><i></i></button>
                     </li>
                     <li class="ui-tg">
-                      <span class="ui-tg__text"><span class="ui-tg__label">MV3 chrome.userScripts</span><span class="ui-tg__sub">Isolated execution world</span></span>
+                      <span class="ui-tg__text">
+                        <span class="ui-tg__label"><span data-l="zh">MV3 脚本沙箱隔离</span><span data-l="en">MV3 chrome.userScripts</span></span>
+                        <span class="ui-tg__sub"><span data-l="zh">独立隔离执行世界</span><span data-l="en">Isolated execution world</span></span>
+                      </span>
                       <button class="ui-switch is-on" type="button" role="switch" aria-checked="true" aria-label="MV3 chrome.userScripts"><i></i></button>
                     </li>
                     <li class="ui-tg">
-                      <span class="ui-tg__text"><span class="ui-tg__label">Send tab screenshot</span><span class="ui-tg__sub">Only when Vision is toggled</span></span>
+                      <span class="ui-tg__text">
+                        <span class="ui-tg__label"><span data-l="zh">局部元素视觉截图</span><span data-l="en">Send tab screenshot</span></span>
+                        <span class="ui-tg__sub"><span data-l="zh">仅在主动开启视觉时截取</span><span data-l="en">Only when Vision is toggled</span></span>
+                      </span>
                       <button class="ui-switch" type="button" role="switch" aria-checked="false" aria-label="Send tab screenshot"><i></i></button>
                     </li>
                     <li class="ui-tg">
-                      <span class="ui-tg__text"><span class="ui-tg__label">Auto-Heal zero matches</span><span class="ui-tg__sub">Verify live DOM count first</span></span>
+                      <span class="ui-tg__text">
+                        <span class="ui-tg__label"><span data-l="zh">0 命中自动自愈</span><span data-l="en">Auto-Heal zero matches</span></span>
+                        <span class="ui-tg__sub"><span data-l="zh">应用前实时校验 DOM 命中数</span><span data-l="en">Verify live DOM count first</span></span>
+                      </span>
                       <button class="ui-switch is-on" type="button" role="switch" aria-checked="true" aria-label="Auto-Heal zero matches"><i></i></button>
                     </li>
                   </ul>
@@ -567,12 +749,35 @@
         </article>
 
         <article class="card card--row card--open span-6 m-nolift">
-          <h3>PageCraft MCP in 8 lines</h3>
-          <p>Point Claude Code, Cursor, or Codex at pagecraft-mcp so your terminal agent inspects and patches live tabs directly.</p>
+          <h3>
+            <span data-l="zh">8 行配置接入本地编程智能体</span>
+            <span data-l="en">PageCraft MCP in 8 lines</span>
+          </h3>
+          <p>
+            <span data-l="zh">将 Claude Code、Cursor 或 Codex 接入 pagecraft-mcp，让终端智能体直接读取点选元素并热更新真实网页。</span>
+            <span data-l="en">Point Claude Code, Cursor, or Codex at pagecraft-mcp so your terminal agent inspects and patches live tabs directly.</span>
+          </p>
           <div class="panel" data-fx="gradient-mesh" data-fx-seed="42">
             <div class="stage">
               <div class="at-rise fit" style="--fit-max: 440px">
-                <div class="ui ui-panel ui-code" data-ui="code">
+                <div class="ui ui-panel ui-code" data-ui="code" data-l="zh">
+                  <div class="ui-code__tabs">
+                    <span class="ui-code__tab is-on"><i class="ui-code__lang">JSON</i>mcp.json</span>
+                    <span class="ui-code__tab"><i class="ui-code__lang">TS</i>cli.ts</span>
+                    <span class="ui-spacer"></span>
+                    <span class="ui-chip ui-chip--plain ui-code__chip" data-code-chip>127.0.0.1</span>
+                  </div>
+                  <pre class="ui-code__pre"><code><span class="ui-code__ln" data-n="1">{</span>
+<span class="ui-code__ln" data-n="2">  <span class="k">"mcpServers"</span>: {</span>
+<span class="ui-code__ln" data-n="3" data-note="注册本机零依赖 stdio MCP 服务。">    <span class="k">"pagecraft"</span>: {</span>
+<span class="ui-code__ln" data-n="4">      <span class="f">"command"</span>: <span class="s">"node"</span>,</span>
+<span class="ui-code__ln" data-n="5">      <span class="f">"args"</span>: [</span>
+<span class="ui-code__ln is-mark" data-n="6" data-note="通过 127.0.0.1 桥接浏览器侧边栏。">        <span class="s">"mcp/src/cli.ts"</span></span>
+<span class="ui-code__ln" data-n="7">      ]</span>
+<span class="ui-code__ln" data-n="8">    } }</span></code></pre>
+                  <div class="ui-code__hint" data-code-hint><span class="ui-dot"></span><span data-code-text>本机实时网页操控工具已就绪。</span></div>
+                </div>
+                <div class="ui ui-panel ui-code" data-ui="code" data-l="en">
                   <div class="ui-code__tabs">
                     <span class="ui-code__tab is-on"><i class="ui-code__lang">JSON</i>mcp.json</span>
                     <span class="ui-code__tab"><i class="ui-code__lang">TS</i>cli.ts</span>
@@ -587,7 +792,7 @@
 <span class="ui-code__ln is-mark" data-n="6" data-note="Bridges Chrome SidePanel over localhost.">        <span class="s">"mcp/src/cli.ts"</span></span>
 <span class="ui-code__ln" data-n="7">      ]</span>
 <span class="ui-code__ln" data-n="8">    } }</span></code></pre>
-                  <div class="ui-code__hint" data-code-hint><span class="ui-dot"></span><span data-code-text>4 live tools ready on localhost.</span></div>
+                  <div class="ui-code__hint" data-code-hint><span class="ui-dot"></span><span data-code-text>Live tools ready on localhost.</span></div>
                 </div>
               </div>
             </div>
@@ -602,18 +807,43 @@
       <div class="grid">
         <div class="span-5">
           <div class="section-head">
-            <h2 id="bridge-h">Four live Chrome tools over localhost</h2>
-            <p class="muted">Run pagecraft-mcp on your machine so Claude Code, Cursor, or Codex reads picked DOM nodes, checks selector counts, and applies verified rules without copy-pasting HTML.</p>
+            <h2 id="bridge-h">
+              <span data-l="zh">通过本机 127.0.0.1 驱动真实浏览器页面</span>
+              <span data-l="en">Live Chrome tools over localhost</span>
+            </h2>
+            <p class="muted">
+              <span data-l="zh">在本机运行 pagecraft-mcp，无需按 F12 手动复制 HTML，Claude Code、Cursor 或 Codex 即可读取点选节点、验证选择器命中数并热更新网页规则。</span>
+              <span data-l="en">Run pagecraft-mcp on your machine so Claude Code, Cursor, or Codex reads picked DOM nodes, checks selector counts, and applies verified rules without copy-pasting HTML.</span>
+            </p>
           </div>
-          <p><a class="link" href="https://github.com/botshen/pagecraft#mcp-bridge-claude-code--cursor--codex">Read the MCP setup guide</a></p>
+          <p>
+            <a class="link" href="https://github.com/botshen/pagecraft#pagecraft-mcp-bridge-claude-code--cursor--codex">
+              <span data-l="zh">查看 MCP 详细接入指南</span><span data-l="en">Read the MCP setup guide</span>
+            </a>
+          </p>
         </div>
         <div class="span-6 start-7 mcp-spec">
           <div class="mcp-rows">
-            <div class="mcp-row"><code>ws://127.0.0.1:17321</code><span>Local stdio and WebSocket transport</span></div>
-            <div class="mcp-row"><code>pagecraft_get_picked_element</code><span>Tag, computed CSS, bounding box</span></div>
-            <div class="mcp-row"><code>pagecraft_get_page_context</code><span>Tab URL, title, DOM landmarks</span></div>
-            <div class="mcp-row"><code>pagecraft_verify_selectors</code><span>Live match count before apply</span></div>
-            <div class="mcp-row"><code>pagecraft_apply_mod</code><span>Inject CSS or MV3 JS and save</span></div>
+            <div class="mcp-row">
+              <code>ws://127.0.0.1:17321</code>
+              <span><span data-l="zh">仅限本机回环的 stdio 与 WebSocket 传输</span><span data-l="en">Local stdio and WebSocket transport</span></span>
+            </div>
+            <div class="mcp-row">
+              <code>pagecraft_get_picked_element</code>
+              <span><span data-l="zh">读取点选元素的标签、选择器与计算样式</span><span data-l="en">Tag, computed CSS, bounding box</span></span>
+            </div>
+            <div class="mcp-row">
+              <code>pagecraft_get_active_page</code>
+              <span><span data-l="zh">获取当前标签页脱敏 URL、标题与 DOM 地标</span><span data-l="en">Tab URL, title, DOM landmarks</span></span>
+            </div>
+            <div class="mcp-row">
+              <code>pagecraft_verify_selectors</code>
+              <span><span data-l="zh">注入前实时校验 CSS 选择器命中节点数</span><span data-l="en">Live match count before apply</span></span>
+            </div>
+            <div class="mcp-row">
+              <code>pagecraft_apply_mod</code>
+              <span><span data-l="zh">热应用并持久化保存 CSS 样式或 MV3 脚本</span><span data-l="en">Inject CSS or MV3 JS and save</span></span>
+            </div>
           </div>
         </div>
       </div>
@@ -625,8 +855,13 @@
       <div class="grid">
         <div class="span-5">
           <div class="section-head">
-            <h2 id="questions-h">Questions</h2>
-            <p class="muted">Runs locally in Chrome 120+ and Edge 120+ under the MIT license.</p>
+            <h2 id="questions-h">
+              <span data-l="zh">常见问题</span><span data-l="en">Questions</span>
+            </h2>
+            <p class="muted">
+              <span data-l="zh">基于 MIT 协议开源，支持 Chrome 120+ 与 Microsoft Edge 120+ 纯本地运行。</span>
+              <span data-l="en">Runs locally in Chrome 120+ and Edge 120+ under the MIT license.</span>
+            </p>
           </div>
           <div class="q-icons" aria-hidden="true">
             <img src="assets/icons/chrome.svg" alt="" width="28" height="28" loading="lazy">
@@ -634,25 +869,53 @@
             <img src="assets/icons/gemini.svg" alt="" width="28" height="28" loading="lazy">
             <img src="assets/icons/claude.svg" alt="" width="28" height="28" loading="lazy">
           </div>
-          <p><a class="link" href="./privacy/">Read the privacy policy</a></p>
+          <p>
+            <a class="link" href="./privacy/">
+              <span data-l="zh">阅读完整隐私政策</span><span data-l="en">Read the privacy policy</span>
+            </a>
+          </p>
         </div>
         <div class="span-6 start-7">
           <div class="faq">
             <div class="faq__item">
-              <h3>Does PageCraft operate any backend servers?</h3>
-              <p>No. PageCraft runs zero telemetry, analytics, or proxy servers. Prompts go straight to Gemini Nano, local Ollama, or the endpoint you choose.</p>
+              <h3>
+                <span data-l="zh">PageCraft 有后台服务器或收集浏览记录吗？</span>
+                <span data-l="en">Does PageCraft operate any backend servers?</span>
+              </h3>
+              <p>
+                <span data-l="zh">完全没有。PageCraft 零遥测、零统计、零官方中转服务器；请求仅直连浏览器内置 Gemini Nano、本机 Ollama 或你自己配置的模型接口，且发送前在本地自动脱敏。</span>
+                <span data-l="en">No. PageCraft runs zero telemetry, analytics, or proxy servers. Prompts go straight to Gemini Nano, local Ollama, or the endpoint you choose.</span>
+              </p>
             </div>
             <div class="faq__item">
-              <h3>Can I customize pages without an API key?</h3>
-              <p>Yes. All 10 built-in recipes, CSS sliders, Chrome Gemini Nano, local Ollama, and pagecraft-mcp work with zero cloud API keys.</p>
+              <h3>
+                <span data-l="zh">没有云端 API Key 也能直接使用吗？</span>
+                <span data-l="en">Can I customize pages without an API key?</span>
+              </h3>
+              <p>
+                <span data-l="zh">可以。点选任意广告/元素直接隐藏、内置热门网站净化与表格导出配方、CSS 排版滑块，以及 Chrome 内置 Gemini Nano、本机 Ollama 和 pagecraft-mcp 均无需任何云端 API Key。</span>
+                <span data-l="en">Yes. Direct element hiding, built-in recipes, CSS sliders, Chrome Gemini Nano, local Ollama, and pagecraft-mcp all work with zero cloud API keys.</span>
+              </p>
             </div>
             <div class="faq__item">
-              <h3>How does PageCraft sandbox JavaScript mods?</h3>
-              <p>Scripts execute inside Chrome's official MV3 chrome.userScripts world and stay disabled until you turn on Chrome's Allow User Scripts toggle.</p>
+              <h3>
+                <span data-l="zh">JavaScript 改造脚本是如何安全隔离的？</span>
+                <span data-l="en">How does PageCraft sandbox JavaScript mods?</span>
+              </h3>
+              <p>
+                <span data-l="zh">纯样式规则通过原生 insertCSS 免开关即时注入；交互脚本运行在浏览器官方隔离的 MV3 chrome.userScripts 世界中，未在扩展详情页开启「允许用户脚本」前绝不执行。</span>
+                <span data-l="en">Scripts execute inside Chrome's official MV3 chrome.userScripts world and stay disabled until you turn on Chrome's Allow User Scripts toggle.</span>
+              </p>
             </div>
             <div class="faq__item">
-              <h3>What happens when a webpage updates its DOM?</h3>
-              <p>Auto-Heal spots zero-match selectors, checks the live DOM and optional Vision tab capture, and proposes a verified selector replacement.</p>
+              <h3>
+                <span data-l="zh">网页前端改版导致旧规则失效怎么办？</span>
+                <span data-l="en">What happens when a webpage updates its DOM?</span>
+              </h3>
+              <p>
+                <span data-l="zh">闭环自动自愈（Auto-Heal）会自动检测 0 命中的失效选择器，结合最新实时 DOM 结构与可选局部截图生成并验证新选择器。</span>
+                <span data-l="en">Auto-Heal spots zero-match selectors, checks the live DOM and optional Vision tab capture, and proposes a verified selector replacement.</span>
+              </p>
             </div>
           </div>
         </div>
@@ -665,54 +928,102 @@
   <div class="wrap">
     <div class="closing__cta close--type">
       <div class="section-head">
-        <h2 id="close-h">Make every webpage yours</h2>
-        <p>MIT open source for Chrome and Edge. Build and load unpacked in under a minute.</p>
+        <h2 id="close-h">
+          <span data-l="zh">把每个常逛的网页，改成你顺手的样子</span>
+          <span data-l="en">Make every webpage yours</span>
+        </h2>
+        <p>
+          <span data-l="zh">MIT 开源免费，支持 Chrome 与 Edge，所有规则均可随时导出标准 .user.js 油猴脚本。</span>
+          <span data-l="en">MIT open source for Chrome and Edge. Build and load unpacked in under a minute.</span>
+        </p>
       </div>
-      <a class="btn btn--primary btn--xl btn--wide" href="https://github.com/botshen/pagecraft">Get PageCraft<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a>
+      <a class="btn btn--primary btn--xl btn--wide" href="https://github.com/botshen/pagecraft">
+        <span data-l="zh">免费获取 PageCraft</span><span data-l="en">Get PageCraft</span><svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg>
+      </a>
     </div>
     <div class="closing__links">
       <div class="grid">
         <div class="span-4 stack-4">
           <a class="nav__logo" href="#top"><img class="pc-mark" src="icon.svg" alt="" width="24" height="24" loading="lazy" aria-hidden="true">PageCraft</a>
-          <p class="footer__lede">Local-first webpage customizer and MCP bridge for Chrome.</p>
+          <p class="footer__lede">
+            <span data-l="zh">100% 纯本地网页定制与 MCP 编程智能体桥接插件。</span>
+            <span data-l="en">Local-first webpage customizer and MCP bridge for Chrome.</span>
+          </p>
         </div>
         <div class="span-2 footer__col">
-          <h3>Studio</h3>
+          <h3><span data-l="zh">工作台</span><span data-l="en">Studio</span></h3>
           <ul>
-            <li><a href="#studio">Recipe shelf</a></li>
-            <li><a href="./playground/">Live sandbox</a></li>
+            <li><a href="#studio"><span data-l="zh">规则书架</span><span data-l="en">Recipe shelf</span></a></li>
+            <li><a href="./playground/"><span data-l="zh">在线练习靶场</span><span data-l="en">Live sandbox</span></a></li>
           </ul>
         </div>
         <div class="span-2 footer__col">
-          <h3>Compute</h3>
+          <h3><span data-l="zh">本地算力</span><span data-l="en">Compute</span></h3>
           <ul>
-            <li><a href="#compute">Dual engine</a></li>
-            <li><a href="#compute">Four backends</a></li>
+            <li><a href="#compute"><span data-l="zh">双引擎架构</span><span data-l="en">Dual engine</span></a></li>
+            <li><a href="#compute"><span data-l="zh">四种本地算力</span><span data-l="en">Four backends</span></a></li>
           </ul>
         </div>
         <div class="span-2 footer__col">
-          <h3>Bridge</h3>
+          <h3><span data-l="zh">智能体桥接</span><span data-l="en">Bridge</span></h3>
           <ul>
-            <li><a href="#bridge">MCP tools</a></li>
-            <li><a href="https://github.com/botshen/pagecraft">GitHub repo</a></li>
+            <li><a href="#bridge"><span data-l="zh">MCP 工具集</span><span data-l="en">MCP tools</span></a></li>
+            <li><a href="https://github.com/botshen/pagecraft"><span data-l="zh">GitHub 开源仓库</span><span data-l="en">GitHub repo</span></a></li>
           </ul>
         </div>
         <div class="span-2 footer__col">
-          <h3>Support</h3>
+          <h3><span data-l="zh">支持与隐私</span><span data-l="en">Support</span></h3>
           <ul>
-            <li><a href="./privacy/">Privacy</a></li>
-            <li><a href="mailto:botzgbj@gmail.com">Email support</a></li>
+            <li><a href="./privacy/"><span data-l="zh">隐私政策</span><span data-l="en">Privacy</span></a></li>
+            <li><a href="mailto:botzgbj@gmail.com"><span data-l="zh">邮件联系</span><span data-l="en">Email support</span></a></li>
           </ul>
         </div>
       </div>
       <div class="footer__legal">
-        <span>&copy; 2026 PageCraft &nbsp; <a href="./privacy/">Privacy</a> &nbsp; <a href="https://github.com/botshen/pagecraft/blob/main/LICENSE">MIT License</a></span>
-        <span>Product names and logos are trademarks of their owners.</span>
+        <span>
+          &copy; 2026 PageCraft &nbsp;
+          <a href="./privacy/"><span data-l="zh">隐私政策</span><span data-l="en">Privacy</span></a> &nbsp;
+          <a href="https://github.com/botshen/pagecraft/blob/main/LICENSE">MIT License</a>
+        </span>
+        <span>
+          <span data-l="zh">文中提及的产品名称与图标均为各自所有者的商标。</span>
+          <span data-l="en">Product names and logos are trademarks of their owners.</span>
+        </span>
       </div>
     </div>
   </div>
 </footer>
 
+<script>
+(function () {
+  var root = document.documentElement;
+  function applyLang(lang, persist) {
+    var next = lang === 'zh' ? 'zh' : 'en';
+    root.setAttribute('data-lang', next);
+    root.setAttribute('lang', next === 'zh' ? 'zh-CN' : 'en');
+    document.title = next === 'zh'
+      ? 'PageCraft — 指哪改哪的浏览器网页改造与本地智能体插件'
+      : 'PageCraft: live webpage customizer for Chrome and coding agents';
+    var btns = document.querySelectorAll('[data-set-lang]');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].setAttribute('aria-pressed', btns[i].getAttribute('data-set-lang') === next ? 'true' : 'false');
+    }
+    if (persist) {
+      try { localStorage.setItem('pc_site_lang', next); } catch (e) {}
+    }
+    try { window.dispatchEvent(new Event('resize')); } catch (e) {}
+  }
+
+  applyLang(root.getAttribute('data-lang') === 'en' ? 'en' : 'zh', false);
+
+  var btns = document.querySelectorAll('[data-set-lang]');
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].addEventListener('click', function () {
+      applyLang(this.getAttribute('data-set-lang') || 'en', true);
+    });
+  }
+})();
+</script>
 <script type="module" src="assets/system.js"></script>
 <script type="module" src="assets/motion/motion.js"></script>
 <script type="module" src="assets/layout/layout.js"></script>

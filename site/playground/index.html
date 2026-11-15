@@ -1,10 +1,32 @@
 <!DOCTYPE html>
-<html lang="en" data-lang="en">
+<html lang="zh-CN" data-lang="zh">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; base-uri 'self'; form-action 'self' mailto:">
-<title>PageCraft: live customization sandbox and PC1 recipe decoder</title>
+<script>
+(function () {
+  try {
+    var root = document.documentElement;
+    var q = new URLSearchParams(window.location.search).get('lang');
+    var saved = localStorage.getItem('pc_site_lang');
+    var lang;
+    if (q === 'zh' || q === 'en') lang = q;
+    else if (saved === 'zh' || saved === 'en') lang = saved;
+    else {
+      var list = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ''];
+      var hasZh = false;
+      for (var i = 0; i < list.length; i++) {
+        if (/^zh/i.test(list[i])) { hasZh = true; break; }
+      }
+      lang = hasZh ? 'zh' : 'en';
+    }
+    root.setAttribute('data-lang', lang);
+    root.setAttribute('lang', lang === 'zh' ? 'zh-CN' : 'en');
+  } catch (e) {}
+})();
+</script>
+<title>PageCraft — 20 秒在线改造靶场与 PC1 口令解析器</title>
 <meta name="description" content="Interactive zero-telemetry practice sandbox for PageCraft. Pick the promo banner, widen the narrow article column, export the sample table to CSV, or import shared #PC1:...# recipes.">
 <link rel="canonical" href="https://pagecraft.shenxin.space/playground/">
 <meta property="og:title" content="PageCraft: live customization sandbox and PC1 recipe decoder">
@@ -837,6 +859,9 @@ tr[data-status="overdue"] .status-pill {
     var next = lang === 'zh' ? 'zh' : 'en';
     root.setAttribute('data-lang', next);
     root.setAttribute('lang', next === 'zh' ? 'zh-CN' : 'en');
+    document.title = next === 'zh'
+      ? 'PageCraft — 20 秒在线改造靶场与 PC1 口令解析器'
+      : 'PageCraft: live customization sandbox and PC1 recipe decoder';
     var btns = document.querySelectorAll('[data-set-lang]');
     for (var i = 0; i < btns.length; i++) {
       btns[i].setAttribute('aria-pressed', btns[i].getAttribute('data-set-lang') === next ? 'true' : 'false');
@@ -846,17 +871,7 @@ tr[data-status="overdue"] .status-pill {
     }
   }
 
-  try {
-    var params = new URLSearchParams(window.location.search);
-    var q = params.get('lang');
-    if (q === 'zh' || q === 'en') {
-      applyLang(q, false);
-    } else {
-      var savedLang = localStorage.getItem('pc_site_lang');
-      if (savedLang === 'zh' || savedLang === 'en') applyLang(savedLang, false);
-      else if (navigator.language && /^zh/i.test(navigator.language)) applyLang('zh', false);
-    }
-  } catch (e) {}
+  applyLang(root.getAttribute('data-lang') === 'en' ? 'en' : 'zh', false);
 
   var langBtns = document.querySelectorAll('[data-set-lang]');
   for (var i = 0; i < langBtns.length; i++) {

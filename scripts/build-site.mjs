@@ -214,12 +214,34 @@ function renderMarkdown(md) {
 function buildPrivacyHtml(markdownSource) {
   const renderedBody = renderMarkdown(markdownSource);
   return `<!DOCTYPE html>
-<html lang="en" data-lang="en">
+<html lang="zh-CN" data-lang="zh">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; base-uri 'self'; form-action 'self' mailto:">
-<title>PageCraft: privacy policy for 100% client-side execution</title>
+<script>
+(function () {
+  try {
+    var root = document.documentElement;
+    var q = new URLSearchParams(window.location.search).get('lang');
+    var saved = localStorage.getItem('pc_site_lang');
+    var lang;
+    if (q === 'zh' || q === 'en') lang = q;
+    else if (saved === 'zh' || saved === 'en') lang = saved;
+    else {
+      var list = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language || ''];
+      var hasZh = false;
+      for (var i = 0; i < list.length; i++) {
+        if (/^zh/i.test(list[i])) { hasZh = true; break; }
+      }
+      lang = hasZh ? 'zh' : 'en';
+    }
+    root.setAttribute('data-lang', lang);
+    root.setAttribute('lang', lang === 'zh' ? 'zh-CN' : 'en');
+  } catch (e) {}
+})();
+</script>
+<title>PageCraft — 隐私政策（100% 纯本地零服务端）</title>
 <meta name="description" content="PageCraft Privacy Policy: 100% client-side execution with zero PageCraft servers, zero accounts, zero telemetry, and local or user-owned AI compute.">
 <link rel="canonical" href="https://pagecraft.shenxin.space/privacy/">
 <meta property="og:title" content="PageCraft: privacy policy for 100% client-side execution">
@@ -574,7 +596,51 @@ blockquote {
       </div>
     </section>
 
-    <article class="doc-card">
+    <article class="doc-card" data-l="zh">
+      <h1>PageCraft 隐私政策</h1>
+      <p><strong>最后更新：2026 年 11 月</strong></p>
+      <p><strong>PageCraft</strong>（官方网站：<a href="https://pagecraft.shenxin.space" rel="noopener noreferrer">https://pagecraft.shenxin.space</a>）帮助你使用自然语言或本地编程智能体定制网页排版、屏蔽弹窗与干扰栏、导出表格，并生成持久生效的 CSS 样式或标准 <code>.user.js</code> 油猴脚本。</p>
+      <h2>1. 零官方服务器 · 零账号 · 零遥测统计</h2>
+      <p>PageCraft 采用 <strong>100% 纯客户端架构</strong>运行在你的浏览器本地。我们<strong>绝不</strong>：</p>
+      <ul>
+        <li>运营任何 PageCraft 云端代理中转服务器、账号登录体系或遥测统计接口；</li>
+        <li>发送任何匿名使用计数、设备安装 ID、崩溃日志或反馈埋点；</li>
+        <li>在后台记录你的浏览历史、访问网址、搜索词或标签页切换行为；</li>
+        <li>向任何网页注入第三方分析或追踪脚本；</li>
+        <li>读取键盘输入、密码框内容、Cookie 或剪贴板隐私数据；</li>
+        <li>向任何广告商、分析服务商或第三方出售、出租或共享任何用户数据。</li>
+      </ul>
+      <p>我们的官方静态网站与在线练习靶场（<a href="https://pagecraft.shenxin.space" rel="noopener noreferrer">https://pagecraft.shenxin.space</a>，托管于 Cloudflare 静态边缘节点）不含任何追踪脚本与 Cookie，所有 <code>#PC1:...#</code> / <code>?recipe=PC1:...</code> 分享口令均纯在浏览器本地解码。</p>
+      <hr>
+      <h2>2. 100% 存储在你本机浏览器的数据</h2>
+      <p>扩展的所有状态仅保存在你设备本机的 <code>chrome.storage.local</code> 中，除非你主动导出备份或生成分享口令，否则绝不离开本机：</p>
+      <ul>
+        <li>你保存的网页 CSS 样式规则与 JavaScript 用户脚本（<code>pc_mods</code>）；</li>
+        <li>界面语言/主题偏好、当前选择的算力模式以及开关项（如多模态视觉截图与自动自愈）；</li>
+        <li>你在「自有密钥直连（BYOK）」模式下自行填写的接口地址与 API Key，或本地 MCP 桥接可选鉴权口令。</li>
+      </ul>
+      <hr>
+      <h2>3. 四种本地与用户自有算力模式</h2>
+      <ol>
+        <li><strong>Chrome 内置 AI（Gemini Nano）</strong>：通过浏览器端侧 <code>LanguageModel</code> API 完全离线推理，零网络请求，网页结构不出浏览器。</li>
+        <li><strong>本机离线模型（Ollama / LM Studio）</strong>：仅通过本机回环地址（<code>127.0.0.1</code> / <code>localhost</code>）连接你电脑上的本地模型，零数据外发。</li>
+        <li><strong>自有密钥直连（Direct BYOK）</strong>：仅当你主动点击「生成」或「微调」时，扩展先在本地对敏感信息（邮箱、<code>sk-...</code>/<code>Bearer</code> 密钥、8–19 位长数字、URL 查询参数等）执行自动脱敏，随后由浏览器通过 <code>HTTPS</code> 直接发往你自选的模型服务商（如 DeepSeek、OpenAI、Anthropic、OpenRouter 等），绝不经过任何 PageCraft 服务器。</li>
+        <li><strong>本地编程智能体桥接（<code>pagecraft-mcp</code>）</strong>：默认关闭；开启后仅连接本机 <code>ws://127.0.0.1:17321</code>，供你本机的 Claude Code、Cursor 或 Codex 实时点选与调试页面。</li>
+      </ol>
+      <hr>
+      <h2>4. 浏览器权限用途说明</h2>
+      <ul>
+        <li><code>sidePanel</code>：提供 PageCraft 侧边栏工作台与规则管理界面；</li>
+        <li><code>activeTab</code> &amp; <code>scripting</code>：注入实时 CSS 改造规则，并在你主动点击点选/生成时提取目标元素结构；</li>
+        <li><code>userScripts</code>：在浏览器官方隔离的 MV3 <code>USER_SCRIPT</code> 沙箱世界中安全执行交互式 JS 脚本；</li>
+        <li><code>storage</code> &amp; <code>tabs</code>：在本机持久化保存规则，并在标签页导航或单页应用路由切换时自动应用匹配的站点规则。</li>
+      </ul>
+      <hr>
+      <h2>5. 联系方式</h2>
+      <p>如有任何隐私相关疑问或反馈，欢迎发送邮件至 <a href="mailto:botzgbj@gmail.com">botzgbj@gmail.com</a>，或前往 <a href="https://github.com/botshen/pagecraft/issues" rel="noopener noreferrer">GitHub Issues</a> 提交反馈。</p>
+    </article>
+
+    <article class="doc-card" data-l="en">
 ${renderedBody}
     </article>
   </div>
@@ -599,6 +665,9 @@ ${renderedBody}
     var next = lang === 'zh' ? 'zh' : 'en';
     root.setAttribute('data-lang', next);
     root.setAttribute('lang', next === 'zh' ? 'zh-CN' : 'en');
+    document.title = next === 'zh'
+      ? 'PageCraft — 隐私政策（100% 纯本地零服务端）'
+      : 'PageCraft: privacy policy for 100% client-side execution';
     var btns = document.querySelectorAll('[data-set-lang]');
     for (var i = 0; i < btns.length; i++) {
       btns[i].setAttribute('aria-pressed', btns[i].getAttribute('data-set-lang') === next ? 'true' : 'false');
@@ -607,17 +676,7 @@ ${renderedBody}
       try { localStorage.setItem('pc_site_lang', next); } catch (e) {}
     }
   }
-  try {
-    var params = new URLSearchParams(window.location.search);
-    var q = params.get('lang');
-    if (q === 'zh' || q === 'en') {
-      applyLang(q, false);
-    } else {
-      var saved = localStorage.getItem('pc_site_lang');
-      if (saved === 'zh' || saved === 'en') applyLang(saved, false);
-      else if (navigator.language && /^zh/i.test(navigator.language)) applyLang('zh', false);
-    }
-  } catch (e) {}
+  applyLang(root.getAttribute('data-lang') === 'en' ? 'en' : 'zh', false);
 
   var btns = document.querySelectorAll('[data-set-lang]');
   for (var i = 0; i < btns.length; i++) {
