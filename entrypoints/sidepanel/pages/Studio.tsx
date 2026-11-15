@@ -21,6 +21,11 @@ import { urlMatchesAny } from '~/lib/userscripts/matcher';
 import { isLocalLoopbackEndpoint } from '~/lib/shared/ai-endpoints';
 import { defaultPlaygroundIntent, isPlaygroundUrl } from '~/lib/userscripts/playground';
 import {
+  buildDirectHideMod,
+  isRootDocumentSelector,
+  isSafePickedSelector,
+} from '~/lib/userscripts/local-intent';
+import {
   BUILTIN_TEMPLATES,
   instantiateTemplate,
   type TemplateRecipe,
@@ -52,6 +57,7 @@ import {
   Share2,
   RotateCcw,
   Eye,
+  EyeOff,
   PlugZap,
   ArrowRight,
 } from 'lucide-react';
@@ -85,24 +91,37 @@ type GenerateResponseWithVerify = GenerateUserScriptResult & {
 type RecipeFilterKey = 'all' | 'site' | 'clean' | 'reading' | 'tools';
 
 const RECIPE_CLEAN_IDS = new Set([
+  'tpl-floating-ad-shield',
   'tpl-zhihu-clean',
   'tpl-bilibili-focus',
   'tpl-xiaohongshu-clean',
+  'tpl-csdn-clean',
+  'tpl-baidu-clean',
+  'tpl-weibo-clean',
+  'tpl-youtube-focus',
   'tpl-widescreen-reader',
 ]);
 
 const RECIPE_READING_IDS = new Set([
   'tpl-widescreen-reader',
+  'tpl-crisp-typography',
   'tpl-smart-dark-mode',
+  'tpl-office-media-dim',
+  'tpl-auto-expand-article',
   'tpl-zhihu-clean',
+  'tpl-csdn-clean',
   'tpl-xiaohongshu-clean',
+  'tpl-youtube-focus',
 ]);
 
 const RECIPE_TOOLS_IDS = new Set([
   'tpl-table-csv-export',
+  'tpl-markdown-clipper',
+  'tpl-video-speed-controller',
   'tpl-unlock-copy',
   'tpl-code-copy-btn',
   'tpl-direct-external-links',
+  'tpl-password-peek',
   'tpl-alt-image-zoom',
 ]);
 
@@ -480,6 +499,80 @@ export default function StudioPage({
     });
   }
 
+  async function handleInstantHidePicked(useSimilar = false) {
+    if (!pickedElement) return;
+    const targetSel =
+      useSimilar && isSafePickedSelector(pickedElement.similarSelector)
+        ? pickedElement.similarSelector!.trim()
+        : pickedElement.selector.trim();
+    const generated = buildDirectHideMod({
+      selector: targetSel,
+      targetUrl: activeTab.url || pickedElement.pageUrl,
+      lang,
+      isSimilarGroup: useSimilar,
+      similarCount: pickedElement.similarCount,
+    });
+    if (!generated) return;
+
+    await clearEphemeralCssPreview();
+    const now = Date.now();
+    const id = crypto.randomUUID();
+    const mod: UserScript = {
+      id,
+      name: generated.name,
+      description: generated.description,
+      engine: 'css',
+      matches: generated.matches,
+      code: '',
+      css: generated.css ?? '',
+      targetSelectors: generated.targetSelectors,
+      enabled: true,
+      source: 'manual',
+      runAt: 'document_start',
+      allowAllUrls: false,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const hitCount = useSimilar
+      ? pickedElement.similarCount ?? 1
+      : Math.max(1, pickedElement.matchCount || 1);
+
+    await upsertUserScript(mod);
+    await onModsChanged();
+    if (!settings.tutorialDone) {
+      void onCompleteTutorial();
+    }
+    await safeSendMessage({ type: 'USERSCRIPTS_TEST', payload: { id } });
+
+    setIntent(
+      useSimilar
+        ? lang === 'zh'
+          ? '隐藏所有同类元素'
+          : 'Hide all similar items'
+        : t('starterHide'),
+    );
+    setDraft(generated);
+    setDraftBody(generated.css ?? '');
+    setDraftMatches(generated.matches.join('\n'));
+    setSelectorCheck({
+      ok: true,
+      totalHits: hitCount,
+      details: [{ selector: targetSel, count: hitCount }],
+    });
+    setDraftProvider('local');
+    setDraftUsedVision(false);
+    setDraftAutoHealed(false);
+    setDraftRefined(false);
+    setFeedbackVote(null);
+    setSavedModId(id);
+    setAppliedOnce(true);
+    setError(null);
+    setErrorCode(undefined);
+    onClearPicked();
+    onToast(t('instantHideToast'));
+  }
+
   function handleStarterChip(chipText: string) {
     setIntent((prev) => {
       const trimmed = prev.trim();
@@ -727,9 +820,27 @@ export default function StudioPage({
 
   const isLocalAi = isLocalLoopbackEndpoint(settings.ai.baseUrl);
   const isBuiltin = settings.aiMode === 'builtin';
+  const hasRemoteKey = Boolean(settings.ai.apiKey?.trim());
+  const canInstantHidePicked = Boolean(
+    pickedElement &&
+      activeTab.supported &&
+      isSafePickedSelector(pickedElement.selector) &&
+      !isRootDocumentSelector(pickedElement.selector),
+  );
+  const canInstantHideSimilar = Boolean(
+    canInstantHidePicked &&
+      pickedElement?.similarSelector &&
+      (pickedElement.similarCount ?? 0) > 1 &&
+      isSafePickedSelector(pickedElement.similarSelector) &&
+      !isRootDocumentSelector(pickedElement.similarSelector),
+  );
   const enginePillText = isBuiltin
     ? t('builtinActiveLabel')
-    : `${isLocalAi ? t('localAiActiveLabel') : t('byokActiveLabel')} · ${settings.ai.model || 'API'}`;
+    : isLocalAi
+      ? `${t('localAiActiveLabel')} · ${settings.ai.model || 'Local'}`
+      : hasRemoteKey
+        ? `${t('byokActiveLabel')} · ${settings.ai.model || 'API'}`
+        : t('zeroAiReadyLabel');
 
   return (
     <div className="space-y-3.5 pb-6 pc-enter">
@@ -913,42 +1024,71 @@ export default function StudioPage({
 
         {/* Picked-Selector Inspector Strip */}
         {pickedElement && (
-          <div className="flex items-start justify-between gap-2 bg-[var(--pc-accent-subtle)] px-3.5 py-2 text-xs">
-            <div className="min-w-0 space-y-1 flex-1">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="font-semibold text-[var(--pc-accent-ink)]">
-                  {t('lockedTarget')}
-                </span>
-                <code className="font-mono text-[11.5px] px-1.5 py-0.5 rounded-[4px] bg-card border border-border text-foreground truncate max-w-[190px] sm:max-w-[240px]">
-                  {pickedElement.selector}
-                </code>
-                {pickedElement.rect && pickedElement.rect.width > 0 && (
-                  <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
-                    {pickedElement.rect.width}×{pickedElement.rect.height}
+          <div className="bg-[var(--pc-accent-subtle)] px-3.5 py-2 text-xs space-y-1.5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 space-y-1 flex-1">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-semibold text-[var(--pc-accent-ink)]">
+                    {t('lockedTarget')}
                   </span>
-                )}
-                {pickedElement.similarCount && pickedElement.similarCount > 1 && (
-                  <span className="px-1.5 py-0.5 rounded-[4px] bg-amber-500/12 text-amber-900 dark:text-amber-300 border border-amber-600/25 text-[11px] font-medium tabular-nums">
-                    {lang === 'zh'
-                      ? `同类 ${pickedElement.similarCount} 项`
-                      : `${pickedElement.similarCount} siblings`}
-                  </span>
+                  <code className="font-mono text-[11.5px] px-1.5 py-0.5 rounded-[4px] bg-card border border-border text-foreground truncate max-w-[190px] sm:max-w-[240px]">
+                    {pickedElement.selector}
+                  </code>
+                  {pickedElement.rect && pickedElement.rect.width > 0 && (
+                    <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
+                      {pickedElement.rect.width}×{pickedElement.rect.height}
+                    </span>
+                  )}
+                  {pickedElement.similarCount && pickedElement.similarCount > 1 && (
+                    <span className="px-1.5 py-0.5 rounded-[4px] bg-amber-500/12 text-amber-900 dark:text-amber-300 border border-amber-600/25 text-[11px] font-medium tabular-nums">
+                      {lang === 'zh'
+                        ? `同类 ${pickedElement.similarCount} 项`
+                        : `${pickedElement.similarCount} siblings`}
+                    </span>
+                  )}
+                </div>
+                {pickedElement.textPreview && (
+                  <p className="text-xs text-muted-foreground truncate">
+                    “{pickedElement.textPreview}”
+                  </p>
                 )}
               </div>
-              {pickedElement.textPreview && (
-                <p className="text-xs text-muted-foreground truncate">
-                  “{pickedElement.textPreview}”
-                </p>
-              )}
+              <button
+                type="button"
+                onClick={onClearPicked}
+                aria-label={t('clearTarget')}
+                className="pc-btn p-1 rounded-[5px] text-muted-foreground hover:text-foreground hover:bg-card cursor-pointer shrink-0"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={onClearPicked}
-              aria-label={t('clearTarget')}
-              className="pc-btn p-1 rounded-[5px] text-muted-foreground hover:text-foreground hover:bg-card cursor-pointer shrink-0"
-            >
-              <X className="h-3.5 w-3.5" />
-            </button>
+
+            {canInstantHidePicked && (
+              <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                <Button
+                  type="button"
+                  size="xs"
+                  variant="primary"
+                  onClick={() => void handleInstantHidePicked(false)}
+                >
+                  <EyeOff className="h-3 w-3" />
+                  <span>{t('instantHideBtn')}</span>
+                </Button>
+                {canInstantHideSimilar && (
+                  <Button
+                    type="button"
+                    size="xs"
+                    variant="secondary"
+                    onClick={() => void handleInstantHidePicked(true)}
+                  >
+                    <EyeOff className="h-3 w-3" />
+                    <span>
+                      {t('instantHideSimilarBtn')} ({pickedElement.similarCount})
+                    </span>
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -1127,6 +1267,9 @@ export default function StudioPage({
                 {draft.name}
               </h2>
               <div className="flex items-center gap-1 shrink-0 flex-wrap justify-end">
+                {draftProvider === 'local' && (
+                  <Badge variant="success">{t('zeroAiBadge')}</Badge>
+                )}
                 {draftUsedVision && (
                   <Badge variant="success" className="gap-1">
                     <Eye className="h-3 w-3" />
