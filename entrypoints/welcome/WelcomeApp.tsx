@@ -240,7 +240,7 @@ export default function WelcomeApp() {
                   ) : (
                     <>
                       <span>
-                        {zh ? '20 秒亲手试改一次（不扣额度）' : 'Try a 20s Hands-On Demo (0 Quota)'}
+                        {zh ? '20 秒亲手试改一次（免配置离线可用）' : 'Try a 20s Hands-On Demo (0 Setup)'}
                       </span>
                       <ArrowRight className="h-4 w-4" />
                     </>
@@ -259,8 +259,8 @@ export default function WelcomeApp() {
               </div>
               <p className="text-[13px] text-muted-foreground">
                 {zh
-                  ? '新安装含 10 次免配置云端生成 · 支持自带 DeepSeek / 硅基流动 / OpenAI Key · 零浏览记录监控'
-                  : 'Includes 10 free cloud generations · Supports DeepSeek, SiliconFlow & OpenAI keys · Zero tracking'}
+                  ? '100% 纯前端零后端 · 支持 Chrome 内置 AI / 本地 Ollama / 自带 API Key / MCP 编程智能体桥接'
+                  : '100% Serverless & Zero-Telemetry · Chrome Built-in AI, Local Ollama, BYOK & MCP Agent Bridge'}
               </p>
             </div>
           </div>

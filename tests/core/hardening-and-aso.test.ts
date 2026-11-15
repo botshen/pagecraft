@@ -446,10 +446,11 @@ test('locales/{zh_CN,en}.yml strictly satisfy CWS/Edge <=45 name & <=132 desc li
   assert.ok(en.appDesc.length > 0 && en.appDesc.length <= 132, `en appDesc length=${en.appDesc.length}`);
   assert.ok([...en.appDesc].length <= 132);
 
-  // Unused boilerplate asset must stay deleted
+  // Unused boilerplate asset and legacy cloud API directory must stay deleted
   assert.equal(fs.existsSync(path.join(ROOT_DIR, 'public/wxt.svg')), false);
+  assert.equal(fs.existsSync(path.join(ROOT_DIR, 'lib/api')), false);
 
-  // Open-source docs must link to GitHub Issues + official contact email and document Ollama CORS setup
+  // Open-source docs must link to GitHub Issues + official contact email, document Ollama CORS & MCP, and omit workers/cloud
   const readmeFiles = ['README.md', 'README.zh-CN.md'];
   for (const rel of readmeFiles) {
     const content = fs.readFileSync(path.join(ROOT_DIR, rel), 'utf8');
@@ -466,6 +467,16 @@ test('locales/{zh_CN,en}.yml strictly satisfy CWS/Edge <=45 name & <=132 desc li
       content,
       /OLLAMA_ORIGINS="chrome-extension:\/\/\*"\s+ollama serve/,
       `${rel} must document Ollama Chrome extension CORS setup`,
+    );
+    assert.match(
+      content,
+      /pagecraft-mcp/,
+      `${rel} must document pagecraft-mcp local coding agent bridge`,
+    );
+    assert.equal(
+      content.includes('workers/cloud'),
+      false,
+      `${rel} must not reference legacy workers/cloud backend`,
     );
   }
 

@@ -1,6 +1,6 @@
 {
   "name": "pagecraft",
-  "description": "PageCraft — Point at any webpage element and modify layouts, remove clutter, or generate Tampermonkey userscripts with AI.",
+  "description": "PageCraft — The Open-Source Live Webpage Customizer & Browser Micro-Agent Runtime (100% Serverless, Zero-Telemetry).",
   "private": true,
   "version": "0.1.0",
   "license": "MIT",
@@ -22,7 +22,10 @@
     "userscript",
     "tampermonkey",
     "greasemonkey",
-    "ai",
+    "mcp",
+    "model-context-protocol",
+    "gemini-nano",
+    "ai-agent",
     "custom-css",
     "manifest-v3",
     "wxt",
@@ -40,6 +43,7 @@
     "zip:firefox": "wxt zip -b firefox",
     "compile": "tsc --noEmit",
     "test": "node --experimental-strip-types --import ./tests/register-loader.mjs --test 'tests/core/**/*.test.ts'",
+    "mcp": "node --experimental-strip-types packages/mcp/src/cli.ts",
     "postinstall": "wxt prepare"
   },
   "dependencies": {

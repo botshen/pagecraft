@@ -1,14 +1,14 @@
 /**
- * Canonical API base for the PageCraft Cloud Trial Worker.
+ * Canonical HTTPS / local-loopback URL origin & path normalizer.
  */
 
-import { DEFAULT_CLOUD_ENDPOINT } from './constants';
+import { DEFAULT_SITE_URL } from './constants';
 import { isLocalLoopbackEndpoint } from './ai-endpoints';
 
 export function endpointBase(endpoint?: string | null): string | null {
-  const raw = (endpoint ?? '').trim() || DEFAULT_CLOUD_ENDPOINT;
+  const raw = (endpoint ?? '').trim() || DEFAULT_SITE_URL;
   const stripped = raw
-    .replace(/\/api\/(generate|quota|register|feedback)\/?$/i, '')
+    .replace(/\/api\/[a-z0-9_-]+\/?$/i, '')
     .replace(/\/+$/, '');
   let url: URL;
   try {

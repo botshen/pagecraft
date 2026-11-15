@@ -1,15 +1,19 @@
 /**
- * PageCraft — Background Service Worker.
+ * PageCraft — Zero-Backend Background Service Worker.
  *
- * Strictly zero behavioral tracking, zero history monitoring, and zero periodic
- * telemetry uploads. Only executes user-created CSS/Userscript mods and handles
- * explicit SidePanel commands (Element Picker, AI Mod Generation, Cloud Trial).
+ * 100% serverless & local-first: strictly zero behavioral tracking, zero history
+ * monitoring, zero accounts, and zero telemetry uploads. Executes user-created
+ * CSS/Userscript mods and handles explicit SidePanel & local MCP commands.
  */
 
 import type { AIConfig } from '~/lib/types';
 import { readSettings, updateSettings } from '~/lib/shared/settings';
 import { byokListModels, byokLlmChat, byokTestConnection } from '~/lib/shared/ai-client';
-import { fetchCloudQuota, sendGenerationFeedback, type GenerationFeedback } from '~/lib/api/cloud';
+import {
+  generateWithBuiltinAi,
+  hasLocalBuiltinAiGlobal,
+  probeBuiltinAi,
+} from '~/lib/shared/builtin-ai';
 import { DEFAULT_PRACTICE_URL } from '~/lib/shared/constants';
 import {
   getExtensionDetailsUrl,
@@ -21,10 +25,14 @@ import { readUserScripts, upsertUserScript } from '~/lib/userscripts/store';
 import type {
   ActiveTabInfo,
   GenerateUserScriptPayload,
+  PickedElementContext,
   UserScript,
 } from '~/lib/userscripts/types';
 import {
+  buildMcpBridgeHandlers,
+  captureElementScreenshot,
   checkUserScriptsAvailability,
+  defaultExtractJsonString,
   generateUserScript,
   getActiveTabPageContext,
   initModsRuntime,
@@ -36,6 +44,8 @@ import {
   injectElementPickerOverlay,
   removeElementPickerOverlay,
 } from './picker-injected';
+
+let lastPickedElement: PickedElementContext | null = null;
 
 function buildActiveTabInfo(tab?: chrome.tabs.Tab): ActiveTabInfo {
   const url = tab?.url ?? '';
@@ -69,6 +79,33 @@ async function queryActiveTabInfo(): Promise<ActiveTabInfo> {
     return { supported: false };
   }
 }
+
+async function startElementPickerOnActiveTab(
+  lang: 'zh' | 'en' = 'zh',
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab?.id || !tab.url || !/^https?:\/\//i.test(tab.url)) {
+      return { ok: false, error: 'unsupported_tab' };
+    }
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: injectElementPickerOverlay,
+      args: [lang],
+      world: 'ISOLATED',
+    });
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+export const mcpBridgeHandlers = buildMcpBridgeHandlers({
+  getLastPickedElement: () => lastPickedElement,
+  startPicker: (lang) => startElementPickerOnActiveTab(lang ?? 'en'),
+  captureScreenshot: (picked) => captureElementScreenshot(picked),
+  includeVisionScreenshot: async () => (await readSettings()).enableVisionCapture,
+});
 
 async function configureSidePanelBehavior(): Promise<void> {
   try {
@@ -132,6 +169,11 @@ export default defineBackground(() => {
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     const { type, payload } = (msg ?? {}) as { type?: string; payload?: unknown };
 
+    if (type === 'PAGECRAFT_ELEMENT_PICKED' && payload) {
+      lastPickedElement = payload as PickedElementContext;
+      return false;
+    }
+
     if (type === 'GET_ACTIVE_TAB') {
       queryActiveTabInfo().then(sendResponse);
       return true;
@@ -139,27 +181,7 @@ export default defineBackground(() => {
 
     if (type === 'START_ELEMENT_PICKER') {
       const lang = (payload as { lang?: 'zh' | 'en' })?.lang ?? 'zh';
-      (async () => {
-        try {
-          const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-          if (!tab?.id || !tab.url || !/^https?:\/\//i.test(tab.url)) {
-            sendResponse({ ok: false, error: 'unsupported_tab' });
-            return;
-          }
-          await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            func: injectElementPickerOverlay,
-            args: [lang],
-            world: 'ISOLATED',
-          });
-          sendResponse({ ok: true });
-        } catch (e) {
-          sendResponse({
-            ok: false,
-            error: e instanceof Error ? e.message : String(e),
-          });
-        }
-      })();
+      startElementPickerOnActiveTab(lang).then(sendResponse);
       return true;
     }
 
@@ -187,6 +209,37 @@ export default defineBackground(() => {
       return true;
     }
 
+    if (type === 'BUILTIN_AI_PROBE') {
+      const forwarded = Boolean((payload as { forwarded?: boolean } | undefined)?.forwarded);
+      if (forwarded && !hasLocalBuiltinAiGlobal()) {
+        return false;
+      }
+      probeBuiltinAi({ allowRuntimeForward: !forwarded }).then(sendResponse);
+      return true;
+    }
+
+    if (type === 'BUILTIN_AI_PROMPT') {
+      const req = (payload ?? {}) as {
+        systemPrompt?: string;
+        userPrompt?: string;
+        forwarded?: boolean;
+      };
+      if (req.forwarded && !hasLocalBuiltinAiGlobal()) {
+        return false;
+      }
+      generateWithBuiltinAi(req.systemPrompt ?? '', req.userPrompt ?? '', {
+        allowRuntimeForward: !req.forwarded,
+      })
+        .then((content) => sendResponse({ ok: true, content }))
+        .catch((e) =>
+          sendResponse({
+            ok: false,
+            error: e instanceof Error ? e.message : String(e),
+          }),
+        );
+      return true;
+    }
+
     if (type === 'GENERATE_USERSCRIPT') {
       (async () => {
         try {
@@ -207,21 +260,12 @@ export default defineBackground(() => {
               pageContext,
             },
             settings,
-            byokLlmChat,
-            extractJsonString,
+            (cfg, prompt, isTest, imageDataUrl) =>
+              byokLlmChat(cfg, prompt, isTest, fetch, imageDataUrl),
+            defaultExtractJsonString,
           );
 
-          if (!genRes.ok) {
-            sendResponse(genRes);
-            return;
-          }
-
-          const selectorCheck =
-            genRes.script.targetSelectors && genRes.script.targetSelectors.length > 0
-              ? await verifySelectorsOnActiveTab(genRes.script.targetSelectors)
-              : undefined;
-
-          sendResponse({ ...genRes, selectorCheck });
+          sendResponse(genRes);
         } catch (e) {
           sendResponse({
             ok: false,
@@ -262,13 +306,6 @@ export default defineBackground(() => {
       return true;
     }
 
-    if (type === 'SUBMIT_GENERATION_FEEDBACK') {
-      sendGenerationFeedback(payload as GenerationFeedback)
-        .then(sendResponse)
-        .catch(() => sendResponse({ ok: false }));
-      return true;
-    }
-
     if (type === 'OPEN_EXTENSION_DETAILS') {
       const modId = (payload as { modId?: string } | undefined)?.modId;
       openExtensionDetailsWithWatcher(modId)
@@ -302,13 +339,6 @@ export default defineBackground(() => {
       updateSettings(() => ({ tutorialDone: true }))
         .then(() => sendResponse({ ok: true }))
         .catch((e) => sendResponse({ ok: false, error: String(e) }));
-      return true;
-    }
-
-    if (type === 'FETCH_CLOUD_QUOTA') {
-      fetchCloudQuota()
-        .then((quota) => sendResponse({ ok: Boolean(quota), quota }))
-        .catch(() => sendResponse({ ok: false }));
       return true;
     }
 
@@ -358,7 +388,6 @@ async function openExtensionDetailsWithWatcher(modId?: string): Promise<void> {
     url: getExtensionDetailsUrl(chrome.runtime.id, ua),
   });
 
-  // Only watch while the user hasn't enabled JS yet; clears on flip, tab close, or 90s timeout.
   const initial = await checkUserScriptsAvailability();
   if (initial.available) {
     await activateJsAndReturn(originTabId, modId);
@@ -447,7 +476,6 @@ async function testModOnTab(scriptId: string, explicitTabId?: number) {
     return { ok: false, error: 'no_reloadable_tab' };
   }
 
-  // CSS mods apply live without needing to reload the tab!
   if (script.engine === 'css') {
     await syncCssForTab(tab.id, tab.url);
     return { ok: true, reloaded: false };
@@ -455,16 +483,4 @@ async function testModOnTab(scriptId: string, explicitTabId?: number) {
 
   await chrome.tabs.reload(tab.id);
   return { ok: true, reloaded: true };
-}
-
-function extractJsonString(text: string): string {
-  const trimmed = text.trim();
-  const fenceMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  if (fenceMatch?.[1]) return fenceMatch[1].trim();
-  const firstBrace = trimmed.indexOf('{');
-  const lastBrace = trimmed.lastIndexOf('}');
-  if (firstBrace !== -1 && lastBrace > firstBrace) {
-    return trimmed.slice(firstBrace, lastBrace + 1);
-  }
-  return trimmed;
 }

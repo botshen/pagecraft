@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import type { AppSettings, CloudQuota } from '~/lib/types';
+import type { AppSettings } from '~/lib/types';
 import type {
   ActiveTabInfo,
   GeneratedUserScript,
   GenerateUserScriptResult,
   ModEngine,
+  ModGenerationProvider,
   PickedElementContext,
   SelectorVerifyResult,
   UserScript,
@@ -48,9 +49,10 @@ import {
   Wand2,
   CornerDownLeft,
   ThumbsUp,
-  ThumbsDown,
   Share2,
   RotateCcw,
+  Eye,
+  PlugZap,
 } from 'lucide-react';
 import { cn } from '~/lib/utils';
 import { recheckOrRecoverJsPermission } from '../utils';
@@ -67,7 +69,6 @@ interface Props {
   onCancelPicker: () => void;
   onClearPicked: () => void;
   onModsChanged: () => Promise<void>;
-  onQuotaUpdated: (q: CloudQuota) => void;
   onRecheckAvailability: () => Promise<UserScriptsAvailability>;
   onCompleteTutorial: () => Promise<void>;
   onNavigateSettings: () => void;
@@ -113,10 +114,12 @@ interface StudioSessionState {
   codeOpen: boolean;
   appliedOnce: boolean;
   savedModId: string | null;
-  feedbackVote: 'up' | 'down' | null;
+  feedbackVote: 'up' | null;
   selectorCheck: SelectorVerifyResult | null;
-  draftProvider: 'cloud' | 'byok' | 'playground';
+  draftProvider: ModGenerationProvider;
   draftRefined: boolean;
+  draftUsedVision: boolean;
+  draftAutoHealed: boolean;
 }
 
 const studioSession: StudioSessionState = {
@@ -130,8 +133,10 @@ const studioSession: StudioSessionState = {
   savedModId: null,
   feedbackVote: null,
   selectorCheck: null,
-  draftProvider: 'cloud',
+  draftProvider: 'byok',
   draftRefined: false,
+  draftUsedVision: false,
+  draftAutoHealed: false,
 };
 
 function safeSendMessage<T = unknown>(msg: unknown): Promise<T | undefined> {
@@ -152,7 +157,6 @@ export default function StudioPage({
   onCancelPicker,
   onClearPicked,
   onModsChanged,
-  onQuotaUpdated,
   onRecheckAvailability,
   onCompleteTutorial,
   onNavigateSettings,
@@ -178,11 +182,13 @@ export default function StudioPage({
   const [draftBody, setDraftBody] = useState(studioSession.draftBody);
   const [draftMatches, setDraftMatches] = useState(studioSession.draftMatches);
   const [needsJsPermForId, setNeedsJsPermForId] = useState<string | null>(null);
-  const [draftProvider, setDraftProvider] = useState<'cloud' | 'byok' | 'playground'>(
+  const [draftProvider, setDraftProvider] = useState<ModGenerationProvider>(
     studioSession.draftProvider,
   );
   const [draftRefined, setDraftRefined] = useState(studioSession.draftRefined);
-  const [feedbackVote, setFeedbackVote] = useState<'up' | 'down' | null>(
+  const [draftUsedVision, setDraftUsedVision] = useState(studioSession.draftUsedVision);
+  const [draftAutoHealed, setDraftAutoHealed] = useState(studioSession.draftAutoHealed);
+  const [feedbackVote, setFeedbackVote] = useState<'up' | null>(
     studioSession.feedbackVote,
   );
   const previewCssRef = useRef<{ tabId: number; css: string } | null>(null);
@@ -200,6 +206,8 @@ export default function StudioPage({
     studioSession.selectorCheck = selectorCheck;
     studioSession.draftProvider = draftProvider;
     studioSession.draftRefined = draftRefined;
+    studioSession.draftUsedVision = draftUsedVision;
+    studioSession.draftAutoHealed = draftAutoHealed;
   }, [
     intent,
     draft,
@@ -213,6 +221,8 @@ export default function StudioPage({
     selectorCheck,
     draftProvider,
     draftRefined,
+    draftUsedVision,
+    draftAutoHealed,
   ]);
 
   async function clearEphemeralCssPreview() {
@@ -337,10 +347,6 @@ export default function StudioPage({
         return;
       }
 
-      if (res.quota) {
-        onQuotaUpdated(res.quota);
-      }
-
       if (!res.ok) {
         setError(res.error);
         setErrorCode(res.code);
@@ -353,12 +359,13 @@ export default function StudioPage({
       setDraftMatches(res.script.matches.join('\n'));
       setSelectorCheck(res.selectorCheck ?? null);
       setDraftProvider(res.provider);
+      setDraftUsedVision(Boolean(res.usedVision));
+      setDraftAutoHealed(Boolean(res.autoHealed));
       setDraftRefined(Boolean(opts?.isRefine));
       setFeedbackVote(null);
       if (opts?.isRefine) {
         setRefineText('');
       }
-      // If previously saved in this session, clear saved badge until re-applied
       setSavedModId(null);
       setAppliedOnce(false);
     } catch (e) {
@@ -431,26 +438,27 @@ export default function StudioPage({
     }
   }
 
-  function handleFeedback(verdict: 'up' | 'down') {
-    if (!draft || feedbackVote) return;
-    setFeedbackVote(verdict);
-    if (draftProvider === 'playground') return;
-    const selector: 'hit' | 'miss' | 'na' =
+  function handleLocalWorked() {
+    if (!draft) return;
+    setFeedbackVote('up');
+  }
+
+  function handleLocalAutoCalibrate() {
+    if (!draft || generating) return;
+    onToast(t('feedbackCalibrating'));
+    const selectorSummary =
       selectorCheck && selectorCheck.details.length > 0
-        ? selectorCheck.totalHits > 0
-          ? 'hit'
-          : 'miss'
-        : 'na';
-    // Fire-and-forget: a failed vote must never interrupt the user's flow.
-    void safeSendMessage({
-      type: 'SUBMIT_GENERATION_FEEDBACK',
-      payload: {
-        verdict,
-        engine: draft.engine,
-        aiSource: draftProvider,
-        refined: draftRefined,
-        selector,
-      },
+        ? selectorCheck.details.map((d) => `${d.selector} (${d.count} hits)`).join(', ')
+        : (draft.targetSelectors ?? []).join(', ');
+    void runGenerate({
+      customIntent:
+        lang === 'zh'
+          ? '刚才生成的改造在页面上未明显生效，请结合最新真实页面 DOM 结构修正选择器或提高样式优先级'
+          : 'The previous mod did not visibly take effect on the live page; please recalibrate the selectors and specificity against the live DOM landmarks',
+      isRefine: true,
+      diagnosticHint: selectorSummary
+        ? `User reported visual no-op on live page. Current target selectors: [${selectorSummary}].`
+        : 'User reported visual no-op on live page; inspect live DOM landmarks for accurate selectors.',
     });
   }
 
@@ -702,12 +710,11 @@ export default function StudioPage({
     }
   }
 
-  const quotaRemaining = settings.cloud.quota?.remaining ?? 10;
-  const quotaLimit = settings.cloud.quota?.limit ?? 10;
   const isLocalAi = isLocalLoopbackEndpoint(settings.ai.baseUrl);
-  const usingByok =
-    settings.aiMode === 'byok' ||
-    ((Boolean(settings.ai.apiKey.trim()) || isLocalAi) && quotaRemaining === 0);
+  const isBuiltin = settings.aiMode === 'builtin';
+  const enginePillText = isBuiltin
+    ? t('builtinActiveLabel')
+    : `${isLocalAi ? t('localAiActiveLabel') : t('byokActiveLabel')} · ${settings.ai.model || 'API'}`;
 
   return (
     <div className="space-y-4 pb-6">
@@ -841,15 +848,25 @@ export default function StudioPage({
             <span>{picking ? t('pickingActive') : t('pickElement')}</span>
           </Button>
 
-          <button
-            type="button"
-            onClick={onNavigateSettings}
-            className="h-8 inline-flex items-center px-1.5 rounded-md text-[13px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer tabular-nums"
-          >
-            {usingByok
-              ? `${isLocalAi ? t('localAiActiveLabel') : t('byokActiveLabel')} · ${settings.ai.model || 'API'}`
-              : `${t('freeQuotaLabel')} ${quotaRemaining}/${quotaLimit}`}
-          </button>
+          <div className="flex items-center gap-1.5 min-w-0">
+            {settings.mcpBridgeEnabled && (
+              <button
+                type="button"
+                onClick={onNavigateSettings}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 border border-emerald-500/25 text-[11px] font-medium cursor-pointer shrink-0"
+              >
+                <PlugZap className="h-3 w-3" />
+                <span>{t('mcpActiveBadge')}</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onNavigateSettings}
+              className="h-8 inline-flex items-center px-1.5 rounded-md text-[13px] text-muted-foreground hover:text-foreground transition-colors cursor-pointer tabular-nums truncate"
+            >
+              {enginePillText}
+            </button>
+          </div>
         </div>
 
         {/* Unsupported Tab Helper Strip (e.g. chrome://newtab or Web Store) */}
@@ -1009,6 +1026,8 @@ export default function StudioPage({
                 setSelectorCheck(null);
                 setError(null);
                 setFeedbackVote(null);
+                setDraftUsedVision(false);
+                setDraftAutoHealed(false);
               }}
               className="text-[13px] font-medium text-primary hover:underline shrink-0 cursor-pointer"
             >
@@ -1025,14 +1044,14 @@ export default function StudioPage({
             <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
             <p className="text-foreground leading-relaxed flex-1">{error}</p>
           </div>
-          {(errorCode === 'quota_exhausted' || errorCode === 'missing_api_key') && (
+          {(errorCode === 'missing_api_key' || errorCode === 'builtin_unavailable') && (
             <Button
               size="sm"
               variant="outline"
               onClick={onNavigateSettings}
               className="pc-press text-[13px] cursor-pointer"
             >
-              {lang === 'zh' ? '前往设置填写 API Key' : 'Configure API Key in Settings'}
+              {lang === 'zh' ? '前往设置切换引擎或配置密钥' : 'Configure AI Engine in Settings'}
             </Button>
           )}
         </div>
@@ -1082,21 +1101,40 @@ export default function StudioPage({
               <h2 className="text-[14px] font-semibold leading-snug text-foreground">
                 {draft.name}
               </h2>
-              <Badge
-                variant={draft.engine === 'css' ? 'secondary' : 'outline'}
-                className={cn(
-                  'shrink-0 text-xs font-medium',
-                  draft.engine === 'css' && 'bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 border-emerald-500/25',
+              <div className="flex items-center gap-1 shrink-0 flex-wrap justify-end">
+                {draftUsedVision && (
+                  <Badge
+                    variant="outline"
+                    className="gap-1 text-xs font-medium bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/25"
+                  >
+                    <Eye className="h-3 w-3" />
+                    <span>{t('visionBadge')}</span>
+                  </Badge>
                 )}
-              >
-                {draft.engine === 'css'
-                  ? lang === 'zh'
-                    ? 'CSS 免开关秒生效'
-                    : 'Instant CSS'
-                  : lang === 'zh'
-                    ? 'JS 油猴脚本'
-                    : 'JS Userscript'}
-              </Badge>
+                {draftAutoHealed && (
+                  <Badge
+                    variant="outline"
+                    className="text-xs font-medium bg-amber-500/12 text-amber-800 dark:text-amber-300 border-amber-500/30"
+                  >
+                    {t('autoHealedBadge')}
+                  </Badge>
+                )}
+                <Badge
+                  variant={draft.engine === 'css' ? 'secondary' : 'outline'}
+                  className={cn(
+                    'text-xs font-medium',
+                    draft.engine === 'css' && 'bg-emerald-500/12 text-emerald-700 dark:text-emerald-300 border-emerald-500/25',
+                  )}
+                >
+                  {draft.engine === 'css'
+                    ? lang === 'zh'
+                      ? 'CSS 免开关秒生效'
+                      : 'Instant CSS'
+                    : lang === 'zh'
+                      ? 'JS 油猴脚本'
+                      : 'JS Userscript'}
+                </Badge>
+              </div>
             </div>
             <p className="text-[13px] text-muted-foreground leading-relaxed">
               {draft.explanation || draft.description}
@@ -1272,20 +1310,20 @@ export default function StudioPage({
             </button>
           </div>
 
-          {/* "Did it work?" — anonymous success signal, asked once the mod is applied */}
+          {/* "Did it work?" — 100% local check + instant Auto-Calibrate / Refine */}
           {(savedModId || appliedOnce) && (
             <div className="rounded-lg bg-secondary/55 px-3 py-2 space-y-1">
               {feedbackVote ? (
                 <p className="text-[13px] text-foreground leading-relaxed">
-                  {feedbackVote === 'up' ? t('feedbackThanksUp') : t('feedbackThanksDown')}
+                  {t('feedbackThanksUp')}
                 </p>
               ) : (
-                <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
                   <span className="text-[13px] text-foreground">{t('feedbackAsk')}</span>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <button
                       type="button"
-                      onClick={() => handleFeedback('up')}
+                      onClick={handleLocalWorked}
                       className="pc-press inline-flex items-center gap-1 h-7 px-2.5 rounded-md border border-border/80 bg-background hover:bg-emerald-500/10 text-[13px] text-foreground cursor-pointer"
                     >
                       <ThumbsUp className="h-3.5 w-3.5" />
@@ -1293,17 +1331,15 @@ export default function StudioPage({
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleFeedback('down')}
-                      className="pc-press inline-flex items-center gap-1 h-7 px-2.5 rounded-md border border-border/80 bg-background hover:bg-destructive/10 text-[13px] text-foreground cursor-pointer"
+                      disabled={generating}
+                      onClick={handleLocalAutoCalibrate}
+                      className="pc-press inline-flex items-center gap-1 h-7 px-2.5 rounded-md border border-primary/35 bg-primary/10 hover:bg-primary/15 text-[13px] font-medium text-[#8f381e] dark:text-[#f29b80] disabled:opacity-50 cursor-pointer"
                     >
-                      <ThumbsDown className="h-3.5 w-3.5" />
+                      <Wand2 className="h-3.5 w-3.5" />
                       <span>{t('feedbackDown')}</span>
                     </button>
                   </div>
                 </div>
-              )}
-              {!feedbackVote && (
-                <p className="text-xs text-muted-foreground">{t('feedbackPrivacyHint')}</p>
               )}
             </div>
           )}

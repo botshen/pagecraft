@@ -1,7 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { AppSettings, CloudQuota } from '~/lib/types';
+import type { AppSettings } from '~/lib/types';
 import { DEFAULT_SETTINGS, STORAGE_KEYS } from '~/lib/shared/constants';
 import { readSettings, updateSettings, writeSettings } from '~/lib/shared/settings';
+import {
+  generateWithBuiltinAi,
+  hasLocalBuiltinAiGlobal,
+  probeBuiltinAi,
+} from '~/lib/shared/builtin-ai';
 import { readUserScripts } from '~/lib/userscripts/store';
 import { urlMatchesAny } from '~/lib/userscripts/matcher';
 import {
@@ -133,7 +138,32 @@ export default function App() {
       return;
     }
 
-    const onRuntimeMessage = (msg: { type?: string; payload?: unknown }) => {
+    const onRuntimeMessage = (
+      msg: { type?: string; payload?: unknown },
+      _sender: chrome.runtime.MessageSender,
+      sendResponse: (response?: unknown) => void,
+    ) => {
+      if (msg?.type === 'BUILTIN_AI_PROBE') {
+        if (!hasLocalBuiltinAiGlobal()) return false;
+        probeBuiltinAi({ allowRuntimeForward: false }).then(sendResponse);
+        return true;
+      }
+      if (msg?.type === 'BUILTIN_AI_PROMPT') {
+        if (!hasLocalBuiltinAiGlobal()) return false;
+        const req = (msg.payload ?? {}) as { systemPrompt?: string; userPrompt?: string };
+        generateWithBuiltinAi(req.systemPrompt ?? '', req.userPrompt ?? '', {
+          allowRuntimeForward: false,
+        })
+          .then((content) => sendResponse({ ok: true, content }))
+          .catch((e) =>
+            sendResponse({
+              ok: false,
+              error: e instanceof Error ? e.message : String(e),
+            }),
+          );
+        return true;
+      }
+
       if (msg?.type === 'PAGECRAFT_TAB_CHANGED' && msg.payload) {
         const nextTab = msg.payload as ActiveTabInfo;
         setActiveTab((prev) => {
@@ -168,6 +198,7 @@ export default function App() {
               : 'JS Userscript engine enabled!',
         );
       }
+      return false;
     };
 
     const recheckIfNeeded = () => {
@@ -233,25 +264,6 @@ export default function App() {
     const saved = await updateSettings(() => ({ tutorialDone: true })).catch(() => null);
     if (saved) setSettings(saved);
   }, []);
-
-  async function handleRefreshQuota(): Promise<CloudQuota | null> {
-    if (typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) return null;
-    try {
-      const res = (await chrome.runtime.sendMessage({
-        type: 'FETCH_CLOUD_QUOTA',
-      })) as { ok?: boolean; quota?: CloudQuota } | undefined;
-      if (res?.quota) {
-        setSettings((prev) => ({
-          ...prev,
-          cloud: { ...prev.cloud, quota: res.quota },
-        }));
-        return res.quota;
-      }
-    } catch {
-      /* ignore */
-    }
-    return null;
-  }
 
   const activeSiteCount = activeTab.url
     ? mods.filter((m) => m.enabled && urlMatchesAny(activeTab.url, m.matches)).length
@@ -345,12 +357,6 @@ export default function App() {
               onCancelPicker={handleCancelPicker}
               onClearPicked={() => setPickedElement(null)}
               onModsChanged={loadMods}
-              onQuotaUpdated={(q) =>
-                setSettings((prev) => ({
-                  ...prev,
-                  cloud: { ...prev.cloud, quota: q },
-                }))
-              }
               onRecheckAvailability={recheckAvailability}
               onCompleteTutorial={handleCompleteTutorial}
               onNavigateSettings={() => setTab('settings')}
@@ -379,7 +385,6 @@ export default function App() {
               settings={settings}
               availability={availability}
               onSaveSettings={handleSaveSettings}
-              onRefreshQuota={handleRefreshQuota}
               onRecheckAvailability={recheckAvailability}
               theme={theme}
               onSetTheme={setTheme}
