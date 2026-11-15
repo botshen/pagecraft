@@ -4,7 +4,7 @@ export const STORAGE_KEYS = {
   SETTINGS: 'pc_settings',
 } as const;
 
-/** Official static website & recipe deep-link host (zero backend, GitHub Pages / static CDN). */
+/** Official static website & recipe deep-link host (zero backend, Cloudflare Pages static CDN). */
 export const DEFAULT_SITE_URL = 'https://pagecraft.shenxin.space';
 
 /** Official interactive 20-second sandbox target page for first-time practice. */

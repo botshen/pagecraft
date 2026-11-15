@@ -19,7 +19,7 @@ PageCraft has **no centralized backend, no cloud database, and no analytics pipe
 - Capture keystrokes, form inputs, passwords, cookies, or clipboard contents;
 - Sell, rent, or share any data with advertisers, analytics vendors, or data brokers.
 
-Our official static website and interactive practice sandbox ([https://pagecraft.shenxin.space](https://pagecraft.shenxin.space), hosted via GitHub Pages) ship zero tracking scripts, zero cookies, and decode shared `#PC1:...#` / `?recipe=PC1:...` recipe links purely inside your browser.
+Our official static website and interactive practice sandbox ([https://pagecraft.shenxin.space](https://pagecraft.shenxin.space), hosted via Cloudflare Pages) ship zero tracking scripts, zero cookies, and decode shared `#PC1:...#` / `?recipe=PC1:...` recipe links purely inside your browser.
 
 ---
 

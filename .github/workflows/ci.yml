@@ -35,7 +35,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Verify static GitHub Pages site
+      - name: Verify static site
         run: node scripts/build-site.mjs --check
 
       - name: Type-check extension

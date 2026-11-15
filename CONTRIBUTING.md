@@ -6,7 +6,7 @@ Welcome, and thank you for your interest in contributing to **PageCraft**! Wheth
 
 ## Architecture Overview
 
-PageCraft is a **100% client-side, zero-backend, zero-telemetry** live webpage customizer and browser micro-agent runtime built with **WXT + React 19 + TypeScript + Tailwind CSS v4** (Manifest V3), paired with a local stdio-to-loopback MCP bridge (`packages/mcp`) and a pure static GitHub Pages site (`site/`).
+PageCraft is a **100% client-side, zero-backend, zero-telemetry** live webpage customizer and browser micro-agent runtime built with **WXT + React 19 + TypeScript + Tailwind CSS v4** (Manifest V3), paired with a local stdio-to-loopback MCP bridge (`packages/mcp`) and a pure static website (`site/`, hosted on Cloudflare Pages).
 
 **Zero PageCraft servers, zero accounts, zero telemetry/feedback pings.** Contributors can develop and test using any of PageCraft's **4 local/user-owned compute options**:
 
@@ -36,7 +36,7 @@ pagecraft/
 │   ├── mcp/                     # Loopback WebSocket bridge contract & extension client (127.0.0.1)
 │   └── shared/                  # Client-side PII redaction (privacy.ts), Built-in AI, BYOK/Ollama & locale
 ├── packages/mcp/                # Standalone @pagecraft/mcp (pagecraft-mcp) stdio server for Claude/Cursor/Codex
-├── site/                        # Zero-telemetry static GitHub Pages website (/, /playground/, /privacy/)
+├── site/                        # Zero-telemetry static website on Cloudflare Pages (/, /playground/, /privacy/)
 ├── scripts/
 │   ├── build-icons.mjs          # Extension & store icon generator
 │   └── build-site.mjs           # Generates site/privacy/index.html from PRIVACY.md & validates static site
@@ -81,7 +81,7 @@ For Firefox development, run `pnpm dev:firefox` (or `pnpm build:firefox`).
 Before opening a pull request, run all four checks from the repository root and confirm zero errors:
 
 ```bash
-# 1. Regenerate & verify static GitHub Pages site (site/privacy/index.html matches PRIVACY.md)
+# 1. Regenerate & verify static website (site/privacy/index.html matches PRIVACY.md)
 node scripts/build-site.mjs
 node scripts/build-site.mjs --check
 

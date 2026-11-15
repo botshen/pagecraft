@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Build & verify the zero-backend static GitHub Pages site (`site/`).
+ * Build & verify the zero-backend static site (`site/`, hosted on Cloudflare Pages).
  *
  * 1. Compiles `PRIVACY.md` -> `site/privacy/index.html` with strict meta CSP,
  *    PageCraft terracotta (#C95533) / warm paper (#FAF8F5) styling, and zero

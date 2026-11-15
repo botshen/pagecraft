@@ -19,7 +19,7 @@ PageCraft modifies live webpages and executes user-authored CSS rules and JavaSc
 - PageCraft **never** injects passive analytics scripts or records your browsing history, visited URLs, search queries, form inputs, cookies, passwords, or clipboard contents in the background.
 - Page inspection (`entrypoints/background/picker-injected.ts`) and Closed-Loop Auto-Heal selector checks run **only** on explicit user or local-MCP invocation.
 - All saved webpage mods (`pc_mods`), UI preferences, and optional BYOK/MCP credentials stay locally inside `chrome.storage.local` on your device unless you explicitly export a `.user.js` / JSON backup or copy a `#PC1:...#` shareable shortcode.
-- The official website and 20-second practice sandbox (`site/`, deployed to GitHub Pages) are pure static HTML/CSS/SVG with strict `<meta http-equiv="Content-Security-Policy">` policies, zero third-party requests, and client-only `?recipe=PC1:...` decoding.
+- The official website and 20-second practice sandbox (`site/`, deployed as static assets on Cloudflare Pages) are pure static HTML/CSS/SVG with strict `<meta http-equiv="Content-Security-Policy">` policies, zero third-party requests, and client-only `?recipe=PC1:...` decoding.
 
 ### 2. Four Local & User-Owned Compute Options
 
