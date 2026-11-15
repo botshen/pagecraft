@@ -117,9 +117,70 @@ html:not([data-lang="zh"]) [data-l="zh"] { display: none !important; }
     font-weight: 600;
     box-shadow: 0 1px 2px rgb(0 0 0 / 0.08);
   }
+  .pc-gh-star {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: color-mix(in oklab, var(--card) 55%, var(--bg));
+    color: var(--ink);
+    font: 500 13px/1 var(--font-text);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: border-color 0.16s ease, background-color 0.16s ease, transform 0.15s ease;
+  }
+  .pc-gh-star svg { width: 15px; height: 15px; flex: none; }
+  .pc-gh-star__s { color: #d97706; font-size: 13px; line-height: 1; transition: transform 0.16s ease, color 0.16s ease; }
+  .pc-gh-star:hover {
+    border-color: var(--line-strong);
+    background: var(--bg);
+    transform: translateY(-1px);
+  }
+  .pc-gh-star:hover .pc-gh-star__s { color: #f59e0b; transform: scale(1.16); }
+  .pill svg.pc-pill-gh { width: 14px; height: 14px; flex: none; vertical-align: -2px; margin-right: 4px; }
+  .pill .pc-pill-star { color: #d97706; font-weight: 600; }
+  .closing__btns {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: var(--s-4);
+    align-items: stretch;
+  }
+  .closing__btns .btn--xl { width: 100%; justify-content: center; }
+  .pc-close-star {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 56px;
+    padding: 0 var(--s-6);
+    border-radius: var(--r-md, 10px);
+    border: 1px solid color-mix(in oklab, var(--ink) 22%, transparent);
+    background: color-mix(in oklab, var(--ink) 6%, transparent);
+    color: var(--ink);
+    font: 500 var(--t-lead)/1.2 var(--font-text);
+    text-decoration: none;
+    transition: border-color 0.16s ease, background-color 0.16s ease, transform 0.15s ease;
+  }
+  .pc-close-star svg { width: 18px; height: 18px; flex: none; }
+  .pc-close-star .pc-gh-star__s { font-size: 16px; color: #fbbf24; }
+  .pc-close-star:hover {
+    border-color: color-mix(in oklab, var(--ink) 42%, transparent);
+    background: color-mix(in oklab, var(--ink) 11%, transparent);
+    transform: translateY(-2px);
+  }
   @media (max-width: 1023px) {
-    .nav:not(.is-open) .nav__actions > .pc-lang { display: inline-flex; }
-    .nav.is-open .nav__actions > .pc-lang { justify-self: center; order: 2; }
+    .nav:not(.is-open) .nav__actions > .pc-lang,
+    .nav:not(.is-open) .nav__actions > .pc-gh-star { display: inline-flex; }
+    .nav.is-open .nav__actions > .pc-gh-star { justify-content: center; height: 44px; order: 2; }
+    .nav.is-open .nav__actions > .pc-lang { justify-self: center; order: 3; }
+  }
+  @media (max-width: 639px) {
+    .nav:not(.is-open) .nav__actions > .pc-gh-star .pc-gh-star__txt { display: none; }
+    .nav:not(.is-open) .nav__actions > .pc-gh-star { padding: 0 9px; height: 32px; }
+    .closing__btns { grid-template-columns: minmax(0, 1fr); }
   }
   @media (max-width: 479px) {
     .pc-lang button { height: 28px; padding: 0 8px; font-size: 12px; }
@@ -384,7 +445,12 @@ html:not([data-lang="zh"]) [data-l="zh"] { display: none !important; }
         <button type="button" data-set-lang="zh" aria-pressed="true">中文</button>
         <button type="button" data-set-lang="en" aria-pressed="false">EN</button>
       </div>
-      <a class="btn btn--primary" href="https://github.com/botshen/pagecraft">
+      <a class="pc-gh-star" href="https://github.com/botshen/pagecraft" target="_blank" rel="noopener noreferrer" aria-label="Star PageCraft on GitHub">
+        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+        <span class="pc-gh-star__s" aria-hidden="true">★</span>
+        <span class="pc-gh-star__txt">Star</span>
+      </a>
+      <a class="btn btn--primary" href="https://github.com/botshen/pagecraft" target="_blank" rel="noopener noreferrer">
         <span data-l="zh">获取插件</span><span data-l="en">Get PageCraft</span><svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg>
       </a>
     </div>
@@ -399,9 +465,15 @@ html:not([data-lang="zh"]) [data-l="zh"] { display: none !important; }
     <div class="wrap">
       <div class="hero-text">
         <div class="hero__c">
-          <a class="pill" href="#compute">
-            <span><span data-l="zh">MIT 开源免费</span><span data-l="en">MIT open source</span></span>
-            <span class="muted"><span data-l="zh">100% 纯本地 · 零官方服务器</span><span data-l="en">Zero PageCraft servers</span></span>
+          <a class="pill" href="https://github.com/botshen/pagecraft" target="_blank" rel="noopener noreferrer">
+            <span>
+              <svg class="pc-pill-gh" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+              <span data-l="zh">MIT 开源免费 · 零官方服务器</span><span data-l="en">MIT Open Source · Zero Servers</span>
+            </span>
+            <span class="muted">
+              <span data-l="zh">去 GitHub 点亮 <b class="pc-pill-star">★ Star</b> →</span>
+              <span data-l="en">Give us a <b class="pc-pill-star">★ Star</b> on GitHub →</span>
+            </span>
           </a>
           <h1 id="hero-h">
             <span data-l="zh">指哪改哪，一句话定制任何网页</span>
@@ -412,7 +484,7 @@ html:not([data-lang="zh"]) [data-l="zh"] { display: none !important; }
             <span data-l="en">Pick any element, describe your edit, and inject 0.1s CSS or chrome.userScripts locally via Gemini Nano, Ollama, or pagecraft-mcp.</span>
           </p>
           <div class="btn-row">
-            <a class="btn btn--primary" href="https://github.com/botshen/pagecraft">
+            <a class="btn btn--primary" href="https://github.com/botshen/pagecraft" target="_blank" rel="noopener noreferrer">
               <span data-l="zh">免费获取 PageCraft</span><span data-l="en">Get PageCraft</span><svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg>
             </a>
             <a class="btn btn--secondary" href="./playground/">
@@ -811,7 +883,7 @@ html:not([data-lang="zh"]) [data-l="zh"] { display: none !important; }
             </p>
           </div>
           <p>
-            <a class="link" href="https://github.com/botshen/pagecraft#pagecraft-mcp-bridge-claude-code--cursor--codex">
+            <a class="link" href="https://github.com/botshen/pagecraft#pagecraft-mcp-bridge-claude-code--cursor--codex" target="_blank" rel="noopener noreferrer">
               <span data-l="zh">查看 MCP 详细接入指南</span><span data-l="en">Read the MCP setup guide</span>
             </a>
           </p>
@@ -931,9 +1003,16 @@ html:not([data-lang="zh"]) [data-l="zh"] { display: none !important; }
           <span data-l="en">MIT open source for Chrome and Edge. Build and load unpacked in under a minute.</span>
         </p>
       </div>
-      <a class="btn btn--primary btn--xl btn--wide" href="https://github.com/botshen/pagecraft">
-        <span data-l="zh">免费获取 PageCraft</span><span data-l="en">Get PageCraft</span><svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg>
-      </a>
+      <div class="closing__btns">
+        <a class="btn btn--primary btn--xl" href="https://github.com/botshen/pagecraft" target="_blank" rel="noopener noreferrer">
+          <span data-l="zh">免费获取 PageCraft</span><span data-l="en">Get PageCraft</span><svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg>
+        </a>
+        <a class="pc-close-star" href="https://github.com/botshen/pagecraft" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+          <span class="pc-gh-star__s" aria-hidden="true">★</span>
+          <span data-l="zh">在 GitHub 点亮 Star</span><span data-l="en">Star us on GitHub</span>
+        </a>
+      </div>
     </div>
     <div class="closing__links">
       <div class="grid">
@@ -962,7 +1041,7 @@ html:not([data-lang="zh"]) [data-l="zh"] { display: none !important; }
           <h3><span data-l="zh">智能体桥接</span><span data-l="en">Bridge</span></h3>
           <ul>
             <li><a href="#bridge"><span data-l="zh">MCP 工具集</span><span data-l="en">MCP tools</span></a></li>
-            <li><a href="https://github.com/botshen/pagecraft"><span data-l="zh">GitHub 开源仓库</span><span data-l="en">GitHub repo</span></a></li>
+            <li><a href="https://github.com/botshen/pagecraft" target="_blank" rel="noopener noreferrer"><span data-l="zh">GitHub 开源仓库</span><span data-l="en">GitHub repo</span></a></li>
           </ul>
         </div>
         <div class="span-2 footer__col">

@@ -510,7 +510,7 @@ export default function WelcomeApp() {
               rel="noopener noreferrer"
               className="pc-focus hover:text-foreground hover:underline"
             >
-              GitHub
+              {zh ? '★ GitHub 点星支持' : '★ Star on GitHub'}
             </a>
             <a
               href="https://pagecraft.shenxin.space/privacy/"

@@ -1053,6 +1053,15 @@ export default function SettingsPage({
           <p>{t('privacyNote')}</p>
         </div>
         <p className="pl-6">
+          <a
+            href="https://github.com/botshen/pagecraft"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="pc-focus text-foreground hover:text-primary hover:underline font-medium"
+          >
+            ★ GitHub
+          </a>
+          <span className="mx-1.5 opacity-50">·</span>
           {t('supportContactLabel')}
           <a
             href="https://github.com/botshen/pagecraft/issues"
