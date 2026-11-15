@@ -71,4 +71,4 @@ Before constructing any LLM prompt (even for your own BYOK provider or local mod
 
 Because PageCraft stores zero data on any server, all of your data resides on your own device. You can delete individual mods or clear your API key at any time in the PageCraft Side Panel, and uninstalling PageCraft immediately deletes all local mods, settings, and keys stored in your browser.
 
-For privacy inquiries or support requests, contact [botzgbj@gmail.com](mailto:botzgbj@gmail.com), open an issue on [GitHub Issues](https://github.com/botshen/plugin-radar/issues), or visit [https://pagecraft.shenxin.space](https://pagecraft.shenxin.space).
+For privacy inquiries or support requests, contact [botzgbj@gmail.com](mailto:botzgbj@gmail.com), open an issue on [GitHub Issues](https://github.com/botshen/pagecraft/issues), or visit [https://pagecraft.shenxin.space](https://pagecraft.shenxin.space).

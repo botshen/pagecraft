@@ -549,7 +549,7 @@ blockquote {
     <div class="nav-right">
       <a href="../"><span data-l="zh">← 返回首页</span><span data-l="en">← Home</span></a>
       <a href="../playground/"><span data-l="zh">练习靶场</span><span data-l="en">Live Sandbox</span></a>
-      <a href="https://github.com/botshen/plugin-radar" rel="noopener noreferrer">GitHub</a>
+      <a href="https://github.com/botshen/pagecraft" rel="noopener noreferrer">GitHub</a>
       <div class="lang-seg" role="group" aria-label="Language">
         <button type="button" data-set-lang="zh" aria-pressed="false">中文</button>
         <button type="button" data-set-lang="en" aria-pressed="true">EN</button>
@@ -586,7 +586,7 @@ ${renderedBody}
     <div class="foot-links">
       <a href="../"><span data-l="zh">官网首页</span><span data-l="en">Home</span></a>
       <a href="../playground/"><span data-l="zh">练习靶场</span><span data-l="en">Sandbox</span></a>
-      <a href="https://github.com/botshen/plugin-radar/issues" rel="noopener noreferrer">GitHub Issues</a>
+      <a href="https://github.com/botshen/pagecraft/issues" rel="noopener noreferrer">GitHub Issues</a>
       <a href="mailto:botzgbj@gmail.com">Email support</a>
     </div>
   </div>
@@ -718,7 +718,7 @@ function main() {
   assertValidHtmlFile(resolve(SITE_DIR, 'index.html'), [
     '#C95533',
     '#FAF8F5',
-    'https://github.com/botshen/plugin-radar',
+    'https://github.com/botshen/pagecraft',
     './playground/',
     './privacy/',
     'mailto:botzgbj@gmail.com',
@@ -735,7 +735,7 @@ function main() {
     '#pc-demo-table',
     'PC1:',
     'mailto:botzgbj@gmail.com',
-    'https://github.com/botshen/plugin-radar',
+    'https://github.com/botshen/pagecraft',
   ]);
 
   assertValidHtmlFile(PRIVACY_OUT, [
@@ -743,7 +743,7 @@ function main() {
     'ZERO PageCraft servers',
     'pagecraft-mcp',
     'mailto:botzgbj@gmail.com',
-    'https://github.com/botshen/plugin-radar/issues',
+    'https://github.com/botshen/pagecraft/issues',
   ]);
 
   for (const asset of ['icon.svg', 'og.svg', '.nojekyll', 'robots.txt', 'sitemap.xml']) {

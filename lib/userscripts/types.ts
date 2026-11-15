@@ -125,7 +125,7 @@ export interface SelectorVerifyResult {
   details: Array<{ selector: string; count: number }>;
 }
 
-export type ModGenerationProvider = 'byok' | 'builtin' | 'playground';
+export type ModGenerationProvider = 'byok' | 'builtin' | 'playground' | 'local';
 
 export type GenerateUserScriptResult =
   | {

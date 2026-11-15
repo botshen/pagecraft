@@ -7,13 +7,13 @@
 不用按 `F12` 翻代码：鼠标点选任意网页元素，用自然语言去弹窗干扰、调宽屏护眼排版、给表格加导出 Excel/CSV 按钮、生成标准油猴 `.user.js` 脚本，或通过 `pagecraft-mcp` 让本机 **Claude Code / Cursor / Codex** 直接改造你的真实登录页。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-d97757.svg)](./LICENSE)
-[![CI](https://github.com/botshen/plugin-radar/actions/workflows/ci.yml/badge.svg)](https://github.com/botshen/plugin-radar/actions/workflows/ci.yml)
+[![CI](https://github.com/botshen/pagecraft/actions/workflows/ci.yml/badge.svg)](https://github.com/botshen/pagecraft/actions/workflows/ci.yml)
 [![Manifest V3](https://img.shields.io/badge/Chrome%20%26%20Edge-Manifest%20V3-0f766e.svg)](https://developer.chrome.com/docs/extensions/develop/migrate/what-is-mv3)
 [![Serverless & Zero Telemetry](https://img.shields.io/badge/%E9%9A%90%E7%A7%81-100%25%20%E6%97%A0%E6%9C%8D%E5%8A%A1%E7%AB%AF%20%C2%B7%20%E9%9B%B6%E9%81%A5%E6%B5%8B-15803d.svg)](./PRIVACY.md)
 [![MCP Ready](https://img.shields.io/badge/MCP-pagecraft--mcp-7c3aed.svg)](#pagecraft-mcp-本地编程智能体桥接claude-code--cursor--codex)
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-2563eb.svg)](./CONTRIBUTING.md)
 
-[English](./README.md) · **简体中文** · [官方网站](https://pagecraft.shenxin.space) · [交互练习靶场](https://pagecraft.shenxin.space/playground) · [问题反馈 Issues](https://github.com/botshen/plugin-radar/issues) · [社区讨论 Discussions](https://github.com/botshen/plugin-radar/discussions)
+[English](./README.md) · **简体中文** · [官方网站](https://pagecraft.shenxin.space) · [交互练习靶场](https://pagecraft.shenxin.space/playground) · [问题反馈 Issues](https://github.com/botshen/pagecraft/issues) · [社区讨论 Discussions](https://github.com/botshen/pagecraft/discussions)
 
 </div>
 
@@ -54,14 +54,14 @@
 ## PageCraft MCP 本地编程智能体桥接（Claude Code / Cursor / Codex）
 
 1. 打开 PageCraft 侧栏 **设置 → 本地编程智能体桥接（`pagecraft-mcp`）**，开启 **启用本地 MCP 桥接客户端**。
-2. 在 Cursor / Claude Desktop 中添加以下配置（也可直接在设置页一键点击 **复制 MCP 配置 JSON**，将 `/path/to/plugin-radar` 替换为你本地克隆的仓库路径）：
+2. 在 Cursor / Claude Desktop 中添加以下配置（也可直接在设置页一键点击 **复制 MCP 配置 JSON**，将 `/path/to/pagecraft` 替换为你本地克隆的仓库路径）：
 
 ```json
 {
   "mcpServers": {
     "pagecraft": {
       "command": "node",
-      "args": ["--experimental-strip-types", "/path/to/plugin-radar/packages/mcp/src/cli.ts"]
+      "args": ["--experimental-strip-types", "/path/to/pagecraft/packages/mcp/src/cli.ts"]
     }
   }
 }
@@ -70,7 +70,7 @@
 或在 **Claude Code** 中一行命令注册：
 
 ```bash
-claude mcp add pagecraft -- node --experimental-strip-types /path/to/plugin-radar/packages/mcp/src/cli.ts
+claude mcp add pagecraft -- node --experimental-strip-types /path/to/pagecraft/packages/mcp/src/cli.ts
 # 或在仓库根目录直接启动桥接服务：
 pnpm mcp
 ```
@@ -114,8 +114,8 @@ flowchart LR
 
 ```bash
 # 1. 克隆仓库并安装依赖
-git clone https://github.com/botshen/plugin-radar.git
-cd plugin-radar
+git clone https://github.com/botshen/pagecraft.git
+cd pagecraft
 pnpm install
 
 # 2. 构建 Chrome / Edge MV3 生产扩展包
@@ -143,8 +143,8 @@ pnpm zip          # 打包商店发布用 ZIP 包
 欢迎提交 PR、分享好用的网站净化/效率配方，或反馈使用问题！
 
 - **贡献代码与内置网站配方：** 请阅读 [**`./CONTRIBUTING.md`**](./CONTRIBUTING.md)，了解项目结构以及如何在 `lib/userscripts/templates.ts` 中新增一键同款配方。
-- **Bug 反馈与新配方许愿：** 请前往 [**GitHub Issues**](https://github.com/botshen/plugin-radar/issues) 或发送邮件至 [botzgbj@gmail.com](mailto:botzgbj@gmail.com)。
-- **使用交流与 `#PC1:...#` 配方分享：** 欢迎参与 [**GitHub Discussions**](https://github.com/botshen/plugin-radar/discussions)。
+- **Bug 反馈与新配方许愿：** 请前往 [**GitHub Issues**](https://github.com/botshen/pagecraft/issues) 或发送邮件至 [botzgbj@gmail.com](mailto:botzgbj@gmail.com)。
+- **使用交流与 `#PC1:...#` 配方分享：** 欢迎参与 [**GitHub Discussions**](https://github.com/botshen/pagecraft/discussions)。
 - **安全与隐私说明：** 详见 [**`./SECURITY.md`**](./SECURITY.md) 与 [**`./PRIVACY.md`**](./PRIVACY.md)。
 
 ## 开源协议

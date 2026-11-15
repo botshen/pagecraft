@@ -446,7 +446,7 @@ export function emitUserScriptHeader(script: UserScript): string {
     '// @version     1.0.0',
     `// @description ${script.description || script.name}`,
     '// @homepageURL https://pagecraft.shenxin.space',
-    '// @supportURL  https://github.com/botshen/plugin-radar/issues',
+    '// @supportURL  https://github.com/botshen/pagecraft/issues',
     ...script.matches.map((m) => `// @match       ${m}`),
     `// @run-at      ${runAt}`,
     '// @grant       none',

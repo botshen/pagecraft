@@ -9,7 +9,7 @@
 - [ ] **验证静态官网与隐私政策页在线可访问（GitHub Pages）**：确认 `main` 分支 `.github/workflows/pages.yml` 已成功部署 `site/`，且 `node scripts/build-site.mjs --check` 通过。浏览器无痕打开 `https://pagecraft.shenxin.space/`、`https://pagecraft.shenxin.space/privacy/` 与 `https://pagecraft.shenxin.space/playground/` 均返回 HTTP 200，无外链追踪器。
 - [ ] **确认 100% 零服务端、零遥测合规**：PageCraft 不再包含任何云端代理后端、无账号体系、无任何遥测或 👍/👎 反馈上报请求。开箱免配置体验由 **10 款内置一键配方**、**`/playground/` 20 秒免网络练习靶场** 以及 **Chrome 内置 AI（Gemini Nano）** 提供，同时支持 **Ollama / LM Studio 本地离线模型**、**Direct BYOK（OpenAI / Anthropic / DeepSeek / OpenRouter）** 与 **`pagecraft-mcp`（`127.0.0.1` 本地智能体桥接）**。
 - [ ] **跑完 [LAUNCH_TEST_PLAN.md](./LAUNCH_TEST_PLAN.md)**，10 个真实网站用例成功率 ≥ 60%。
-- [ ] **确认开发者联系邮箱验证**：统一使用 `botzgbj@gmail.com`（已在 `PRIVACY.md`、静态官网 `site/` 与 `CHROME_STORE_LISTING.md` 同步），在 Chrome Web Store 开发者后台 Account 页面确认该联系邮箱已完成验证码校验；仓库反馈地址统一指向 `https://github.com/botshen/plugin-radar/issues`。
+- [ ] **确认开发者联系邮箱验证**：统一使用 `botzgbj@gmail.com`（已在 `PRIVACY.md`、静态官网 `site/` 与 `CHROME_STORE_LISTING.md` 同步），在 Chrome Web Store 开发者后台 Account 页面确认该联系邮箱已完成验证码校验；仓库反馈地址统一指向 `https://github.com/botshen/pagecraft/issues`。
 - [ ] **版本号检查**：首次提交或每次更新前确认 `wxt.config.ts` 与 `package.json` 中的 `version` 已递增。
 
 ---

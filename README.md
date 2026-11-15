@@ -7,13 +7,13 @@
 Point at any webpage element and reshape the web in plain words — remove clutter, restyle layouts with live CSS, export tables to Excel/CSV, generate standard Tampermonkey `.user.js` scripts, or let **Claude Code / Cursor / Codex** customize live tabs over MCP.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-d97757.svg)](./LICENSE)
-[![CI](https://github.com/botshen/plugin-radar/actions/workflows/ci.yml/badge.svg)](https://github.com/botshen/plugin-radar/actions/workflows/ci.yml)
+[![CI](https://github.com/botshen/pagecraft/actions/workflows/ci.yml/badge.svg)](https://github.com/botshen/pagecraft/actions/workflows/ci.yml)
 [![Manifest V3](https://img.shields.io/badge/Chrome%20%26%20Edge-Manifest%20V3-0f766e.svg)](https://developer.chrome.com/docs/extensions/develop/migrate/what-is-mv3)
 [![Serverless & Zero Telemetry](https://img.shields.io/badge/Privacy-100%25%20Serverless%20%26%20Zero--Telemetry-15803d.svg)](./PRIVACY.md)
 [![MCP Ready](https://img.shields.io/badge/MCP-pagecraft--mcp-7c3aed.svg)](#pagecraft-mcp-bridge-claude-code--cursor--codex)
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-2563eb.svg)](./CONTRIBUTING.md)
 
-**English** · [简体中文](./README.zh-CN.md) · [Official Website](https://pagecraft.shenxin.space) · [Interactive Sandbox](https://pagecraft.shenxin.space/playground?lang=en) · [Issues](https://github.com/botshen/plugin-radar/issues) · [Discussions](https://github.com/botshen/plugin-radar/discussions)
+**English** · [简体中文](./README.zh-CN.md) · [Official Website](https://pagecraft.shenxin.space) · [Interactive Sandbox](https://pagecraft.shenxin.space/playground?lang=en) · [Issues](https://github.com/botshen/pagecraft/issues) · [Discussions](https://github.com/botshen/pagecraft/discussions)
 
 </div>
 
@@ -54,14 +54,14 @@ All mods, recipes, and settings stay strictly in `chrome.storage.local` (guarded
 ## PageCraft MCP Bridge (Claude Code / Cursor / Codex)
 
 1. Open PageCraft **Settings → Local Coding Agent Bridge (`pagecraft-mcp`)** and toggle **Enable Local MCP Bridge** ON.
-2. Add `pagecraft-mcp` to your coding agent (or click **Copy MCP Config JSON** right inside Settings, replacing `/path/to/plugin-radar` with your local clone path):
+2. Add `pagecraft-mcp` to your coding agent (or click **Copy MCP Config JSON** right inside Settings, replacing `/path/to/pagecraft` with your local clone path):
 
 ```json
 {
   "mcpServers": {
     "pagecraft": {
       "command": "node",
-      "args": ["--experimental-strip-types", "/path/to/plugin-radar/packages/mcp/src/cli.ts"]
+      "args": ["--experimental-strip-types", "/path/to/pagecraft/packages/mcp/src/cli.ts"]
     }
   }
 }
@@ -70,7 +70,7 @@ All mods, recipes, and settings stay strictly in `chrome.storage.local` (guarded
 Or register directly in **Claude Code**:
 
 ```bash
-claude mcp add pagecraft -- node --experimental-strip-types /path/to/plugin-radar/packages/mcp/src/cli.ts
+claude mcp add pagecraft -- node --experimental-strip-types /path/to/pagecraft/packages/mcp/src/cli.ts
 # Or launch standalone from the repository root:
 pnpm mcp
 ```
@@ -114,8 +114,8 @@ flowchart LR
 
 ```bash
 # 1. Clone and install dependencies
-git clone https://github.com/botshen/plugin-radar.git
-cd plugin-radar
+git clone https://github.com/botshen/pagecraft.git
+cd pagecraft
 pnpm install
 
 # 2. Build the production Manifest V3 extension
@@ -143,8 +143,8 @@ pnpm zip          # Package store-ready ZIP archive
 Contributions, website recipe templates, bug reports, and feature ideas are warmly welcome!
 
 - **Contribute Code or Built-in Website Recipes:** Read [**`./CONTRIBUTING.md`**](./CONTRIBUTING.md) for local setup and how to add a new 1-click recipe to `lib/userscripts/templates.ts`.
-- **Bugs & Recipe Requests:** Open a ticket on [**GitHub Issues**](https://github.com/botshen/plugin-radar/issues) or email [botzgbj@gmail.com](mailto:botzgbj@gmail.com).
-- **Questions, Showcases & `#PC1:...#` Recipes:** Join [**GitHub Discussions**](https://github.com/botshen/plugin-radar/discussions).
+- **Bugs & Recipe Requests:** Open a ticket on [**GitHub Issues**](https://github.com/botshen/pagecraft/issues) or email [botzgbj@gmail.com](mailto:botzgbj@gmail.com).
+- **Questions, Showcases & `#PC1:...#` Recipes:** Join [**GitHub Discussions**](https://github.com/botshen/pagecraft/discussions).
 - **Security & Privacy:** See [**`./SECURITY.md`**](./SECURITY.md) and [**`./PRIVACY.md`**](./PRIVACY.md).
 
 ## License

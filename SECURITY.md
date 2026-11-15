@@ -81,7 +81,7 @@ Please **do not** report undisclosed security vulnerabilities through public Git
 
 Instead, report vulnerabilities privately through **GitHub Security Advisories** or by email:
 
-- **GitHub Security Advisories**: [https://github.com/botshen/plugin-radar/security/advisories/new](https://github.com/botshen/plugin-radar/security/advisories/new)
+- **GitHub Security Advisories**: [https://github.com/botshen/pagecraft/security/advisories/new](https://github.com/botshen/pagecraft/security/advisories/new)
 - **Security Contact Email**: [botzgbj@gmail.com](mailto:botzgbj@gmail.com)
 
 ### What to Include

@@ -8,10 +8,10 @@
   "homepage": "https://pagecraft.shenxin.space",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/botshen/plugin-radar.git"
+    "url": "git+https://github.com/botshen/pagecraft.git"
   },
   "bugs": {
-    "url": "https://github.com/botshen/plugin-radar/issues"
+    "url": "https://github.com/botshen/pagecraft/issues"
   },
   "engines": {
     "node": ">=22.6.0"

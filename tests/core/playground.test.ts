@@ -14,12 +14,12 @@ test('isPlaygroundUrl matches /playground on official site, *.github.io, localho
   assert.equal(isPlaygroundUrl('https://pagecraft.shenxin.space/playground?lang=en'), true);
   assert.equal(isPlaygroundUrl('https://pagecraft.shenxin.space/playground/'), true);
   assert.equal(isPlaygroundUrl('https://botshen.github.io/playground'), true);
-  assert.equal(isPlaygroundUrl('https://botshen.github.io/plugin-radar/playground?lang=zh'), true);
+  assert.equal(isPlaygroundUrl('https://botshen.github.io/pagecraft/playground?lang=zh'), true);
   assert.equal(isPlaygroundUrl('http://localhost:4173/playground'), true);
   assert.equal(isPlaygroundUrl('http://127.0.0.1:8080/playground/'), true);
 
   assert.equal(isPlaygroundUrl('https://pagecraft.shenxin.space/'), false);
-  assert.equal(isPlaygroundUrl('https://botshen.github.io/plugin-radar/'), false);
+  assert.equal(isPlaygroundUrl('https://botshen.github.io/pagecraft/'), false);
   assert.equal(isPlaygroundUrl('https://evilgithub.io/playground'), false);
   assert.equal(isPlaygroundUrl('https://www.zhihu.com/playground'), false);
   assert.equal(isPlaygroundUrl('chrome://newtab'), false);
@@ -61,11 +61,11 @@ test('tryBuildPlaygroundMod builds instant CSS for sandbox targets across suppor
   // GitHub Pages subpath sandbox resolves exact subpath match pattern
   const ghPagesMod = tryBuildPlaygroundMod({
     intent: 'Hide the top promotional banner',
-    targetUrl: 'https://botshen.github.io/plugin-radar/playground?lang=en',
+    targetUrl: 'https://botshen.github.io/pagecraft/playground?lang=en',
     lang: 'en',
   });
   assert.ok(ghPagesMod);
-  assert.deepEqual(ghPagesMod.matches, ['https://botshen.github.io/plugin-radar/playground*']);
+  assert.deepEqual(ghPagesMod.matches, ['https://botshen.github.io/pagecraft/playground*']);
 
   // Follow-up refinement preserves previous hidden target and adds banner + warm paper
   const refined = tryBuildPlaygroundMod({

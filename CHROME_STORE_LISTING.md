@@ -5,7 +5,7 @@
 - **Official Website URL**: `https://pagecraft.shenxin.space`
 - **Privacy Policy URL**: `https://pagecraft.shenxin.space/privacy`
 - **Interactive Practice Sandbox**: `https://pagecraft.shenxin.space/playground`
-- **GitHub Repository & Issues**: `https://github.com/botshen/plugin-radar/issues`
+- **GitHub Repository & Issues**: `https://github.com/botshen/pagecraft/issues`
 - **Support / Developer Contact Email**: `botzgbj@gmail.com`
 
 ---
@@ -54,7 +54,7 @@ PageCraft 网页工坊是一个开源、常驻在浏览器侧边栏的 **实时�
 - **官方网站**：https://pagecraft.shenxin.space
 - **交互练习靶场**：https://pagecraft.shenxin.space/playground
 - **隐私政策**：https://pagecraft.shenxin.space/privacy
-- **开源仓库与反馈**：https://github.com/botshen/plugin-radar/issues
+- **开源仓库与反馈**：https://github.com/botshen/pagecraft/issues
 - **支持邮箱**：botzgbj@gmail.com
 
 ### 2.2 English Detailed Description (`en`)
@@ -85,7 +85,7 @@ PageCraft is an open-source **Live Webpage Customizer & Browser Micro-Agent Runt
 - **Official Website**: https://pagecraft.shenxin.space
 - **Interactive Sandbox**: https://pagecraft.shenxin.space/playground
 - **Privacy Policy**: https://pagecraft.shenxin.space/privacy
-- **GitHub Repository & Issues**: https://github.com/botshen/plugin-radar/issues
+- **GitHub Repository & Issues**: https://github.com/botshen/pagecraft/issues
 - **Support Email**: botzgbj@gmail.com
 
 ---

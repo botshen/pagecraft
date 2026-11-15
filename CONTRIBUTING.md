@@ -183,7 +183,7 @@ Every contribution to PageCraft must uphold our zero-backend security and privac
   - Do not use `eval()` or `new Function()` inside extension pages or service workers (MV3 CSP `script-src 'self'` forbids dynamic code evaluation).
   - Keep `messaging: false` in the `USER_SCRIPT` world so untrusted userscripts cannot message the privileged extension runtime.
   - Enforce `https:` for all remote BYOK endpoints; `http:` and `ws:` are permitted **strictly** for local loopback hosts (`localhost`, `127.0.0.1`, `[::1]`) for Ollama, LM Studio, and `pagecraft-mcp`.
-- **No Secrets or Personal Machine Paths**: Never commit API keys, `.env` files, or machine-specific paths. Official support channels are [GitHub Issues](https://github.com/botshen/plugin-radar/issues) and [botzgbj@gmail.com](mailto:botzgbj@gmail.com).
+- **No Secrets or Personal Machine Paths**: Never commit API keys, `.env` files, or machine-specific paths. Official support channels are [GitHub Issues](https://github.com/botshen/pagecraft/issues) and [botzgbj@gmail.com](mailto:botzgbj@gmail.com).
 
 ---
 

@@ -162,7 +162,7 @@ test('emitUserScriptHeader and exportAsUserScript include official PageCraft vir
   assert.equal(header.includes('pagecraft.local'), false);
   assert.match(header, /\/\/ @namespace\s+https:\/\/pagecraft\.shenxin\.space\//);
   assert.match(header, /\/\/ @homepageURL\s+https:\/\/pagecraft\.shenxin\.space\b/);
-  assert.match(header, /\/\/ @supportURL\s+https:\/\/github\.com\/botshen\/plugin-radar\/issues\b/);
+  assert.match(header, /\/\/ @supportURL\s+https:\/\/github\.com\/botshen\/pagecraft\/issues\b/);
   assert.equal(/[a-z0-9._%+-]+@gmail\.com/i.test(header), false);
 
   const exported = exportAsUserScript(mod);
@@ -471,7 +471,7 @@ test('locales/{zh_CN,en}.yml strictly satisfy CWS/Edge <=45 name & <=132 desc li
     );
     assert.match(
       content,
-      /https:\/\/github\.com\/botshen\/plugin-radar\/issues/,
+      /https:\/\/github\.com\/botshen\/pagecraft\/issues/,
       `${rel} must link to GitHub Issues`,
     );
     assert.match(
@@ -486,7 +486,7 @@ test('locales/{zh_CN,en}.yml strictly satisfy CWS/Edge <=45 name & <=132 desc li
     );
     assert.match(
       content,
-      /--experimental-strip-types.*\/path\/to\/plugin-radar\/packages\/mcp\/src\/cli\.ts/,
+      /--experimental-strip-types.*\/path\/to\/pagecraft\/packages\/mcp\/src\/cli\.ts/,
       `${rel} must document direct Node strip-types MCP CLI command`,
     );
     assert.equal(
@@ -505,7 +505,7 @@ test('locales/{zh_CN,en}.yml strictly satisfy CWS/Edge <=45 name & <=132 desc li
     path.join(ROOT_DIR, 'entrypoints/sidepanel/pages/Settings.tsx'),
     'utf8',
   );
-  assert.match(settingsTsx, /\/path\/to\/plugin-radar\/packages\/mcp\/src\/cli\.ts/);
+  assert.match(settingsTsx, /\/path\/to\/pagecraft\/packages\/mcp\/src\/cli\.ts/);
   assert.equal(/npx\s+-y\s+(?:@pagecraft\/mcp|pagecraft-mcp)/.test(settingsTsx), false);
 
   const roadmapContent = fs.readFileSync(path.join(ROOT_DIR, 'ROADMAP.md'), 'utf8');

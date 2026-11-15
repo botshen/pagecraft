@@ -505,7 +505,7 @@ export default function WelcomeApp() {
           </span>
           <div className="flex items-center gap-4">
             <a
-              href="https://github.com/botshen/plugin-radar"
+              href="https://github.com/botshen/pagecraft"
               target="_blank"
               rel="noopener noreferrer"
               className="pc-focus hover:text-foreground hover:underline"

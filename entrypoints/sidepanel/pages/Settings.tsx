@@ -76,7 +76,7 @@ function isValidLoopbackWsUrl(rawUrl: string): boolean {
   }
 }
 
-const MCP_CLI_SCRIPT_PATH = '/path/to/plugin-radar/packages/mcp/src/cli.ts';
+const MCP_CLI_SCRIPT_PATH = '/path/to/pagecraft/packages/mcp/src/cli.ts';
 
 function buildMcpConfigJson(wsUrl: string, token: string): string {
   const portMatch = /:(\d+)(?:\/|$)/.exec(wsUrl.trim());
@@ -1055,7 +1055,7 @@ export default function SettingsPage({
         <p className="pl-6">
           {t('supportContactLabel')}
           <a
-            href="https://github.com/botshen/plugin-radar/issues"
+            href="https://github.com/botshen/pagecraft/issues"
             target="_blank"
             rel="noopener noreferrer"
             className="pc-focus text-foreground hover:text-primary hover:underline"

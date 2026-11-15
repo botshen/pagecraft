@@ -37,6 +37,7 @@ import { isLocalLoopbackEndpoint, resolveEndpoints } from '../../lib/shared/ai-e
 import { byokLlmChat } from '../../lib/shared/ai-client';
 import { generateWithBuiltinAi } from '../../lib/shared/builtin-ai';
 import { tryBuildPlaygroundMod } from '../../lib/userscripts/playground';
+import { tryBuildLocalPickedMod } from '../../lib/userscripts/local-intent';
 import type { AppSettings, AIConfig } from '../../lib/types';
 import {
   extractLivePageContext,
@@ -1007,22 +1008,34 @@ export async function generateUserScript(
     };
   }
 
-  const playgroundScript = tryBuildPlaygroundMod(payload);
-  if (playgroundScript) {
-    const verifyFn = runtimeHooks.verifySelectors ?? verifySelectorsOnActiveTab;
+  const verifyFn = runtimeHooks.verifySelectors ?? verifySelectorsOnActiveTab;
+
+  const finalizeLocalMod = async (
+    script: GeneratedUserScript,
+    providerName: 'playground' | 'local',
+  ): Promise<GenerateUserScriptResult> => {
     const selectorCheck =
-      playgroundScript.targetSelectors && playgroundScript.targetSelectors.length > 0
-        ? await verifyFn(playgroundScript.targetSelectors)
+      script.targetSelectors && script.targetSelectors.length > 0
+        ? await verifyFn(script.targetSelectors)
         : undefined;
     return {
       ok: true,
-      script: playgroundScript,
-      provider: 'playground',
+      script,
+      provider: providerName,
       ...(selectorCheck?.ok ? { selectorCheck } : {}),
     };
+  };
+
+  const playgroundScript = tryBuildPlaygroundMod(payload);
+  if (playgroundScript) {
+    return finalizeLocalMod(playgroundScript, 'playground');
   }
 
-  const verifyFn = runtimeHooks.verifySelectors ?? verifySelectorsOnActiveTab;
+  const instantLocalScript = tryBuildLocalPickedMod(payload, { allowExtendedFallback: false });
+  if (instantLocalScript) {
+    return finalizeLocalMod(instantLocalScript, 'local');
+  }
+
   const fetchContextFn = runtimeHooks.fetchPageContext ?? getActiveTabPageContext;
   const captureFn = runtimeHooks.captureScreenshot ?? ((p) => captureElementScreenshot(p));
   const builtinFn = runtimeHooks.builtinGenerate ?? ((sys, usr) => generateWithBuiltinAi(sys, usr));
@@ -1053,13 +1066,17 @@ export async function generateUserScript(
       };
     }
     if (!isLocalLoopbackEndpoint(resolved.base) && !settings.ai?.apiKey?.trim()) {
+      const zeroKeyLocalScript = tryBuildLocalPickedMod(payload, { allowExtendedFallback: true });
+      if (zeroKeyLocalScript) {
+        return finalizeLocalMod(zeroKeyLocalScript, 'local');
+      }
       return {
         ok: false,
         code: 'missing_api_key',
         error:
           payload.lang === 'zh'
-            ? '请先在「设置」中填写 API Key，或切换为本地 Ollama / LM Studio / Chrome 内置 AI（免 Key 离线可用）。'
-            : 'API key is empty. Add your API key in Settings, or switch to Local Ollama / LM Studio / Chrome Built-in AI.',
+            ? '复杂自定义改造需要连接 AI 引擎：请在「设置」填写 API Key，或切换本地 Ollama / Chrome 内置 AI。若只想去广告或隐藏模块，可直接点上方「点选页面元素」一键隐藏，或启用下方内置脚本（免 AI 可用）。'
+            : 'Custom logic requires an AI engine (add an API key in Settings, or use Local Ollama / Chrome Built-in AI). To hide ads or blocks with zero AI, click "Pick element" above or enable a built-in recipe below.',
       };
     }
   }
@@ -1112,6 +1129,12 @@ export async function generateUserScript(
 
   const firstPass = await runSinglePass(payload);
   if (!firstPass.ok) {
+    if (firstPass.code === 'builtin_unavailable') {
+      const builtinFallbackScript = tryBuildLocalPickedMod(payload, { allowExtendedFallback: true });
+      if (builtinFallbackScript) {
+        return finalizeLocalMod(builtinFallbackScript, 'local');
+      }
+    }
     return firstPass;
   }
 
