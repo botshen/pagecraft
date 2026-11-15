@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   verify:
-    name: Extension & Cloud Worker Checks
+    name: Extension & Static Site Checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -30,12 +30,13 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-          cache-dependency-path: |
-            pnpm-lock.yaml
-            workers/cloud/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
 
-      - name: Install extension dependencies
+      - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Verify static GitHub Pages site
+        run: node scripts/build-site.mjs --check
 
       - name: Type-check extension
         run: pnpm compile
@@ -45,12 +46,3 @@ jobs:
 
       - name: Build production MV3 extension
         run: pnpm build
-
-      - name: Install Cloud Worker dependencies
-        run: pnpm --dir workers/cloud install --frozen-lockfile
-
-      - name: Type-check Cloud Worker
-        run: pnpm --dir workers/cloud typecheck
-
-      - name: Run Cloud Worker tests
-        run: pnpm --dir workers/cloud test

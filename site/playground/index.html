@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en" data-lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' data:; base-uri 'self'; form-action 'none'">
+<title>PageCraft 20s Sandbox — Practice Live Webpage Customization</title>
+<meta name="description" content="Interactive zero-telemetry practice sandbox for PageCraft. Pick the promo banner, widen the narrow article column, export the sample table to CSV, or import shared #PC1:...# recipes.">
+<link rel="canonical" href="https://pagecraft.shenxin.space/playground/">
+<meta property="og:title" content="PageCraft 20s Sandbox — Try Reshaping This Page Live">
+<meta property="og:description" content="Zero-setup practice sandbox and client-side #PC1:...# shared recipe decoder for PageCraft.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://pagecraft.shenxin.space/playground/">
+<meta property="og:image" content="https://pagecraft.shenxin.space/og.svg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="../icon.svg">
+<style>
+:root {
+  --bg: #FAF8F5;
+  --bg-subtle: #F3EFE8;
+  --surface: #FFFFFF;
+  --surface-2: #FCFAF7;
+  --ink: #1C1917;
+  --ink-secondary: #44403C;
+  --muted: #78716C;
+  --primary: #C95533;
+  --primary-hover: #B04324;
+  --primary-soft: rgba(201, 85, 51, 0.10);
+  --primary-border: rgba(201, 85, 51, 0.32);
+  --amber-bg: rgba(217, 119, 6, 0.09);
+  --amber-border: rgba(217, 119, 6, 0.38);
+  --emerald: #15803D;
+  --emerald-soft: rgba(21, 128, 61, 0.10);
+  --emerald-border: rgba(21, 128, 61, 0.26);
+  --border: rgba(28, 25, 23, 0.11);
+  --border-strong: rgba(28, 25, 23, 0.20);
+  --shadow-sm: 0 1px 2px rgba(28, 25, 23, 0.04), 0 4px 14px rgba(28, 25, 23, 0.05);
+  --serif: "Newsreader", "Iowan Old Style", "Georgia", "Songti SC", "STSong", "Noto Serif SC", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Inter", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141312;
+    --bg-subtle: #1C1A18;
+    --surface: #1E1C1A;
+    --surface-2: #252220;
+    --ink: #F5F2EB;
+    --ink-secondary: #D6D1C7;
+    --muted: #A09A90;
+    --primary: #E27250;
+    --primary-hover: #EB8060;
+    --primary-soft: rgba(226, 114, 80, 0.15);
+    --primary-border: rgba(226, 114, 80, 0.38);
+    --amber-bg: rgba(245, 158, 11, 0.12);
+    --amber-border: rgba(245, 158, 11, 0.42);
+    --emerald: #4ADE80;
+    --emerald-soft: rgba(74, 222, 128, 0.13);
+    --emerald-border: rgba(74, 222, 128, 0.28);
+    --border: rgba(245, 242, 235, 0.11);
+    --border-strong: rgba(245, 242, 235, 0.22);
+    --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #141312;
+  --bg-subtle: #1C1A18;
+  --surface: #1E1C1A;
+  --surface-2: #252220;
+  --ink: #F5F2EB;
+  --ink-secondary: #D6D1C7;
+  --muted: #A09A90;
+  --primary: #E27250;
+  --primary-hover: #EB8060;
+  --primary-soft: rgba(226, 114, 80, 0.15);
+  --primary-border: rgba(226, 114, 80, 0.38);
+  --amber-bg: rgba(245, 158, 11, 0.12);
+  --amber-border: rgba(245, 158, 11, 0.42);
+  --emerald: #4ADE80;
+  --emerald-soft: rgba(74, 222, 128, 0.13);
+  --emerald-border: rgba(74, 222, 128, 0.28);
+  --border: rgba(245, 242, 235, 0.11);
+  --border-strong: rgba(245, 242, 235, 0.22);
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html[data-lang="zh"] [data-l="en"] { display: none !important; }
+html[data-lang="en"] [data-l="zh"] { display: none !important; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration: none; }
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 24px;
+}
+.topbar-inner {
+  max-width: 1060px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 5px rgba(201, 85, 51, 0.22));
+}
+.brand-title {
+  font-family: var(--serif);
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+.sandbox-pill {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  border: 1px solid var(--primary-border);
+}
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2px;
+  background: var(--surface);
+}
+.seg button, .icon-btn {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 9px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.seg button[aria-pressed="true"] {
+  background: var(--bg-subtle);
+  color: var(--ink);
+  font-weight: 600;
+}
+.icon-btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-secondary);
+  padding: 5px 10px;
+  border-radius: 8px;
+}
+
+.wrap {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 22px 24px 64px;
+}
+
+/* ─── ?recipe=PC1:... Client-Side Shared Recipe Decoder Banner ──────── */
+#pc-recipe-banner[hidden] {
+  display: none !important;
+}
+#pc-recipe-banner {
+  background: var(--surface);
+  border: 2px solid var(--primary);
+  border-radius: 16px;
+  padding: 20px 22px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+}
+.recipe-banner-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.recipe-kicker-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.recipe-kicker {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-soft);
+  border: 1px solid var(--primary-border);
+  padding: 2px 9px;
+  border-radius: 999px;
+}
+.recipe-engine-badge {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--emerald);
+  background: var(--emerald-soft);
+  border: 1px solid var(--emerald-border);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.recipe-shared-title {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 0 4px;
+  color: var(--ink);
+}
+.recipe-shared-desc {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: var(--ink-secondary);
+}
+.recipe-matches-line {
+  font-size: 12.5px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.recipe-matches-code {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: var(--bg-subtle);
+  color: var(--ink);
+}
+.recipe-cta-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+.copy-shortcode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 0;
+  background: var(--primary);
+  color: #FAF8F5;
+  font-family: var(--sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(201, 85, 51, 0.26);
+}
+.copy-shortcode-btn:hover { background: var(--primary-hover); }
+.recipe-import-hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+.recipe-source-details {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.recipe-source-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ink-secondary);
+}
+.recipe-source-pre {
+  margin: 8px 0 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--bg-subtle);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 12px;
+  overflow-x: auto;
+  max-height: 200px;
+}
+
+/* ─── Step-by-Step Coach Strip ──────────────────────────────────────── */
+#pc-demo-guide {
+  background: var(--surface);
+  border: 1px solid var(--primary-border);
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin-bottom: 18px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.guide-steps {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 13.5px;
+  color: var(--ink);
+}
+.step-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+.step-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.guide-arrow { color: var(--muted); font-size: 13px; }
+.guide-free {
+  font-size: 12px;
+  color: var(--emerald);
+  background: var(--emerald-soft);
+  border: 1px solid var(--emerald-border);
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+/* ─── Target 1: Sample Promotional Banner ───────────────────────────── */
+#pc-demo-banner {
+  background: var(--amber-bg);
+  border: 1.5px dashed var(--amber-border);
+  border-radius: 14px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: crosshair;
+}
+#pc-demo-banner *, #pc-demo-sidebar *, #pc-demo-float * {
+  pointer-events: none;
+}
+.target-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--surface);
+  border: 1px solid var(--primary-border);
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+.nag-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.nag-sub {
+  font-size: 13px;
+  color: var(--ink-secondary);
+}
+.fake-cta {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: 9px;
+  background: #D97706;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ─── Main Stage: Narrow Article Column + Noisy Right Sidebar ───────── */
+#pc-demo-layout {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 22px;
+}
+
+#pc-demo-article {
+  flex: 1 1 auto;
+  max-width: 680px;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 28px 32px;
+  box-shadow: var(--shadow-sm);
+  transition: max-width 0.2s ease, background-color 0.2s ease;
+}
+
+.article-kicker {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.article-h1 {
+  font-family: var(--serif);
+  font-size: 26px;
+  line-height: 1.3;
+  margin: 0 0 14px;
+  color: var(--ink);
+}
+.article-p {
+  margin: 0 0 14px;
+  color: var(--ink-secondary);
+  font-size: 15px;
+}
+
+/* ─── Sample Data Table for CSV Export & Row Highlight ──────────────── */
+.table-wrap {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+.table-head-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.table-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.table-hint {
+  font-size: 12px;
+  color: var(--muted);
+}
+#pc-demo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+#pc-demo-table th {
+  text-align: left;
+  padding: 9px 10px;
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border-strong);
+  font-weight: 600;
+  color: var(--ink);
+}
+#pc-demo-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.status-pill {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--bg-subtle);
+  color: var(--ink-secondary);
+}
+tr[data-status="overdue"] .status-pill {
+  background: rgba(220, 38, 38, 0.10);
+  color: #B91C1C;
+}
+
+/* ─── Target 2: Noisy Right Sidebar ─────────────────────────────────── */
+#pc-demo-sidebar {
+  width: 310px;
+  flex: 0 0 310px;
+  background: var(--surface-2);
+  border: 1.5px dashed var(--primary-border);
+  border-radius: 14px;
+  padding: 16px;
+  cursor: crosshair;
+}
+.noisy-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+.noisy-card {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.noisy-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: #D97706;
+  margin-bottom: 3px;
+}
+.noisy-headline {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.45;
+}
+
+/* ─── Target 3: Floating Corner Widget ──────────────────────────────── */
+#pc-demo-float {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 20;
+  background: var(--surface);
+  border: 1.5px dashed var(--primary-border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: var(--shadow-sm);
+  cursor: crosshair;
+  max-width: 220px;
+}
+.float-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+footer {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 20px 24px 40px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--muted);
+}
+.foot-links {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.foot-links a:hover { color: var(--ink); text-decoration: underline; }
+
+@media (max-width: 860px) {
+  #pc-demo-layout { flex-direction: column; }
+  #pc-demo-article { max-width: 100%; }
+  #pc-demo-sidebar { width: 100%; flex: 1 1 auto; }
+}
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <a href="../" class="brand" aria-label="PageCraft Home">
+          <span class="brand-mark">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 128 128" fill="none" aria-hidden="true"><defs><linearGradient id="pcg-pg" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#C95533"/><stop offset="100%" stop-color="#A63C20"/></linearGradient></defs><rect width="128" height="128" rx="28.5" fill="url(#pcg-pg)"/><path fill="#FAF8F5" d="M35 31.5h53.8L70 38.5l18.8 6.8 1.1 2.2H32.5V87a2.8 2.8 0 0 0 2.8 2.8h57.4A2.8 2.8 0 0 0 95.5 87V59.6l6.5-15V87a9 9 0 0 1-9 9H35a9 9 0 0 1-9-9V40.5a9 9 0 0 1 9-9Z"/><rect x="44.5" y="66" width="39" height="5.8" rx="1.2" fill="#FAF8F5"/><path fill="#FAF8F5" d="M95 22.2c1.5 9.6 3.5 13.3 16.2 16.3-12.7 3-14.7 6.7-16.2 16.3-1.5-9.6-3.5-13.3-16.2-16.3 12.7-3 14.7-6.7 16.2-16.3Z"/></svg>
+          </span>
+          <span class="brand-title">PageCraft</span>
+        </a>
+        <span class="sandbox-pill"><span data-l="zh">20 秒交互练习靶场</span><span data-l="en">20s Practice Sandbox</span></span>
+      </div>
+
+      <div class="controls">
+        <div class="seg" role="group" aria-label="Language">
+          <button type="button" data-set-lang="zh" aria-pressed="false">中文</button>
+          <button type="button" data-set-lang="en" aria-pressed="true">EN</button>
+        </div>
+        <button type="button" id="theme-toggle" class="icon-btn" aria-label="Toggle theme">◐</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Client-Side ?recipe=PC1:... Shared Recipe Decoder Banner -->
+    <section id="pc-recipe-banner" hidden aria-live="polite">
+      <div class="recipe-banner-top">
+        <div>
+          <div class="recipe-kicker-row">
+            <span class="recipe-kicker">
+              <span data-l="zh">✨ 收到好友分享的 PageCraft 配方（纯本地解码）</span>
+              <span data-l="en">✨ Shared PageCraft Recipe (Decoded 100% Client-Side)</span>
+            </span>
+            <span id="pc-recipe-engine" class="recipe-engine-badge">CSS</span>
+          </div>
+          <h2 id="pc-recipe-title" class="recipe-shared-title"></h2>
+          <p id="pc-recipe-desc" class="recipe-shared-desc"></p>
+          <div class="recipe-matches-line">
+            <span><span data-l="zh">适用站点：</span><span data-l="en">Matches:</span></span>
+            <code id="pc-recipe-matches" class="recipe-matches-code"></code>
+          </div>
+        </div>
+
+        <div class="recipe-cta-col">
+          <button type="button" id="pc-copy-shortcode" class="copy-shortcode-btn">
+            <span data-l="zh">复制 #PC1:...# 分享口令</span>
+            <span data-l="en">Copy #PC1:...# Shortcode</span>
+          </button>
+          <span class="recipe-import-hint">
+            <span data-l="zh">复制后打开扩展侧栏「我的改造 → 导入」粘贴即启用</span>
+            <span data-l="en">Paste into PageCraft Side Panel → My Mods → Import</span>
+          </span>
+        </div>
+      </div>
+
+      <details class="recipe-source-details">
+        <summary><span data-l="zh">预览配方源码（安全只读）</span><span data-l="en">Inspect Recipe Source (Read-Only)</span></summary>
+        <pre id="pc-recipe-body" class="recipe-source-pre"></pre>
+      </details>
+    </section>
+
+    <!-- 3-Step Visual Coach Strip -->
+    <section id="pc-demo-guide" aria-label="Practice instructions">
+      <div class="guide-steps">
+        <span class="step-chip">
+          <span class="step-num">1</span>
+          <span data-l="zh">在右侧插件侧栏点「点选元素」</span><span data-l="en">Click "Pick Element" in the Side Panel</span>
+        </span>
+        <span class="guide-arrow">→</span>
+        <span class="step-chip">
+          <span class="step-num">2</span>
+          <span data-l="zh">点选下方虚线推广横幅或右侧栏</span><span data-l="en">Click the promo banner or right sidebar below</span>
+        </span>
+        <span class="guide-arrow">→</span>
+        <span class="step-chip">
+          <span class="step-num">3</span>
+          <span data-l="zh">点「生成改造」并「应用并保存」</span><span data-l="en">Click "Generate Mod" then "Apply &amp; Save"</span>
+        </span>
+      </div>
+      <span class="guide-free">
+        <span data-l="zh">100% 本地确定性秒出 · 无需配置 AI Key</span>
+        <span data-l="en">Instant local sandbox · Zero API key needed</span>
+      </span>
+    </section>
+
+    <!-- Practice Target 1: Sample Promotional Banner -->
+    <div id="pc-demo-banner" data-testid="pc-demo-banner" role="region" aria-label="Practice Promo Banner">
+      <div>
+        <div class="target-badge">
+          <span data-l="zh">🎯 可点选目标 1 · #pc-demo-banner</span><span data-l="en">🎯 Target 1 · #pc-demo-banner</span>
+        </div>
+        <div class="nag-title">
+          <span data-l="zh">下载官方 App 客户端领 VIP 畅读券，解锁全年 128 份深度行业报告！</span>
+          <span data-l="en">Download our Mobile App to unlock full articles &amp; claim your VIP pass!</span>
+        </div>
+        <div class="nag-sub">
+          <span data-l="zh">示例推广横幅 · 试试用 PageCraft 点选我并在 0.1 秒内彻底隐藏</span>
+          <span data-l="en">Sample promotional banner — try picking this block with PageCraft to hide it in 0.1s</span>
+        </div>
+      </div>
+      <span class="fake-cta"><span data-l="zh">立即打开客户端</span><span data-l="en">Open in App</span></span>
+    </div>
+
+    <!-- 2-Column Content Stage: Narrow Article Column + Noisy Sidebar -->
+    <div id="pc-demo-layout">
+      <article id="pc-demo-article" data-testid="pc-demo-article">
+        <div class="article-kicker">
+          <span data-l="zh">效率周刊 · 狭窄正文列（加宽练习目标 #pc-demo-article）</span>
+          <span data-l="en">Weekly Brief · Narrow Article Column (#pc-demo-article)</span>
+        </div>
+        <h1 class="article-h1">
+          <span data-l="zh">为什么你每天高频访问的网页，值得按你自己的习惯重塑？</span>
+          <span data-l="en">Why the Websites You Use Every Day Should Fit How You Read and Work</span>
+        </h1>
+        <p class="article-p">
+          <span data-l="zh">现代网页塞满了客户端导流横幅、狭窄局促的正文栏与杂乱推荐流。当你用右侧 PageCraft 侧栏把上方推广横幅或右侧推荐栏隐藏后，这篇原本限制在 680px 的狭窄正文列会自动舒展铺满整个阅读区——且规则 100% 保存在你的本地浏览器中，下次打开依然清爽。</span>
+          <span data-l="en">Modern webpages squeeze articles into narrow columns surrounded by app-download banners and noisy feeds. Once you hide the banner above or the sidebar on the right using PageCraft, this constrained 680px article column smoothly expands full-width—and stays saved locally in your browser.</span>
+        </p>
+        <p class="article-p">
+          <span data-l="zh">学会这三步之后，去知乎、B站、小红书、技术文档或内部管理后台都是完全相同的操作；你也可以连接 Chrome 内置 Gemini Nano、本地 Ollama、BYOK 或 <code>pagecraft-mcp</code> 解锁任意复杂脚本定制。</span>
+          <span data-l="en">Once you try these 3 steps here, customizing docs, forums, or internal dashboards works the exact same way—powered locally by Chrome Gemini Nano, Ollama, BYOK, or <code>pagecraft-mcp</code>.</span>
+        </p>
+
+        <!-- Sample Data Table for CSV Export & Overdue Highlight -->
+        <div class="table-wrap">
+          <div class="table-head-bar">
+            <span class="table-title">
+              <span data-l="zh">季度渠道回款示例表（#pc-demo-table）</span>
+              <span data-l="en">Sample Channel Metrics Table (#pc-demo-table)</span>
+            </span>
+            <span class="table-hint">
+              <span data-l="zh">进阶练习：试试「网页表格一键导出 Excel / CSV」内置配方或高亮逾期行</span>
+              <span data-l="en">Bonus: try the built-in "Table to CSV" recipe or highlight Overdue rows</span>
+            </span>
+          </div>
+          <table id="pc-demo-table" class="pc-demo-orders">
+            <thead>
+              <tr>
+                <th><span data-l="zh">单号</span><span data-l="en">Order #</span></th>
+                <th><span data-l="zh">渠道来源</span><span data-l="en">Channel</span></th>
+                <th><span data-l="zh">金额</span><span data-l="en">Amount</span></th>
+                <th><span data-l="zh">状态</span><span data-l="en">Status</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr data-status="paid">
+                <td>INV-2041</td>
+                <td>Organic Search</td>
+                <td>¥860</td>
+                <td><span class="status-pill"><span data-l="zh">已结清</span><span data-l="en">Paid</span></span></td>
+              </tr>
+              <tr data-status="overdue" class="pc-overdue-row">
+                <td>INV-2042</td>
+                <td>Paid Social</td>
+                <td>¥2,480</td>
+                <td><span class="status-pill"><span data-l="zh">逾期</span><span data-l="en">Overdue</span></span></td>
+              </tr>
+              <tr data-status="paid">
+                <td>INV-2043</td>
+                <td>Direct</td>
+                <td>¥640</td>
+                <td><span class="status-pill"><span data-l="zh">已结清</span><span data-l="en">Paid</span></span></td>
+              </tr>
+              <tr data-status="paid">
+                <td>INV-2044</td>
+                <td>Partner Referral</td>
+                <td>¥1,920</td>
+                <td><span class="status-pill"><span data-l="zh">已结清</span><span data-l="en">Paid</span></span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <!-- Practice Target 2: Noisy Right Sidebar -->
+      <aside id="pc-demo-sidebar" data-testid="pc-demo-sidebar" aria-label="Practice Noisy Sidebar">
+        <div class="target-badge">
+          <span data-l="zh">🎯 可点选目标 2 · #pc-demo-sidebar</span><span data-l="en">🎯 Target 2 · #pc-demo-sidebar</span>
+        </div>
+        <div class="nag-title"><span data-l="zh">全站热搜与为你推荐</span><span data-l="en">Trending &amp; Sponsored Clutter</span></div>
+        <div class="noisy-list">
+          <div class="noisy-card">
+            <div class="noisy-tag"><span data-l="zh">热议 · 弹窗导流</span><span data-l="en">Sponsored · Hot</span></div>
+            <div class="noisy-headline"><span data-l="zh">90% 的人每天都在忍受的杂乱侧边栏…</span><span data-l="en">10 Distracting Clickbait Links Stealing Your Focus…</span></div>
+          </div>
+          <div class="noisy-card">
+            <div class="noisy-tag"><span data-l="zh">推广 · 限时活动</span><span data-l="en">Ad · Flash Deal</span></div>
+            <div class="noisy-headline"><span data-l="zh">扫码进群领资料弹窗，点选我即可一键屏蔽</span><span data-l="en">Pop-up Promo Card — Pick &amp; Hide Me Permanently!</span></div>
+          </div>
+          <div class="noisy-card">
+            <div class="noisy-tag"><span data-l="zh">猜你喜欢</span><span data-l="en">Recommended Feed</span></div>
+            <div class="noisy-headline"><span data-l="zh">隐藏右侧栏后，左侧狭窄文章将自动加宽铺满！</span><span data-l="en">Hide this sidebar and watch the narrow article expand full-width!</span></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- Practice Target 3: Floating Corner Widget -->
+  <div id="pc-demo-float" data-testid="pc-demo-float" role="complementary" aria-label="Practice Floating Promo">
+    <div class="target-badge"><span data-l="zh">🎯 目标 3 · 悬浮角标</span><span data-l="en">🎯 Target 3 · Floating Widget</span></div>
+    <div class="float-title"><span data-l="zh">🧧 扫码领 18 元新人礼包</span><span data-l="en">🎁 Spin Wheel &amp; App Coupon</span></div>
+  </div>
+
+  <footer>
+    <span>PageCraft · <span data-l="zh">100% 无服务端 · 零遥测监控</span><span data-l="en">100% Serverless · Zero Telemetry</span></span>
+    <div class="foot-links">
+      <a href="../"><span data-l="zh">返回官网</span><span data-l="en">Home</span></a>
+      <a href="../privacy/"><span data-l="zh">隐私政策</span><span data-l="en">Privacy Policy</span></a>
+      <a href="https://github.com/botshen/plugin-radar" rel="noopener noreferrer">GitHub</a>
+      <a href="mailto:botzgbj@gmail.com">botzgbj@gmail.com</a>
+    </div>
+  </footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+
+  function applyLang(lang, persist) {
+    var next = lang === 'zh' ? 'zh' : 'en';
+    root.setAttribute('data-lang', next);
+    root.setAttribute('lang', next === 'zh' ? 'zh-CN' : 'en');
+    var btns = document.querySelectorAll('[data-set-lang]');
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].setAttribute('aria-pressed', btns[i].getAttribute('data-set-lang') === next ? 'true' : 'false');
+    }
+    if (persist) {
+      try { localStorage.setItem('pc_site_lang', next); } catch (e) {}
+    }
+  }
+
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var q = params.get('lang');
+    if (q === 'zh' || q === 'en') {
+      applyLang(q, false);
+    } else {
+      var savedLang = localStorage.getItem('pc_site_lang');
+      if (savedLang === 'zh' || savedLang === 'en') applyLang(savedLang, false);
+      else if (navigator.language && /^zh/i.test(navigator.language)) applyLang('zh', false);
+    }
+  } catch (e) {}
+
+  var langBtns = document.querySelectorAll('[data-set-lang]');
+  for (var i = 0; i < langBtns.length; i++) {
+    langBtns[i].addEventListener('click', function () {
+      applyLang(this.getAttribute('data-set-lang') || 'en', true);
+    });
+  }
+
+  try {
+    var savedTheme = localStorage.getItem('pc_site_theme');
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      root.setAttribute('data-theme', savedTheme);
+    }
+  } catch (e) {}
+
+  var themeBtn = document.getElementById('theme-toggle');
+  if (themeBtn) {
+    themeBtn.addEventListener('click', function () {
+      var cur = root.getAttribute('data-theme');
+      var sysDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var nextTheme = (cur ? cur === 'dark' : sysDark) ? 'light' : 'dark';
+      root.setAttribute('data-theme', nextTheme);
+      try { localStorage.setItem('pc_site_theme', nextTheme); } catch (e) {}
+    });
+  }
+
+  // Client-side WireRecipeV1 (?recipe=PC1:...) decoder — 100% safe textContent rendering
+  function decodeRecipeFromQuery(rawInput) {
+    if (!rawInput || typeof rawInput !== 'string') return null;
+    var candidate = rawInput;
+    if (candidate.indexOf('PC1%3A') !== -1 || candidate.indexOf('pc1%3A') !== -1) {
+      try { candidate = decodeURIComponent(candidate); } catch (e) {}
+    }
+    var m = /PC1:([A-Za-z0-9_-]{8,})/.exec(candidate);
+    if (!m || !m[1]) return null;
+    var tokenPart = m[1];
+    try {
+      var padded = tokenPart.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((tokenPart.length + 3) % 4);
+      var binary = atob(padded);
+      var bytes = new Uint8Array(binary.length);
+      for (var i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      var json = new TextDecoder().decode(bytes);
+      var parsed = JSON.parse(json);
+      if (
+        !parsed ||
+        parsed.v !== 1 ||
+        typeof parsed.n !== 'string' ||
+        !parsed.n.trim() ||
+        (parsed.e !== 'css' && parsed.e !== 'js') ||
+        !Array.isArray(parsed.m) ||
+        typeof parsed.b !== 'string' ||
+        !parsed.b.trim()
+      ) {
+        return null;
+      }
+      var matches = parsed.m.filter(function (item) {
+        return typeof item === 'string' && item.trim().length > 0;
+      });
+      if (matches.length === 0) return null;
+      return {
+        shortcode: '#PC1:' + tokenPart + '#',
+        name: parsed.n.trim(),
+        description: typeof parsed.d === 'string' ? parsed.d.trim() : '',
+        engine: parsed.e,
+        matches: matches,
+        body: parsed.b.trim()
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  try {
+    var searchParams = new URLSearchParams(window.location.search);
+    var rawRecipe = searchParams.get('recipe') || window.location.hash || '';
+    var decoded = decodeRecipeFromQuery(rawRecipe);
+    if (decoded) {
+      var banner = document.getElementById('pc-recipe-banner');
+      var titleEl = document.getElementById('pc-recipe-title');
+      var descEl = document.getElementById('pc-recipe-desc');
+      var engineEl = document.getElementById('pc-recipe-engine');
+      var matchesEl = document.getElementById('pc-recipe-matches');
+      var bodyEl = document.getElementById('pc-recipe-body');
+      var copyBtn = document.getElementById('pc-copy-shortcode');
+
+      if (banner && titleEl && matchesEl && engineEl && bodyEl && copyBtn) {
+        titleEl.textContent = decoded.name;
+        if (descEl) {
+          descEl.textContent = decoded.description;
+          descEl.style.display = decoded.description ? 'block' : 'none';
+        }
+        engineEl.textContent = decoded.engine === 'css' ? 'CSS · 0.1s' : 'JS · Userscript';
+        matchesEl.textContent = decoded.matches.join(', ');
+        bodyEl.textContent = decoded.body;
+        banner.removeAttribute('hidden');
+
+        copyBtn.addEventListener('click', function () {
+          var lang = root.getAttribute('data-lang') === 'zh' ? 'zh' : 'en';
+          var markCopied = function () {
+            copyBtn.textContent = lang === 'zh' ? '✓ 已复制 #PC1:...# 口令！' : '✓ Shortcode Copied!';
+            setTimeout(function () {
+              copyBtn.innerHTML =
+                '<span data-l="zh">复制 #PC1:...# 分享口令</span><span data-l="en">Copy #PC1:...# Shortcode</span>';
+            }, 2200);
+          };
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(decoded.shortcode).then(markCopied).catch(function () {});
+          } else {
+            var ta = document.createElement('textarea');
+            ta.value = decoded.shortcode;
+            document.body.appendChild(ta);
+            ta.select();
+            try { document.execCommand('copy'); markCopied(); } catch (e) {}
+            document.body.removeChild(ta);
+          }
+        });
+      }
+    }
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>

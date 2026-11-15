@@ -1,17 +1,24 @@
 # Contributing to PageCraft
 
-Welcome, and thank you for your interest in contributing to **PageCraft**! Whether you are sharing a 1-click website CSS/JS recipe, improving the visual Element Picker, adding AI provider support, or fixing a bug, this guide walks you through everything you need to get productive quickly.
+Welcome, and thank you for your interest in contributing to **PageCraft**! Whether you are sharing a 1-click website CSS/JS recipe, improving the visual Element Picker and Closed-Loop Auto-Heal runtime, extending the `pagecraft-mcp` local coding agent bridge, or fixing a bug, this guide walks you through everything you need to get productive quickly.
 
 ---
 
 ## Architecture Overview
 
-PageCraft is a **WXT + React 19 + TypeScript + Tailwind CSS v4** Manifest V3 browser extension paired with an optional, self-hostable Cloudflare Worker backend.
+PageCraft is a **100% client-side, zero-backend, zero-telemetry** live webpage customizer and browser micro-agent runtime built with **WXT + React 19 + TypeScript + Tailwind CSS v4** (Manifest V3), paired with a local stdio-to-loopback MCP bridge (`packages/mcp`) and a pure static GitHub Pages site (`site/`).
+
+**Zero PageCraft servers, zero accounts, zero telemetry/feedback pings.** Contributors can develop and test using any of PageCraft's **4 local/user-owned compute options**:
+
+1. **Chrome Built-in AI (Gemini Nano on-device)** — zero-config offline `LanguageModel` inside Chrome.
+2. **Offline Local AI (Ollama / LM Studio)** — local loopback inference (`OLLAMA_ORIGINS="chrome-extension://*" ollama serve`).
+3. **Direct BYOK** — direct browser-to-provider HTTPS (OpenAI, Anthropic, DeepSeek, OpenRouter).
+4. **Local Coding Agent Bridge (`pagecraft-mcp` over `127.0.0.1`)** — connects Claude Code, Cursor, or Codex CLI directly to the live browser DOM and Dual-Engine runtime over `ws://127.0.0.1:17321`.
 
 ```text
 pagecraft/
 ├── entrypoints/                 # Browser extension entrypoints (WXT)
-│   ├── background/              # MV3 service worker: dual-engine CSS/JS sync & on-demand DOM context
+│   ├── background/              # MV3 service worker: dual-engine CSS/JS sync, Vision, Auto-Heal & MCP hooks
 │   ├── sidepanel/               # React 19 studio UI: prompt composer, CSS sliders, recipe gallery, settings
 │   ├── welcome/                 # Interactive onboarding & live zero-setup CSS playground
 │   └── probe/                   # Lightweight runtime capability probe
@@ -19,16 +26,21 @@ pagecraft/
 │   ├── picker/                  # Shadow-DOM visual Element Picker & resilient CSS selector generator
 │   ├── userscripts/             # Core mod runtime & utilities
 │   │   ├── templates.ts         # Built-in 1-click website recipe library ("热门同款一键改造")
-│   │   ├── css-tweaks.ts        # Zero-credit live CSS property parser & quick sliders
+│   │   ├── css-tweaks.ts        # Instant live CSS property parser & quick sliders
+│   │   ├── playground.ts        # Deterministic zero-network CSS sandbox rules for /playground
 │   │   ├── share.ts             # #PC1:...# shareable recipe shortcode encoder/decoder
 │   │   ├── gm-shim.ts           # Safe, local-only GM_* compatibility prelude (zero @require)
 │   │   ├── matcher.ts           # @match pattern parser & URL matcher
 │   │   ├── store.ts             # chrome.storage.local persistence & @match validation
 │   │   └── types.ts             # Shared mod & generation TypeScript interfaces
-│   ├── shared/                  # Client-side PII redaction (privacy.ts), AI endpoints, locale & settings
-│   └── api/                     # HMAC-signed Cloud Trial & coarse feedback client
-├── tests/core/                  # Fast Node native TypeScript unit tests
-└── workers/cloud/               # Optional Cloudflare Worker + D1 backend (Cloud Trial & landing pages)
+│   ├── mcp/                     # Loopback WebSocket bridge contract & extension client (127.0.0.1)
+│   └── shared/                  # Client-side PII redaction (privacy.ts), Built-in AI, BYOK/Ollama & locale
+├── packages/mcp/                # Standalone @pagecraft/mcp (pagecraft-mcp) stdio server for Claude/Cursor/Codex
+├── site/                        # Zero-telemetry static GitHub Pages website (/, /playground/, /privacy/)
+├── scripts/
+│   ├── build-icons.mjs          # Extension & store icon generator
+│   └── build-site.mjs           # Generates site/privacy/index.html from PRIVACY.md & validates static site
+└── tests/core/                  # Fast Node native TypeScript unit tests
 ```
 
 ---
@@ -37,9 +49,9 @@ pagecraft/
 
 ### Prerequisites
 
-- **Node.js `>= 22.6.0`** (Node **24 LTS** recommended — unit tests use Node's built-in `--experimental-strip-types` runner)
+- **Node.js `>= 22.6.0`** (Node **24 LTS** recommended — unit tests and `packages/mcp` use Node's built-in `--experimental-strip-types` support)
 - **pnpm `10+`** (`corepack enable` or `npm install -g pnpm`)
-- A Chromium-based browser (**Chrome 120+** / **Edge 120+**; Chrome **138+** provides the streamlined per-extension *Allow User Scripts* toggle) or Firefox
+- A Chromium-based browser (**Chrome 120+** / **Edge 120+**; Chrome **138+** provides the streamlined per-extension *Allow User Scripts* toggle and on-device Gemini Nano Prompt API) or Firefox
 
 ### 1. Install Dependencies & Start Dev Mode
 
@@ -60,31 +72,27 @@ pnpm dev
 5. *(For testing `engine: 'js'` userscripts on Chrome 138+)* Open PageCraft's **Details** page on `chrome://extensions` and toggle **Allow User Scripts** ON.
    > **Tip:** Pure CSS mods (`engine: 'css'`) use `chrome.scripting.insertCSS` and work immediately with **zero** extra toggles!
 
-For Firefox development, run `pnpm dev:firefox` (or `pnpm build:firefox`). To self-host or work on the optional Cloud Trial backend, see [`workers/cloud/README.md`](./workers/cloud/README.md).
+For Firefox development, run `pnpm dev:firefox` (or `pnpm build:firefox`).
 
 ---
 
 ## Verification Commands
 
-Before opening a pull request, run all three checks from the repository root and confirm zero errors:
+Before opening a pull request, run all four checks from the repository root and confirm zero errors:
 
 ```bash
-# 1. TypeScript strict type-checking across extension & libraries
+# 1. Regenerate & verify static GitHub Pages site (site/privacy/index.html matches PRIVACY.md)
+node scripts/build-site.mjs
+node scripts/build-site.mjs --check
+
+# 2. TypeScript strict type-checking across extension & libraries
 pnpm compile
 
-# 2. Core unit test suite (matcher, privacy redaction, selector builder, shortcodes, gm-shim, etc.)
+# 3. Core unit test suite (matcher, privacy redaction, selector builder, shortcodes, gm-shim, MCP, etc.)
 pnpm test
 
-# 3. Production Manifest V3 extension build (.output/chrome-mv3)
+# 4. Production Manifest V3 extension build (.output/chrome-mv3)
 pnpm build
-```
-
-If your changes touch `workers/cloud/`, also verify the Worker package:
-
-```bash
-pnpm --dir workers/cloud install
-pnpm --dir workers/cloud typecheck
-pnpm --dir workers/cloud test
 ```
 
 ---
@@ -166,21 +174,23 @@ Add your `TemplateRecipe` object to `BUILTIN_TEMPLATES` in `lib/userscripts/temp
 
 ## Privacy & Manifest V3 Security Principles
 
-Every contribution to PageCraft must uphold our security and privacy guarantees (see [`SECURITY.md`](./SECURITY.md) for full details):
+Every contribution to PageCraft must uphold our zero-backend security and privacy guarantees (see [`SECURITY.md`](./SECURITY.md) and [`PRIVACY.md`](./PRIVACY.md)):
 
-- **Zero Background Telemetry**: Never add passive content scripts, analytics SDKs, or background tab URL listeners that collect browsing activity.
+- **Zero Servers & Zero Telemetry**: Never introduce remote telemetry, analytics beacons, feedback pings, or centralized backend dependencies.
 - **Client-Side PII Redaction**: Any new page-context field sent to an LLM **must** pass through `redactSensitiveText()` / `sanitizePageUrl()` in `lib/shared/privacy.ts` and have corresponding unit tests in `tests/core/`.
-- **Strict MV3 & Sandbox Boundaries**:
+- **Strict MV3, CSP & Loopback Boundaries**:
   - Never weaken `content_security_policy` in `wxt.config.ts` or `configureWorld({ csp: "script-src 'self'", messaging: false })` in `entrypoints/background/userscripts.ts`.
+  - Do not use `eval()` or `new Function()` inside extension pages or service workers (MV3 CSP `script-src 'self'` forbids dynamic code evaluation).
   - Keep `messaging: false` in the `USER_SCRIPT` world so untrusted userscripts cannot message the privileged extension runtime.
-  - Enforce `https:` for all remote AI/API endpoints; `http:` is permitted **strictly** for local loopback hosts (`localhost`, `127.0.0.1`, `[::1]`) for local inference tools like Ollama and LM Studio.
-- **No Secrets or Personal Identifiers**: Never commit API keys, `.env` / `.dev.vars` files, real Cloudflare resource IDs, or machine-specific paths.
+  - Enforce `https:` for all remote BYOK endpoints; `http:` and `ws:` are permitted **strictly** for local loopback hosts (`localhost`, `127.0.0.1`, `[::1]`) for Ollama, LM Studio, and `pagecraft-mcp`.
+- **No Secrets or Personal Machine Paths**: Never commit API keys, `.env` files, or machine-specific paths. Official support channels are [GitHub Issues](https://github.com/botshen/plugin-radar/issues) and [botzgbj@gmail.com](mailto:botzgbj@gmail.com).
 
 ---
 
 ## Pull Request Checklist
 
 - [ ] Focused, atomic branch from `main` (e.g., `feat/recipe-hn-reader` or `fix/picker-shadow-dom`)
+- [ ] If `PRIVACY.md` or `site/` changed, `node scripts/build-site.mjs --check` passes cleanly
 - [ ] `pnpm compile`, `pnpm test`, and `pnpm build` pass with zero errors
 - [ ] Unit tests added in `tests/core/` for new logic or edge cases
 - [ ] Follows our [Code of Conduct](./CODE_OF_CONDUCT.md)
